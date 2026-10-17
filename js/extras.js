@@ -3,7 +3,7 @@ import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } fro
 import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card' };
-const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours' };
+const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection' };
 const FIELD = {
   title: 'name', owner: 'person in charge', due: 'due date', status: 'status', notes: 'notes', area_id: 'area', stage_id: 'stage',
   couple: 'couple names', monogram: 'monogram', wedding_date: 'wedding date', date_note: 'date note', theme: 'theme', theme_custom: 'theme colours',

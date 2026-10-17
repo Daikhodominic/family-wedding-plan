@@ -190,9 +190,37 @@ input[type=color] { padding: 2px; height: 42px; }
 .tools { display: flex; flex-wrap: wrap; gap: 6px; }
 .tool { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--w-line); background: var(--w-surface); cursor: pointer; font-size: 14px; font-weight: 500; }
 .tool:hover { border-color: var(--w-light); }
-.board-view { position: relative; overflow: auto; height: min(78vh, 900px); border: 1px solid var(--w-line); border-radius: 18px; background-color: color-mix(in srgb, var(--w-bg) 88%, var(--w-light)); background-image: radial-gradient(color-mix(in srgb, var(--w-light) 70%, transparent) 1px, transparent 1.3px); background-size: 22px 22px; touch-action: pan-x pan-y; }
-.board-canvas { position: relative; width: 3200px; height: 2200px; transform-origin: 0 0; }
-.zoom { position: sticky; float: right; top: 10px; right: 10px; margin: 10px; z-index: 50; display: flex; gap: 4px; background: var(--w-surface); border: 1px solid var(--w-line); border-radius: 12px; padding: 4px; }
+.board-view { position: relative; overflow: auto; height: min(78vh, 900px); min-height: 320px; resize: vertical; overscroll-behavior: contain; touch-action: none; cursor: grab; border: 1px solid var(--w-line); border-radius: 18px; background-color: color-mix(in srgb, var(--w-bg) 88%, var(--w-light)); background-image: radial-gradient(color-mix(in srgb, var(--w-light) 70%, transparent) 1px, transparent 1.3px); background-size: 22px 22px; }
+.board-canvas { position: relative; transform-origin: 0 0; }
+.board-sizer { position: relative; }
+.board-view.panning { cursor: grabbing; }
+.board-view.tool-draw { cursor: crosshair; }
+.board-view.tool-draw .card { pointer-events: none; }
+.board-view.tool-connect .card { cursor: pointer; }
+.board-view.tool-connect .card:hover, .card.linking { box-shadow: 0 0 0 3px var(--w-accent); }
+svg.ink { position: absolute; left: 0; top: 0; z-index: 5000; pointer-events: none; overflow: visible; }
+.tool-select svg.ink .hit { pointer-events: stroke; cursor: pointer; }
+.tool-select svg.ink .hit[fill=transparent] { pointer-events: all; }
+svg.ink g.sel { filter: drop-shadow(0 0 3px rgba(255,255,255,.9)) drop-shadow(0 0 2px var(--w-accent)); }
+svg.ink .selbox { fill: none; stroke: var(--w-accent); stroke-width: 1.5; stroke-dasharray: 6 5; pointer-events: none; }
+svg.ink .knob { fill: #fff; stroke: var(--w-accent); stroke-width: 2.5; pointer-events: all; cursor: move; }
+.drawbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; }
+.drawbar .seg { display: flex; align-items: center; gap: 2px; padding: 3px; background: var(--w-surface); border: 1px solid var(--w-line); border-radius: 12px; }
+.drawbar .dt { min-width: 38px; height: 38px; border: 0; border-radius: 9px; background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--w-ink); padding: 0 6px; }
+.drawbar .dt:hover { background: var(--w-soft); }
+.drawbar .dt.on { background: var(--w-accent); color: var(--w-accent-ink); }
+.drawbar .dt.wide { padding: 0 12px; font-size: 14px; font-weight: 500; }
+.drawbar .dt.danger { color: var(--warn); }
+.drawbar .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--w-line); margin: 0 3px; cursor: pointer; padding: 0; }
+.drawbar .swatch.on { box-shadow: 0 0 0 2px var(--w-ink); }
+.drawbar .zoomseg { margin-left: auto; }
+.zoom-pct { border: 0; background: none; font-size: 13px; min-width: 52px; cursor: pointer; color: var(--w-ink); }
+.board-hint { margin: 0 0 10px; font-size: 13px; color: var(--w-muted); }
+.board-shell.full { position: fixed; inset: 0; z-index: 90; background: var(--w-bg); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); }
+.board-shell.full .board-bar { margin-top: 10px; }
+.board-shell.full .board-holder { flex: 1; display: flex; padding-bottom: max(12px, env(safe-area-inset-bottom)); min-height: 0; max-width: none; }
+.board-shell.full .board-view { flex: 1; height: auto; resize: none; }
+@media (max-width: 640px) { .drawbar .zoomseg { margin-left: 0; } .board-shell.full .board-bar h2 { display: none; } }
 .card { position: absolute; background: var(--w-surface); border: 1px solid var(--w-line); border-radius: 12px; box-shadow: 0 12px 26px -20px rgba(30, 30, 30, .6); display: flex; flex-direction: column; overflow: hidden; }
 .card.dragging { box-shadow: 0 26px 50px -24px rgba(30, 30, 30, .7); opacity: .96; }
 .card.flash { animation: flash 2.2s ease-out; }
