@@ -1,7 +1,7 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=12';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=13';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen'];  // tables added by later database updates
@@ -107,6 +107,7 @@ class LiveStore extends BaseStore {
       this.cache[t] = r.data || [];
     });
     this.subscribe();
+    this.saveSnapshot();
   }
 
   subscribe() {
@@ -119,6 +120,7 @@ class LiveStore extends BaseStore {
         else this.upsertLocal(t, p.new);
         if (t === 'activity') this.cache.activity.sort((x, y) => y.id - x.id);
         this.emit({ table: t, remote: true });
+        this.saveSnapshot();
       })
       .subscribe();
   }
@@ -229,6 +231,39 @@ class LiveStore extends BaseStore {
     return data.signedUrl;
   }
 }
+
+// Saving status ("Saved", "Saving…", "Offline") and a saved copy for instant loading.
+for (const m of ['insert', 'update', 'patchMany', 'del', 'purge']) {
+  const f = LiveStore.prototype[m];
+  LiveStore.prototype[m] = async function (...a) {
+    this.pending = (this.pending || 0) + 1; syncStatus(this);
+    try { return await f.apply(this, a); } finally { this.pending--; syncStatus(this); this.saveSnapshot(); }
+  };
+}
+const SNAP = 'fwp-live-copy-v1';
+LiveStore.prototype.saveSnapshot = function () {
+  clearTimeout(this._snapT);
+  this._snapT = setTimeout(() => {
+    try {
+      const cache = { ...this.cache, activity: (this.cache.activity || []).slice(0, 200) };
+      localStorage.setItem(SNAP, JSON.stringify({ user: this.me && this.me.id, at: Date.now(), cache, missing: this.missing }));
+    } catch (e) { /* too big or blocked — fine, it just loads normally */ }
+  }, 1500);
+};
+LiveStore.prototype.hydrate = function () {
+  try {
+    const s = JSON.parse(localStorage.getItem(SNAP) || 'null');
+    if (!s || !this.me || s.user !== this.me.id) return false;
+    this.cache = { ...this.cache, ...s.cache }; this.missing = s.missing || {};
+    return true;
+  } catch (e) { return false; }
+};
+const statusFns = new Set();
+export const onStatus = (fn) => { statusFns.add(fn); return () => statusFns.delete(fn); };
+export function syncState(st = store) { return !navigator.onLine ? 'offline' : (st && st.pending) ? 'saving' : 'saved'; }
+function syncStatus(st) { const v = syncState(st); for (const fn of statusFns) fn(v); }
+window.addEventListener('online', () => syncStatus(store));
+window.addEventListener('offline', () => syncStatus(store));
 
 /* ------------------------------------------------------------------ */
 /*  Demo: sample data kept in this browser                             */

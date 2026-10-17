@@ -1,8 +1,8 @@
 // Decide and Budget pages. Both read the same data as the plan, so they update live.
-import { store } from './store.js?v=12';
-import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=12';
-import { live, stepVisible } from './app.js?v=12';
-import { openStep, lockIcon } from './panel.js?v=12';
+import { store } from './store.js?v=13';
+import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=13';
+import { live, stepVisible } from './app.js?v=13';
+import { openStep, lockIcon } from './panel.js?v=13';
 
 const where = (s) => {
   const a = store.find('areas', s.area_id); const st = a && store.find('stages', a.stage_id);
@@ -15,8 +15,8 @@ export function renderDecide(root, w) {
   const waiting = steps.filter(s => s.gate && !s.locked_at).sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
   const locked = steps.filter(s => s.locked_at).sort((a, b) => b.locked_at.localeCompare(a.locked_at));
 
-  root.append(secHead('Lock points', 'Decisions'));
-  root.append(h('p', { class: 'hint' }, 'Lock points are the big choices — venue, caterer, menu, dress. Open one to add options, files and notes, then lock it once the family agrees. Only the admin can unlock.'));
+  root.append(secHead('Big decisions', 'Decisions'));
+  root.append(h('p', { class: 'hint' }, 'Big decisions are the main choices — venue, caterer, menu, dress. Open one to add options, files and notes. Once agreed, a Decider makes it final. Only the admin can reopen it.'));
 
   const card = (s) => {
     const late = s.due && daysUntil(s.due) < 0;
@@ -33,17 +33,17 @@ export function renderDecide(root, w) {
   root.append(h('section', { class: 'dsec' },
     h('div', { class: 'dsec-h' }, h('h2', {}, 'Waiting on a decision'), h('span', { class: 'count' }, String(waiting.length))),
     waiting.length ? h('div', { class: 'dgrid' }, waiting.map(card))
-      : h('p', { class: 'muted' }, 'Nothing waiting. Open any step in the plan and tick “This is a lock point” to bring it here.')));
+      : h('p', { class: 'muted' }, 'Nothing waiting. Open any step in the plan and tick “Big decision” to bring it here.')));
 
   root.append(h('section', { class: 'dsec' },
-    h('div', { class: 'dsec-h' }, h('h2', {}, 'Decided and locked'), h('span', { class: 'count gold' }, String(locked.length))),
+    h('div', { class: 'dsec-h' }, h('h2', {}, 'Decided and final'), h('span', { class: 'count gold' }, String(locked.length))),
     locked.length ? h('div', { class: 'locked-list' }, locked.map(s => {
       const note = s.lock_note || {};
       return h('button', { type: 'button', class: 'lrow2', onclick: () => openStep(s.id) },
         h('span', { class: 'lk-ic', html: lockIcon(15) }),
         h('span', { class: 'lk-main' }, h('b', {}, s.title), h('span', {}, [note.with, where(s)].filter(Boolean).join(' · '))),
-        h('span', { class: 'lk-when' }, 'Locked ' + shortDate(s.locked_at.slice(0, 10))));
-    })) : h('p', { class: 'muted' }, 'Nothing locked yet.')));
+        h('span', { class: 'lk-when' }, 'Final · ' + shortDate(s.locked_at.slice(0, 10))));
+    })) : h('p', { class: 'muted' }, 'Nothing final yet.')));
 
   root.append(h('aside', { class: 'soon-note' },
     h('span', { class: 'soon-ic', html: ICONS.decide }),

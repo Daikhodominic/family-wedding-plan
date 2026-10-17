@@ -2,8 +2,8 @@
 // Every write goes through the store, so we wrap its write methods and keep
 // a list of what to reverse. Several writes made together (moving a group,
 // clearing a page) are undone as one step.
-import { store, nowIso } from './store.js?v=12';
-import { h, toast, ICONS } from './ui.js?v=12';
+import { store, nowIso } from './store.js?v=13';
+import { h, toast, ICONS } from './ui.js?v=13';
 
 const MAX = 80;
 const SKIP = new Set(['activity', 'members', 'reactions']); // reactions and votes toggle on their own
@@ -97,7 +97,7 @@ export function describeStep(ops) {
   if (keys.includes('deleted_at')) return (o.patch.deleted_at ? 'removing the ' : 'restoring the ') + n;
   if (keys.every(k => ['x', 'y', 'z'].includes(k))) return 'moving the ' + n;
   if (keys.every(k => ['w'].includes(k))) return 'resizing the ' + n;
-  if (keys.includes('locked_at')) return o.patch.locked_at ? 'locking' : 'unlocking';
+  if (keys.includes('locked_at')) return o.patch.locked_at ? 'making it final' : 'reopening';
   if (keys.includes('paid_at')) return o.patch.paid_at ? 'marking paid' : 'marking not paid';
   return 'editing the ' + n;
 }

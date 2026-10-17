@@ -1,8 +1,8 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=12';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=12';
-import { uploadFile, pickFiles } from './board.js?v=12';
-import { isDecider, deciderNames, personInput } from './tools.js?v=12';
+import { store } from './store.js?v=13';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=13';
+import { uploadFile, pickFiles } from './board.js?v=13';
+import { isDecider, deciderNames, personInput } from './tools.js?v=13';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -135,35 +135,35 @@ export function openStep(stepId) {
     // Lock block
     let lockBlock;
     if (missing.files && s.locked_at === undefined) {
-      lockBlock = h('div', { class: 'd-card muted' }, 'Locking needs database update 4. Ask the admin to run it in Supabase.');
+      lockBlock = h('div', { class: 'd-card muted' }, 'Final decisions need database update 4. Ask the admin to run it in Supabase.');
     } else if (locked) {
       lockBlock = h('div', { class: 'd-lock on' },
-        h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(22) }), h('b', {}, 'Locked'), h('span', { class: 'ft-sub' }, `by ${store.memberName(s.locked_by) || 'someone'} · ${longDate(String(s.locked_at).slice(0, 10))}`)),
+        h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(22) }), h('b', {}, 'Final'), h('span', { class: 'ft-sub' }, `by ${store.memberName(s.locked_by) || 'someone'} · ${longDate(String(s.locked_at).slice(0, 10))}`)),
         h('dl', { class: 'd-dl' },
           note.with ? [h('dt', {}, 'With'), h('dd', {}, note.with)] : null,
           note.amount ? [h('dt', {}, 'Amount'), h('dd', {}, '₹ ' + note.amount)] : null,
           note.advance ? [h('dt', {}, 'Advance paid'), h('dd', {}, '₹ ' + note.advance)] : null,
           note.notes ? [h('dt', {}, 'Notes'), h('dd', {}, note.notes)] : null),
         store.me.isAdmin
-          ? h('button', { type: 'button', class: 'btn ghost small', onclick: async () => { if (await confirmBox('Unlock this?', 'It can be edited and changed again. The unlock is recorded in the edit history.', 'Unlock', '')) set({ locked_at: null, lock_note: note }); } }, 'Unlock')
-          : h('div', { class: 'ft-sub' }, 'Only the admin can unlock this.'));
+          ? h('button', { type: 'button', class: 'btn ghost small', onclick: async () => { if (await confirmBox('Reopen this decision?', 'It can be edited and changed again. Reopening is recorded in the edit history.', 'Reopen', '')) set({ locked_at: null, lock_note: note }); } }, 'Reopen')
+          : h('div', { class: 'ft-sub' }, 'Only the admin can reopen this.'));
     } else if (lockForm) {
       const wWith = h('input', { placeholder: 'Vendor, venue or person', value: note.with || '' });
       const wAmt = h('input', { placeholder: 'e.g. 85000', inputmode: 'decimal', value: note.amount || '' });
       const wAdv = h('input', { placeholder: 'e.g. 20000', inputmode: 'decimal', value: note.advance || '' });
       const wNotes = h('textarea', { rows: 2, placeholder: 'Anything to remember about this deal' }); wNotes.value = note.notes || '';
       lockBlock = h('div', { class: 'd-lock' },
-        h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(20) }), h('b', {}, 'Lock this decision')),
+        h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(20) }), h('b', {}, 'Make this decision final')),
         h('div', { class: 'form-grid' }, h('div', { class: 'full' }, field('Who or what it’s with', wWith)), field('Amount (₹)', wAmt), field('Advance paid (₹)', wAdv), h('div', { class: 'full' }, field('Notes', wNotes))),
         h('div', { style: { display: 'flex', gap: '8px', marginTop: '10px' } },
-          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = false; set({ locked_at: new Date().toISOString(), status: 'done', lock_note: { with: wWith.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value } }); toast('Locked'); } }, 'Lock it'),
+          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = false; set({ locked_at: new Date().toISOString(), status: 'done', lock_note: { with: wWith.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value } }); toast('Final ✓'); } }, 'Make it final'),
           h('button', { type: 'button', class: 'btn ghost', onclick: () => { lockForm = false; draw(); } }, 'Cancel')));
     } else {
       lockBlock = h('div', { class: 'd-lock' },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
-          isDecider() ? h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Lock this decision') : h('span', { class: 'ft-sub' }, `Only the Deciders (${deciderNames()}) can make this final.`),
-          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Lock point')),
-        h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Lock it once it’s confirmed, like a vendor booked or a menu agreed. A lock point is a key decision, shown as a gold gate on the map.'));
+          isDecider() ? h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Make it final') : h('span', { class: 'ft-sub' }, `Only the Deciders (${deciderNames()}) can make this final.`),
+          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Big decision')),
+        h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Make it final once it’s confirmed — a vendor booked, a menu agreed. Tick “Big decision” for the main choices; they show on the Decide list and as gold ◆ on the map.'));
     }
 
     const owner = personInput(s.owner || '', { disabled: !canEdit ? true : null, onchange: (e) => set({ owner: e.target.value.trim() }) });

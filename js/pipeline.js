@@ -1,9 +1,9 @@
-import { store } from './store.js?v=12';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=12';
-import { live, ui, render } from './app.js?v=12';
-import { openStep, lockIcon } from './panel.js?v=12';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=12';
-import { personInput } from './tools.js?v=12';
+import { store } from './store.js?v=13';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=13';
+import { live, ui, render } from './app.js?v=13';
+import { openStep, lockIcon } from './panel.js?v=13';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=13';
+import { personInput } from './tools.js?v=13';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -104,7 +104,7 @@ export function renderPipeline(root, w, params) {
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
   });
   if (view === 'map') {
-    root.append(h('p', { class: 'hint' }, 'Tap any step to open its details, lock it, or add files and lists. ◆ marks a lock point. Switch to List to add or rearrange.'));
+    root.append(h('p', { class: 'hint' }, 'Tap any step to open its details, make it final, or add files and lists. ◆ marks a big decision. Switch to List to add or rearrange.'));
     renderMap(root, w, plan, params);
     return;
   }
@@ -242,10 +242,10 @@ function stepEl(s) {
   const locked = !!s.locked_at;
   const late = s.due && s.status !== 'done' && !locked && daysUntil(s.due) < 0;
   const nFiles = (store.rows('files') || []).filter(f => f.step_id === s.id && !f.deleted_at).length + (store.rows('lists') || []).filter(l => l.step_id === s.id && !l.deleted_at).length;
-  const sub = locked ? ['Locked' + (s.lock_note && s.lock_note.with ? ' · ' + s.lock_note.with : ''), nFiles ? nFiles + ' attached' : null].filter(Boolean).join(' · ')
+  const sub = locked ? ['Final' + (s.lock_note && s.lock_note.with ? ' · ' + s.lock_note.with : ''), nFiles ? nFiles + ' attached' : null].filter(Boolean).join(' · ')
     : [s.owner, s.due ? (late ? null : 'due ' + shortDate(s.due)) : null, nFiles ? nFiles + ' attached' : null].filter(Boolean).join(' · ');
   return h('li', { class: 'step' + (s.status === 'done' && !locked ? ' done' : '') + (locked ? ' locked' : '') + (s.gate && !locked ? ' is-gate' : ''), dataset: { id: s.id } },
-    locked ? h('span', { class: 'tick lockd', title: 'Locked', html: lockIcon(14) }) : h('button', {
+    locked ? h('span', { class: 'tick lockd', title: 'Final', html: lockIcon(14) }) : h('button', {
       class: 'tick ' + s.status, type: 'button',
       'aria-label': s.status === 'done' ? `Mark “${s.title}” as not done` : `Mark “${s.title}” as done`,
       html: s.status === 'done' ? ICONS.check : '',
@@ -254,5 +254,5 @@ function stepEl(s) {
     h('button', { class: 'txt', type: 'button', onclick: () => openStep(s.id) },
       h('span', { class: 't' }, s.title),
       (sub || late) ? h('span', { class: 'sub' }, sub, late ? h('span', { class: 'late' }, (sub ? ' · ' : '') + 'overdue since ' + shortDate(s.due)) : null) : null),
-    locked ? h('span', { class: 'chip lockchip' }, 'Locked') : s.gate ? h('span', { class: 'gate-ic', title: 'Lock point' }, '◆') : s.status !== 'todo' ? h('span', { class: 'chip ' + s.status }, STATUS[s.status]) : h('span'));
+    locked ? h('span', { class: 'chip lockchip' }, 'Final') : s.gate ? h('span', { class: 'gate-ic', title: 'Big decision' }, '◆') : s.status !== 'todo' ? h('span', { class: 'chip ' + s.status }, STATUS[s.status]) : h('span'));
 }

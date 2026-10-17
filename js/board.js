@@ -1,9 +1,9 @@
-import { store } from './store.js?v=12';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=12';
-import { live, ui, render } from './app.js?v=12';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=12';
-import { together } from './history.js?v=12';
-import { isDecider } from './tools.js?v=12';
+import { store } from './store.js?v=13';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=13';
+import { live, ui, render } from './app.js?v=13';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=13';
+import { together } from './history.js?v=13';
+import { isDecider } from './tools.js?v=13';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -684,7 +684,7 @@ export function renderBoard(root, w, params) {
     tool('note', 'Note', () => addThenEdit('note', { text: '', tint: 'yellow' })),
     tool('image', 'Photos or video', async () => { const fs = await pickFiles('image/*,video/*'); if (fs.length) addFiles(fs, null); }),
     tool('link', 'Link', () => addThenEdit('link', { url: '', title: '' })),
-    tool('file', 'Document', () => uploadTool('.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf')),
+    tool('file', 'Document', async () => { const fs = await pickFiles('.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf'); if (fs.length) addFiles(fs, null, 'separate'); }),
     tool('contact', 'Contact', () => addThenEdit('contact', { title: '', phone: '', role: '' })),
     tool('compare', 'Comparison', () => addThenEdit('compare', { title: '', options: [{ title: '', rate: '', contact: '', chosen: false }, { title: '', rate: '', contact: '', chosen: false }] })),
     tool('label', 'Section', () => addThenEdit('label', { text: '' })),
@@ -692,6 +692,13 @@ export function renderBoard(root, w, params) {
     tool('collage', 'Collage', async () => { const fs = (await pickFiles('image/*')).filter(f => /^image\//.test(f.type)); if (fs.length) addFiles(fs, null, 'grid'); }),
     tool('checklist', 'Checklist', () => addThenEdit('checklist', { title: '', items: [] })));
   const addBar = mkAdd();
+  // One "+ Add" button with everything inside, instead of a row of ten.
+  const topAdd = () => {
+    const menu = h('div', { class: 'add-pop', hidden: true, onclick: (e) => { if (e.target.closest('button')) menu.hidden = true; } }, h('div', { class: 'am-h' }, 'Add to the board'), mkAdd('tools'),
+      h('p', { class: 'hint', style: { margin: '10px 0 0' } }, 'Tip: drag photos or links straight onto the board, or press Ctrl+V to paste.'));
+    const btn = h('button', { type: 'button', class: 'btn add-btn', 'aria-expanded': 'false', onclick: (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); if (!menu.hidden) setTimeout(() => document.addEventListener('click', function off(ev) { if (!menu.contains(ev.target)) { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); } document.removeEventListener('click', off); }), 0); } }, h('span', { html: ICONS.plus, style: { display: 'inline-flex' } }), 'Add');
+    return h('div', { class: 'add-wrap' }, btn, menu);
+  };
 
   const sel = all.find(i => i.id === board.selected);
   const setTool = (t) => { board.tool = t; board.connectFrom = null; if (t !== 'select') board.selected = null; render(); };
@@ -743,7 +750,7 @@ export function renderBoard(root, w, params) {
     h('div', { class: 'wrap' },
       h('div', { class: 'plan-head board-bar' },
         h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
-        mkAdd('addrow')),
+        topAdd()),
       findBar(),
       h('p', { class: 'board-hint' }, board.multi.size ? `${board.multi.size} selected · drag any of them to move them together · Esc to clear` : hint)),
     h('div', { class: 'wrap board-holder' }, view, h('div', { class: 'drop-hint', 'aria-hidden': 'true' }, h('span', {}, 'Drop to add to the board')), drawBar, selBar, zoomBar, fab, addMenu)));
@@ -1044,10 +1051,12 @@ function findBar() {
     view.scrollTo({ left: x1 * board.zoom, top: y1 * board.zoom, behavior: 'smooth' });
     void x2; void y2;
   } }, 'Show me');
+  const showChips = board.showFilters || board.filter !== 'all';
   const bar = h('div', { class: 'findbar' },
     h('label', { class: 'find-in' }, h('span', { html: ICONS.search }), input),
-    h('div', { class: 'find-chips', role: 'group', 'aria-label': 'Filter' }, FILTERS.map(([k, l]) => h('button', { type: 'button', class: 'filter', 'aria-pressed': String(board.filter === k), onclick: () => { board.filter = k; render(); } }, l))),
-    count, zoomTo);
+    h('button', { type: 'button', class: 'btn ghost small', 'aria-expanded': String(showChips), onclick: () => { board.showFilters = !showChips; if (!board.showFilters) board.filter = 'all'; render(); } }, showChips ? 'Hide filters' : 'Filters'),
+    showChips ? h('div', { class: 'find-chips', role: 'group', 'aria-label': 'Filter' }, FILTERS.map(([k, l]) => h('button', { type: 'button', class: 'filter', 'aria-pressed': String(board.filter === k), onclick: () => { board.filter = k; render(); } }, l))) : null,
+    count, (board.q || board.filter !== 'all') ? zoomTo : null);
   requestAnimationFrame(() => applyFind(count));
   return bar;
 }

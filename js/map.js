@@ -1,7 +1,7 @@
 // Progress tracking and the Map view of a wedding's pipeline.
-import { store } from './store.js?v=12';
-import { h, shortDate, daysUntil, ICONS } from './ui.js?v=12';
-import { openStep, lockIcon } from './panel.js?v=12';
+import { store } from './store.js?v=13';
+import { h, shortDate, daysUntil, ICONS } from './ui.js?v=13';
+import { openStep, lockIcon } from './panel.js?v=13';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -44,9 +44,9 @@ export function journeyBar(w, plan, { onPick } = {}) {
     h('div', { class: 'journey-sum' },
       h('b', {}, plan.pct + '% there'),
       hereArea ? h('span', {}, ' · you are here: ', h('b', { class: 'here-name' }, hereArea.title)) : plan.total ? h('span', {}, ' · everything is done') : h('span', {}, ' · no steps yet'),
-      plan.locked ? h('span', { class: 'jlock' }, h('span', { html: lockIcon(13) }), ` ${plan.locked} locked`) : null,
+      plan.locked ? h('span', { class: 'jlock' }, h('span', { html: lockIcon(13) }), ` ${plan.locked} final`) : null,
       h('span', { class: 'jlegend' },
-        h('span', {}, h('i', { class: 'jseg doing' }), 'Underway'), h('span', {}, h('i', { class: 'jseg done' }), 'Done'), h('span', {}, h('i', { class: 'jseg locked' }), 'Locked'))));
+        h('span', {}, h('i', { class: 'jseg doing' }), 'Underway'), h('span', {}, h('i', { class: 'jseg done' }), 'Done'), h('span', {}, h('i', { class: 'jseg locked' }), 'Final'))));
 }
 
 // The map: stages left to right, areas as columns of numbered nodes, joined by lines.
@@ -106,9 +106,9 @@ export function renderMap(root, w, plan, params) {
 function nodeEl(s) {
   const late = s.due && !isComplete(s) && daysUntil(s.due) < 0;
   const cls = ['mnode', s.locked_at ? 'locked' : s.status, isComplete(s) ? 'complete' : '', s.gate && !s.locked_at ? 'is-gate' : ''].filter(Boolean).join(' ');
-  const sub = s.locked_at ? ((s.lock_note && s.lock_note.with) || 'Locked') : [s.owner, s.due ? (late ? 'overdue' : 'due ' + shortDate(s.due)) : null].filter(Boolean).join(' · ');
+  const sub = s.locked_at ? ((s.lock_note && s.lock_note.with) || 'Final') : [s.owner, s.due ? (late ? 'overdue' : 'due ' + shortDate(s.due)) : null].filter(Boolean).join(' · ');
   return h('button', { type: 'button', class: cls, dataset: { id: s.id }, onclick: () => openStep(s.id), 'aria-label': `${s.n}. ${s.title}${s.locked_at ? ', locked' : isComplete(s) ? ', done' : ''}` },
     h('span', { class: 'mnum' }, String(s.n)),
     h('span', { class: 'mtxt' }, h('span', { class: 'mt' }, s.title), sub ? h('span', { class: 'ms' + (late ? ' late' : '') }, sub) : null),
-    s.locked_at ? h('span', { class: 'mic', html: lockIcon(16) }) : isComplete(s) ? h('span', { class: 'mic', html: ICONS.check }) : s.gate ? h('span', { class: 'mic gate-ic', title: 'Lock point' }, '◆') : s.status === 'doing' ? h('span', { class: 'pulse' }) : null);
+    s.locked_at ? h('span', { class: 'mic', html: lockIcon(16) }) : isComplete(s) ? h('span', { class: 'mic', html: ICONS.check }) : s.gate ? h('span', { class: 'mic gate-ic', title: 'Big decision' }, '◆') : s.status === 'doing' ? h('span', { class: 'pulse' }) : null);
 }

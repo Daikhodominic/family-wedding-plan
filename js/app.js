@@ -1,20 +1,21 @@
-import { store } from './store.js?v=12';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=12';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=12';
-import { renderBoard } from './board.js?v=12';
-import { renderTodo } from './todo.js?v=12';
-import { renderFiles } from './files.js?v=12';
-import { renderDecide } from './decide.js?v=12';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=12';
-import { clearPage, clearAll } from './clear.js?v=12';
-import { undoButtons } from './history.js?v=12';
-import { downloadBackup } from './tools.js?v=12';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=12';
-import { renderOverview, editDate } from './overview.js?v=12';
-import { renderLists } from './lists.js?v=12';
-import { planOf } from './map.js?v=12';
-import { openStep } from './panel.js?v=12';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=12';
+import { store, onStatus, syncState } from './store.js?v=13';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=13';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=13';
+import { renderBoard } from './board.js?v=13';
+import { renderTodo } from './todo.js?v=13';
+import { renderFiles } from './files.js?v=13';
+import { renderDecide } from './decide.js?v=13';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=13';
+import { clearPage, clearAll } from './clear.js?v=13';
+import { undoButtons } from './history.js?v=13';
+import { downloadBackup } from './tools.js?v=13';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=13';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=13';
+import { renderOverview, editDate } from './overview.js?v=13';
+import { renderLists } from './lists.js?v=13';
+import { planOf } from './map.js?v=13';
+import { openStep } from './panel.js?v=13';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=13';
 
 const app = document.getElementById('app');
 
@@ -96,6 +97,7 @@ function avatarMenu(btn) {
     ...pageClearItems(item),
     store.me.isAdmin ? item('broom', 'Clear all and start over…', () => { const { parts } = parseRoute(); clearAll(parts[0] === 'w' ? { weddingId: parts[1] } : {}); }) : null,
     item('user', 'Change your name', profileMenu),
+    item('zoomIn', easyOn() ? 'Normal view' : 'Easy view (bigger text)', () => { toggleEasy(); render(); }),
     store.mode === 'demo' ? item('restore', 'Reset the sample', () => store.resetDemo()) : null,
     store.mode === 'live' ? item('logout', 'Sign out of this device', async () => { if (await confirmBox('Sign out?', 'You will need the family passcode to come back in on this device.', 'Sign out')) { await store.signOut(); location.hash = '#/'; location.reload(); } }) : null);
   document.body.append(pop);
@@ -115,6 +117,15 @@ function pageClearItems(item) {
   if (!names[section]) return [];
   return [item('broom', 'Clear ' + names[section] + '…', () => clearPage(parts[1], section === 'budget' ? 'budget' : section))];
 }
+
+// "Saved" / "Saving…" / "Offline — will save when you're back online"
+const SYNC = { saved: ['Saved', 'Everything is saved'], saving: ['Saving…', 'Saving your change'], offline: ['Offline', 'No internet — changes won’t save until you’re back online'] };
+function syncPill() {
+  if (store.mode !== 'live') return null;
+  const v = syncState();
+  return h('span', { class: 'sync ' + v, title: SYNC[v][1], 'aria-live': 'polite' }, h('i'), h('span', {}, SYNC[v][0]));
+}
+onStatus((v) => document.querySelectorAll('.sync').forEach(el => { el.className = 'sync ' + v; el.title = SYNC[v][1]; el.lastChild.textContent = SYNC[v][0]; }));
 
 function avatar() {
   const n = unread().length;
@@ -233,7 +244,7 @@ function renderHome() {
     waiting.length ? waiting.slice(0, 3).map(s => {
       const a = store.find('areas', s.area_id); const w = wedding(s.wedding_id);
       return h('a', { class: 'hrow', href: `#/w/${s.wedding_id}/plan?open=${s.id}` }, h('b', {}, s.title), h('span', {}, `${firstName(w)} · ${a ? a.title : ''}${s.due ? ' · by ' + shortDate(s.due) : ''}`));
-    }) : h('p', { class: 'muted hc-empty' }, 'No open lock points. Mark a step as a lock point and it shows here until it’s locked.'),
+    }) : h('p', { class: 'muted hc-empty' }, 'No big decisions waiting. Mark a step as a big decision and it shows here until it’s final.'),
     waiting.length > 3 ? h('span', { class: 'hc-more' }, `+ ${waiting.length - 3} more`) : null);
 
   const coming = h('section', { class: 'hcol', 'aria-label': 'Coming up' },
@@ -261,7 +272,8 @@ function renderHome() {
 }
 
 /* ---------- Wedding space ---------- */
-const TABS = [['overview', 'Overview', 'overview'], ['plan', 'Plan', 'plan'], ['decide', 'Decide', 'decide'], ['board', 'Board', 'board'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget'], ['files', 'Files', 'folder']];
+const TABS = [['overview', 'Overview', 'overview'], ['plan', 'Plan', 'plan'], ['board', 'Board', 'board'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget']];
+const ALIAS = { decide: 'overview', files: 'lists' }; // still reachable, shown under these tabs
 const tabOf = (t, params = {}) => !t ? (params.focus ? 'plan' : 'overview') : t === 'todo' ? 'plan' : t;
 
 function renderSpace(id, sub, params) {
@@ -290,9 +302,10 @@ function renderSpace(id, sub, params) {
             others.length ? others.map(o => h('span', {}, ' · ', h('a', { href: '#/w/' + o.id + (sub && sub !== 'todo' ? '/' + sub : '') }, 'switch to ' + firstName(o)))) : null,
             store.me.isAdmin && !w.wedding_date ? h('span', {}, ' · ', h('button', { type: 'button', class: 'date-btn', onclick: () => editDate(w) }, 'set the date')) : null)),
         h('nav', { class: 'snav', 'aria-label': 'Sections' }, TABS.map(([k, label, icon]) =>
-          h('a', { href: link(k), 'aria-current': tab === k ? 'page' : null },
+          h('a', { href: link(k), 'aria-current': (ALIAS[tab] || tab) === k ? 'page' : null },
             h('span', { class: 'snav-ic', html: ICONS[icon] }), h('span', { class: 'snav-t' }, label),
-            k === 'decide' && nWait ? h('span', { class: 'nbadge' }, String(nWait)) : null))),
+            k === 'overview' && nWait ? h('span', { class: 'nbadge', title: `${nWait} big decisions waiting` }, String(nWait)) : null))),
+        syncPill(),
         undoButtons(),
         avatar())),
     h('div', { class: 'shead-rule', 'aria-hidden': 'true' }),
@@ -300,6 +313,8 @@ function renderSpace(id, sub, params) {
 
   const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap sbody' });
   root.append(body);
+  const tp = tip(sub === 'todo' ? 'plan' : tab);
+  if (tp) body.prepend(tp);
   if (tab === 'board') renderBoard(body, w, params);
   else if (tab === 'decide') renderDecide(body, w, params);
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
@@ -390,7 +405,7 @@ export function render() {
   else if (parts[0] === 'budget') view = familyPage(renderFamilyBudget(params));
   else if (parts[0] === 'me') view = familyPage(renderMyJobs());
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
-  else view = renderHome();
+  else { view = renderHome(); setTimeout(maybeWelcome, 400); }
   document.body.dataset.page = !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   app.dataset.view = key;
@@ -411,7 +426,8 @@ function scheduleRender() {
   const tryRender = () => {
     const a = document.activeElement;
     const typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && app.contains(a);
-    if (ui.busy || typing || document.querySelector('.modal-wrap') || document.querySelector('.menu-pop')) { setTimeout(tryRender, 600); return; }
+    const popOpen = document.querySelector('.menu-pop, .add-pop:not([hidden]), .rx-pick:not([hidden]), .addmenu:not([hidden])');
+    if (ui.busy || typing || popOpen || document.querySelector('.modal-wrap')) { setTimeout(tryRender, 400); return; }
     pending = false; render();
   };
   requestAnimationFrame(tryRender);
@@ -427,6 +443,8 @@ async function boot() {
     const state = await store.init();
     booted = true;
     if (state !== 'ready') { if (!onLandingNow()) render(); return; }
+    // Show the saved copy straight away, then bring in the latest from the internet.
+    if (store.hydrate && store.hydrate() && !onLandingNow()) render();
     await store.loadAll();
   } catch (e) {
     console.error(e);
@@ -437,6 +455,8 @@ async function boot() {
   if (!onLandingNow()) render();
 }
 
+applyEasy();
 store.onChange(() => scheduleRender());
+if (store.mode === 'live' && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => { });
 window.addEventListener('hashchange', () => { document.querySelectorAll('.modal-wrap').forEach(m => m.remove()); render(); });
 boot();

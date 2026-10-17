@@ -1,9 +1,10 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { store } from './store.js?v=12';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=12';
-import { live } from './app.js?v=12';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=12';
+import { store } from './store.js?v=13';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=13';
+import { live } from './app.js?v=13';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=13';
+import { renderFiles } from './files.js?v=13';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -31,7 +32,7 @@ export function renderLists(root, w, params) {
   if (store.missing && store.missing.lists) { root.append(h('div', { class: 'panel' }, h('p', { style: { margin: 0 } }, 'Lists need database update 4. Ask the admin to run it in Supabase, then reload.'))); return; }
   if (params.list) { const l = store.find('lists', params.list); if (l && !l.deleted_at) { renderListPage(root, w, l); return; } }
   const lists = live(store.rows('lists') || []).filter(l => l.wedding_id === w.id).sort((a, b) => a.title.localeCompare(b.title));
-  root.append(secHead('Who, what and how many', 'Lists', h('button', { class: 'btn', type: 'button', onclick: () => newList(w.id, null) }, '+ New list')));
+  root.append(secHead('Lists and files', 'Lists & files', h('button', { class: 'btn', type: 'button', onclick: () => newList(w.id, null) }, '+ New list'), h('a', { class: 'btn ghost', href: '#files', onclick: (e) => { e.preventDefault(); const f = document.getElementById('files'); if (f) f.scrollIntoView({ behavior: 'smooth' }); } }, 'Files ↓')));
   root.append(h('p', { class: 'hint' }, 'Everyone in the family can open, edit and tick off these lists. Tap one to open it; download any of them for Excel or to print.'));
   if (lists.length) root.append(h('div', { class: 'lgrid' }, lists.map(l => {
     const step = l.step_id ? store.find('steps', l.step_id) : null;
@@ -53,6 +54,7 @@ export function renderLists(root, w, params) {
         try { const l = await store.insert('lists', { wedding_id: w.id, step_id: null, title: t.title, columns: t.columns }); location.hash = `#/w/${w.id}/lists?list=${l.id}`; } catch (e) { fail(e); }
       }
     }, h('span', { class: 'lc-ic', html: ICONS.plus }), h('span', { class: 'lc-t' }, t.title), h('span', { class: 'lc-s' }, t.blurb))))));
+  renderFiles(root, w, params, { embedded: true });
 }
 
 /* ---------- One list, full page ---------- */

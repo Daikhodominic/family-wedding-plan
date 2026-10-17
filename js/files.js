@@ -1,14 +1,14 @@
 // The Files tab: every file and list for one wedding, in one place.
-import { store } from './store.js?v=12';
-import { h, secHead } from './ui.js?v=12';
-import { render } from './app.js?v=12';
-import { fileTile, listRow, uploadTo, newList } from './panel.js?v=12';
-import { pickFiles } from './board.js?v=12';
+import { store } from './store.js?v=13';
+import { h, secHead } from './ui.js?v=13';
+import { render } from './app.js?v=13';
+import { fileTile, listRow, uploadTo, newList } from './panel.js?v=13';
+import { pickFiles } from './board.js?v=13';
 
 let filter = 'all';
 const live = (rows) => rows.filter(r => !r.deleted_at);
 
-export function renderFiles(root, w) {
+export function renderFiles(root, w, params = {}, opts = {}) {
   if (store.missing && store.missing.files) {
     root.append(h('div', { class: 'panel', style: { marginTop: '24px' } }, h('p', { style: { margin: 0 } }, 'Files and lists need database update 4. Ask the admin to run it in Supabase, then reload.')));
     return;
@@ -23,6 +23,15 @@ export function renderFiles(root, w) {
   drop.addEventListener('dragleave', () => drop.classList.remove('over'));
   drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files.length) uploadTo(w.id, null, [...e.dataTransfer.files]); });
 
+  const filesPanel = h('section', { class: 'panel', id: 'files' },
+      h('div', { class: 'd-sec-h', style: { marginBottom: '6px', flexWrap: 'wrap', gap: '8px' } }, h('h3', { class: 'serif', style: { margin: 0, fontWeight: 500, fontSize: '24px' } }, 'Files'),
+        h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } },
+          h('div', { class: 'filters', style: { margin: 0 } }, [['all', `All (${files.length})`], ['photos', 'Photos and videos'], ['docs', 'Documents']].map(([k, l]) =>
+            h('button', { class: 'filter', type: 'button', 'aria-pressed': String(filter === k), onclick: () => { filter = k; render(); } }, l))),
+          h('button', { class: 'btn small', type: 'button', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(w.id, null, fs); } }, '+ Upload files'))),
+      h('p', { class: 'ft-sub', style: { margin: '0 0 10px' } }, 'Quotes, receipts, invitations, photos, spreadsheets — drag them here from your computer or tap Upload. Files added to a step show which step they belong to.'),
+      drop);
+  if (opts.embedded) { root.append(filesPanel); return; }
   root.append(h('div', { class: 'files-page' },
     secHead('Shared with the family', 'Files and lists',
       h('button', { class: 'btn', type: 'button', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(w.id, null, fs); } }, '+ Upload files'),

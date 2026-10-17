@@ -1,13 +1,13 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=12';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=12';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=12';
-import { openStep, lockIcon } from './panel.js?v=12';
-import { planOf, journeyBar } from './map.js?v=12';
-import { listSummary } from './lists.js?v=12';
-import { budgetMath, inr } from './budget.js?v=12';
-import { editStep } from './pipeline.js?v=12';
-import { canonical } from './myjobs.js?v=12';
+import { store } from './store.js?v=13';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=13';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=13';
+import { openStep, lockIcon } from './panel.js?v=13';
+import { planOf, journeyBar } from './map.js?v=13';
+import { listSummary } from './lists.js?v=13';
+import { budgetMath, inr } from './budget.js?v=13';
+import { editStep } from './pipeline.js?v=13';
+import { canonical } from './myjobs.js?v=13';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -46,7 +46,7 @@ function taskRow(t, { showOwner = true } = {}) {
 
 function block(title, items, empty, opts = {}) {
   return h('section', { class: 'oblock' + (opts.cls ? ' ' + opts.cls : '') },
-    h('div', { class: 'ob-h' }, h('h2', {}, title), items.length ? h('span', { class: 'count' + (opts.countCls ? ' ' + opts.countCls : '') }, String(items.length)) : null),
+    h('div', { class: 'ob-h' }, h('h2', {}, title), items.length ? h('span', { class: 'count' + (opts.countCls ? ' ' + opts.countCls : '') }, String(items.length)) : null, opts.link ? h('a', { class: 'ob-link', href: opts.link[0] }, opts.link[1]) : null),
     items.length ? h('div', { class: 'olist' }, items.slice(0, opts.limit || 6).map(t => taskRow(t, opts)), items.length > (opts.limit || 6) ? h('a', { class: 'o-more', href: opts.more || '#' }, `See all ${items.length} →`) : null)
       : h('p', { class: 'muted o-empty' }, empty));
 }
@@ -78,7 +78,7 @@ export function renderOverview(root, w) {
       h('div', { class: 'ost' }, h('b', {}, String(doing.length)), h('span', {}, 'in progress')),
       h('div', { class: 'ost' }, h('b', {}, String(open.length - doing.length)), h('span', {}, 'still to do')),
       h('div', { class: 'ost' + (overdue.length ? ' warn' : '') }, h('b', {}, String(overdue.length)), h('span', {}, 'overdue')),
-      h('div', { class: 'ost gold' }, h('b', {}, String(plan.locked)), h('span', {}, 'locked')))));
+      h('div', { class: 'ost gold' }, h('b', {}, String(plan.locked)), h('span', {}, 'final')))));
   root.append(journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } }));
 
   // Who is doing what
@@ -130,10 +130,10 @@ export function renderOverview(root, w) {
       block('Coming up · next 3 weeks', soon, 'Nothing due in the next three weeks.', { more: `#/w/${w.id}/plan` }),
       whoEl),
     h('div', { class: 'ocol' },
-      block('Waiting on a decision', waiting, 'No open lock points.', { countCls: 'gold', more: `#/w/${w.id}/decide`, limit: 5 }),
+      block('Waiting on a decision', waiting, 'No big decisions waiting.', { countCls: 'gold', more: `#/w/${w.id}/decide`, limit: 5, link: [`#/w/${w.id}/decide`, 'All decisions →'] }),
       h('section', { class: 'oblock' },
         h('div', { class: 'ob-h' }, h('h2', {}, 'Recently done'), h('a', { class: 'ob-link', href: '#/history' }, 'Edit history →')),
-        recent.length ? feedList(recent, { compact: true }) : h('p', { class: 'muted o-empty' }, 'Things ticked off or locked will show here.')),
+        recent.length ? feedList(recent, { compact: true }) : h('p', { class: 'muted o-empty' }, 'Things ticked off or made final will show here.')),
       listsEl, moneyEl)));
   void t; void ago; void lockIcon;
 }

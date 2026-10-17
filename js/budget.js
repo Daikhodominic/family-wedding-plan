@@ -4,11 +4,11 @@
 //   contingency  — set by hand (starts at ₹0); unplanned payments and overspends draw from it
 //   areas        — the total split up; removing one frees its unspent money
 //   payments     — what is owed or paid; no area = unplanned (comes out of contingency)
-import { store } from './store.js?v=12';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS } from './ui.js?v=12';
-import { live, weddings, themeOf, stepVisible } from './app.js?v=12';
-import { openStep } from './panel.js?v=12';
-import { deciderOnly, isDecider, deciderNames } from './tools.js?v=12';
+import { store } from './store.js?v=13';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS } from './ui.js?v=13';
+import { live, weddings, themeOf, stepVisible } from './app.js?v=13';
+import { openStep } from './panel.js?v=13';
+import { deciderOnly, isDecider, deciderNames } from './tools.js?v=13';
 
 /* ---------- Money helpers ---------- */
 // Accepts "1,20,000", "120000", "1.2 lakh", "1.2L", "50k", "₹ 45,000".
@@ -349,9 +349,9 @@ export function renderBudgetView(root, opts) {
   if (m.unplanned.length || m.fromLocks.length) extras.append(h('section', { class: 'dsec' },
     h('div', { class: 'dsec-h' }, h('h2', {}, 'Unplanned · from contingency'), h('span', { class: 'count gold' }, inr(m.unplannedTotal))),
     m.fromLocks.length ? h('div', { class: 'lockfeed' },
-      h('p', { class: 'hint', style: { margin: '0 0 8px' } }, 'Locked decisions with an amount. They count here until you put them in an area.'),
+      h('p', { class: 'hint', style: { margin: '0 0 8px' } }, 'Final decisions with an amount. They count here until you put them in an area.'),
       m.fromLocks.map(x => h('div', { class: 'brow' },
-        h('button', { type: 'button', class: 'brow-main', onclick: () => openStep(x.step.id) }, h('span', { class: 'brow-t' }, x.step.title), h('span', { class: 'brow-s' }, ['Locked decision', x.step.lock_note && x.step.lock_note.with, x.advance ? inr(x.advance) + ' advance paid' : null].filter(Boolean).join(' · '))),
+        h('button', { type: 'button', class: 'brow-main', onclick: () => openStep(x.step.id) }, h('span', { class: 'brow-t' }, x.step.title), h('span', { class: 'brow-s' }, ['Final decision', x.step.lock_note && x.step.lock_note.with, x.advance ? inr(x.advance) + ' advance paid' : null].filter(Boolean).join(' · '))),
         h('span', { class: 'brow-amt' }, inr(x.amount)),
         h('button', { type: 'button', class: 'btn small', onclick: () => addLockToBudget(id, x, m) }, 'Put in an area')))) : null,
     m.unplanned.length ? h('div', { class: 'blist' }, m.unplanned.map(i => itemRow(id, i, m))) : null));

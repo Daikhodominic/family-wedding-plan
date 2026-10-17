@@ -1,9 +1,9 @@
-import { store } from './store.js?v=12';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=12';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=12';
-import { confirmAreaRestore, inr } from './budget.js?v=12';
-import { clearAll } from './clear.js?v=12';
-import { downloadBackup } from './tools.js?v=12';
+import { store } from './store.js?v=13';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=13';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=13';
+import { confirmAreaRestore, inr } from './budget.js?v=13';
+import { clearAll } from './clear.js?v=13';
+import { downloadBackup } from './tools.js?v=13';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist' };
@@ -52,12 +52,12 @@ export function describe(a) {
       const keys = Object.keys(ch);
       if (ch.locked_at && ch.locked_at.new && !ch.locked_at.old) {
         const ln = (ch.lock_note && ch.lock_note.new) || {};
-        text = `locked ${name}` + (ln.with ? ` with ${ln.with}` : '') + (ln.amount ? ` for ₹${ln.amount}` : '');
+        text = `made ${name} final` + (ln.with ? ` with ${ln.with}` : '') + (ln.amount ? ` for ₹${ln.amount}` : '');
         return { text: text.replace(/\s+/g, ' ').trim(), changes };
       } else if (ch.locked_at && !ch.locked_at.new && ch.locked_at.old) {
-        return { text: `unlocked ${name}`, changes };
+        return { text: `reopened ${name}`, changes };
       } else if (keys.length === 1 && keys[0] === 'gate') {
-        return { text: ch.gate.new ? `marked ${name} as a lock point` : `removed the lock point from ${name}`, changes };
+        return { text: ch.gate.new ? `marked ${name} as a big decision` : `took ${name} off the big decisions`, changes };
       } else if (keys.length === 1 && keys[0] === 'paid_at') {
         return { text: ch.paid_at.new ? `marked ${name} as paid` : `marked ${name} as not paid`, changes };
       } else if (keys.length === 1 && keys[0] === 'status') {
