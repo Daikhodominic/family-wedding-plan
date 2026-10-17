@@ -1,6 +1,6 @@
-import { store } from './store.js?v=7';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=7';
-import { live, ui, render } from './app.js?v=7';
+import { store } from './store.js?v=8';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=8';
+import { live, ui, render } from './app.js?v=8';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },

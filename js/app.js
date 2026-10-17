@@ -1,13 +1,14 @@
-import { store } from './store.js?v=7';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=7';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=7';
-import { renderBoard } from './board.js?v=7';
-import { renderTodo } from './todo.js?v=7';
-import { renderFiles } from './files.js?v=7';
-import { renderDecide, renderBudget } from './decide.js?v=7';
-import { planOf } from './map.js?v=7';
-import { openStep } from './panel.js?v=7';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=7';
+import { store } from './store.js?v=8';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=8';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=8';
+import { renderBoard } from './board.js?v=8';
+import { renderTodo } from './todo.js?v=8';
+import { renderFiles } from './files.js?v=8';
+import { renderDecide } from './decide.js?v=8';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=8';
+import { planOf } from './map.js?v=8';
+import { openStep } from './panel.js?v=8';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=8';
 
 const app = document.getElementById('app');
 
@@ -81,6 +82,7 @@ function avatarMenu(btn) {
   const pop = h('div', { class: 'menu-pop', role: 'menu' },
     h('div', { class: 'mp-head' }, h('b', {}, store.me.name), h('span', {}, store.me.isAdmin ? 'Admin' : 'Family')),
     item('history', 'Edit history', () => go('#/history'), n ? h('span', { class: 'badge' }, String(n)) : null),
+    item('budget', 'Family budget', () => go('#/budget')),
     item('trash', 'Bin', () => go('#/bin')),
     store.me.isAdmin ? item('settings', 'Settings', () => go('#/settings')) : null,
     item('user', 'Change your name', profileMenu),
@@ -207,7 +209,7 @@ function renderHome() {
       const w = wedding(s.wedding_id); const late = daysUntil(s.due) < 0;
       return h('a', { class: 'hrow', href: stepLink(s) }, h('b', {}, s.title), h('span', { class: late ? 'late' : '' }, `${firstName(w)}${s.owner ? ' · ' + s.owner : ''} · ${late ? 'overdue since ' : ''}${shortDate(s.due)}`));
     }) : h('p', { class: 'muted hc-empty' }, 'Nothing due in the next few weeks. Give steps a due date and they’ll appear here.'),
-    ws.length ? h('a', { class: 'hrow budget-link', href: `#/w/${(ws.find(w => w.theme === 'rose') || ws[0]).id}/budget` }, h('span', {}, 'Budgets'), h('span', {}, 'open →')) : null);
+    ws.length ? h('a', { class: 'hrow budget-link', href: '#/budget' }, h('span', {}, 'Family budget'), h('span', {}, 'open →')) : null);
 
   return h('div', { class: 'home' },
     demoFlag(),
@@ -265,7 +267,7 @@ function renderSpace(id, sub, params) {
   root.append(body);
   if (tab === 'board') renderBoard(body, w, params);
   else if (tab === 'decide') renderDecide(body, w, params);
-  else if (tab === 'budget') renderBudget(body, w, params);
+  else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
   else if (sub === 'todo') { renderPlanHead(body, w, 'todo'); renderTodo(body, w, params); }
   else renderPipeline(body, w, params);
@@ -347,9 +349,10 @@ export function render() {
   else if (parts[0] === 'w') { view = renderSpace(parts[1], parts[2], params); const w = wedding(parts[1]); if (w) document.title = w.couple + ' · The Wedding War Room'; }
   else if (parts[0] === 'activity' || parts[0] === 'history') view = familyPage(renderActivity());
   else if (parts[0] === 'bin') view = familyPage(renderBin());
+  else if (parts[0] === 'budget') view = familyPage(renderFamilyBudget(params));
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
   else view = renderHome();
-  document.body.dataset.page = !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings'].includes(parts[0]) ? 'home' : 'page';
+  document.body.dataset.page = !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   app.dataset.view = key;
   const boardView = $('.board-view');

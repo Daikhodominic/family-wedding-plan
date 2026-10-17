@@ -1,8 +1,8 @@
 // Decide and Budget pages. Both read the same data as the plan, so they update live.
-import { store } from './store.js?v=7';
-import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=7';
-import { live, stepVisible } from './app.js?v=7';
-import { openStep, lockIcon } from './panel.js?v=7';
+import { store } from './store.js?v=8';
+import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=8';
+import { live, stepVisible } from './app.js?v=8';
+import { openStep, lockIcon } from './panel.js?v=8';
 
 const where = (s) => {
   const a = store.find('areas', s.area_id); const st = a && store.find('stages', a.stage_id);
@@ -49,36 +49,4 @@ export function renderDecide(root, w) {
     h('span', { class: 'soon-ic', html: ICONS.decide }),
     h('div', {}, h('b', {}, 'Coming next to this page'),
       h('p', {}, 'Options side by side with votes, a family-only discussion, suggestions from the partner family, and a record of every changed decision with the reason.'))));
-}
-
-/* ---------- Budget ---------- */
-const money = (v) => { const n = parseFloat(String(v || '').replace(/[^0-9.]/g, '')); return isFinite(n) ? n : 0; };
-const inr = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
-
-export function renderBudget(root, w) {
-  const locked = live(store.rows('steps')).filter(s => s.wedding_id === w.id && s.locked_at && stepVisible(s));
-  const rows = locked.map(s => ({ s, amt: money(s.lock_note && s.lock_note.amount), adv: money(s.lock_note && s.lock_note.advance) })).filter(r => r.amt || r.adv);
-  const committed = rows.reduce((t, r) => t + r.amt, 0), paid = rows.reduce((t, r) => t + r.adv, 0);
-
-  root.append(secHead('Money', 'Budget'));
-  root.append(h('p', { class: 'hint' }, 'For now this adds up the amounts written on locked decisions. Everyone in the family can see it; partner families never will.'));
-
-  root.append(h('div', { class: 'stats' },
-    h('div', { class: 'stat' }, h('span', {}, 'Committed so far'), h('b', {}, inr(committed)), h('small', {}, `${rows.length} locked ${rows.length === 1 ? 'decision' : 'decisions'} with an amount`)),
-    h('div', { class: 'stat' }, h('span', {}, 'Advances paid'), h('b', {}, inr(paid)), h('small', {}, 'From the “advance paid” on each lock')),
-    h('div', { class: 'stat accent' }, h('span', {}, 'Still to pay'), h('b', {}, inr(Math.max(0, committed - paid))), h('small', {}, 'Committed minus advances'))));
-
-  root.append(h('section', { class: 'dsec' },
-    h('div', { class: 'dsec-h' }, h('h2', {}, 'From locked decisions')),
-    rows.length ? h('div', { class: 'money-table', role: 'table' },
-      h('div', { class: 'mt-row mt-h', role: 'row' }, h('span', {}, 'Decision'), h('span', {}, 'Agreed'), h('span', {}, 'Advance'), h('span', {}, 'Left')),
-      rows.map(r => h('button', { type: 'button', class: 'mt-row', role: 'row', onclick: () => openStep(r.s.id) },
-        h('span', {}, h('b', {}, r.s.title), h('small', {}, (r.s.lock_note && r.s.lock_note.with) || where(r.s))),
-        h('span', {}, r.amt ? inr(r.amt) : '—'), h('span', {}, r.adv ? inr(r.adv) : '—'), h('span', {}, inr(Math.max(0, r.amt - r.adv))))))
-      : h('p', { class: 'muted' }, 'No amounts yet. When you lock a decision, fill in “Amount” and “Advance paid” and it adds up here.')));
-
-  root.append(h('aside', { class: 'soon-note' },
-    h('span', { class: 'soon-ic', html: ICONS.budget }),
-    h('div', {}, h('b', {}, 'The full budget is being built next'),
-      h('p', {}, 'A total for Charani, for Elow, and for shared home costs, plus a family total. Split it into areas, keep a contingency that new items draw from, see what’s still to pay and when, and tap “Mark paid” as money goes out. Remove an area and its unspent money returns to “free to reassign”.'))));
 }

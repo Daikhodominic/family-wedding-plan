@@ -1,7 +1,7 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=7';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=7';
-import { uploadFile, pickFiles } from './board.js?v=7';
+import { store } from './store.js?v=8';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=8';
+import { uploadFile, pickFiles } from './board.js?v=8';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {

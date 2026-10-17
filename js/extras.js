@@ -1,14 +1,16 @@
-import { store } from './store.js?v=7';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=7';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=7';
+import { store } from './store.js?v=8';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=8';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=8';
+import { confirmAreaRestore, inr } from './budget.js?v=8';
 
-const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list' };
+const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection' };
 const FIELD = {
   title: 'name', owner: 'person in charge', due: 'due date', status: 'status', notes: 'notes', area_id: 'area', stage_id: 'stage',
   couple: 'couple names', monogram: 'monogram', wedding_date: 'wedding date', date_note: 'date note', theme: 'theme', theme_custom: 'theme colours',
   text: 'text', caption: 'caption', rate: 'rate', phone: 'phone', role: 'role', url: 'address', options: 'options', colors: 'colours',
-  tint: 'colour', path: 'file', thumb: 'picture', kind: 'type'
+  tint: 'colour', path: 'file', thumb: 'picture', kind: 'type',
+  planned: 'planned amount', amount: 'amount', total: 'total', contingency: 'contingency', paid_at: 'paid', payee: 'paid to', refund_expected: 'refund expected'
 };
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 
@@ -23,7 +25,10 @@ function show(v, key) {
   if (v === null || v === undefined || v === '') return '(empty)';
   if (key === 'status') return STATUS[v] || v;
   if (key === 'due' || key === 'wedding_date') return /^\d{4}-\d{2}-\d{2}$/.test(v) ? shortDate(v) : v;
-  if (key === 'area_id') { const r = store.find('areas', v); return r ? r.title : 'another area'; }
+  if (key === 'area_id') { const r = store.find('areas', v) || (store.rows('budget_areas') || []).find(x => x.id === v); return r ? r.title : 'another area'; }
+  if (['planned', 'amount', 'total', 'contingency'].includes(key)) return inr(Number(v) || 0);
+  if (key === 'paid_at') return v ? 'paid' : 'not paid';
+  if (key === 'refund_expected') return v ? 'yes' : 'no';
   if (key === 'stage_id') { const r = store.find('stages', v); return r ? r.title : 'another stage'; }
   if (typeof v === 'object') return null;
   const s = String(v);
@@ -51,6 +56,8 @@ export function describe(a) {
         return { text: `unlocked ${name}`, changes };
       } else if (keys.length === 1 && keys[0] === 'gate') {
         return { text: ch.gate.new ? `marked ${name} as a lock point` : `removed the lock point from ${name}`, changes };
+      } else if (keys.length === 1 && keys[0] === 'paid_at') {
+        return { text: ch.paid_at.new ? `marked ${name} as paid` : `marked ${name} as not paid`, changes };
       } else if (keys.length === 1 && keys[0] === 'status') {
         text = ch.status.new === 'done' ? `marked ${name} as done` : `set ${name} to ${STATUS[ch.status.new] || ch.status.new}`;
       } else if (keys.length === 1 && keys[0] === 'area_id') {
@@ -76,6 +83,7 @@ export function linkFor(a) {
   if (a.action === 'purge' || !row) return '#/activity';
   if (row.deleted_at) return '#/bin';
   if (a.entity === 'weddings') return '#/w/' + a.entity_id;
+  if (a.entity === 'budgets' || a.entity === 'budget_areas' || a.entity === 'budget_items') return row.wedding_id ? `#/w/${row.wedding_id}/budget` : '#/budget?to=shared';
   if (row.wedding_id && (store.find('weddings', row.wedding_id) || {}).deleted_at) return '#/bin';
   if (a.entity === 'board_items') return `#/w/${w}/board?focus=${a.entity_id}`;
   if (a.entity === 'todos') return `#/w/${w}/todo?focus=${a.entity_id}`;
@@ -114,7 +122,7 @@ export function renderActivity() {
 /* ---------- Bin ---------- */
 export function renderBin() {
   const rows = [];
-  for (const t of ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists']) for (const r of (store.rows(t) || [])) if (r.deleted_at) rows.push({ t, r });
+  for (const t of ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'budget_areas', 'budget_items']) for (const r of (store.rows(t) || [])) if (r.deleted_at) rows.push({ t, r });
   rows.sort((a, b) => new Date(b.r.deleted_at) - new Date(a.r.deleted_at));
   const label = ({ t, r }) => {
     if (t === 'board_items') { const d = r.data || {}; return `${(CARD[r.kind] || 'card').replace(/^./, c => c.toUpperCase())}${d.title || d.text ? ': ' + (d.title || d.text).slice(0, 80) : ''}`; }
@@ -122,7 +130,9 @@ export function renderBin() {
   };
   const context = ({ t, r }) => {
     const w = store.find('weddings', r.wedding_id);
-    const bits = [t === 'weddings' ? 'the whole space, with its plan, to-dos and board' : w ? w.couple + (w.deleted_at ? ' (removed)' : '') : ''];
+    const bits = [t === 'weddings' ? 'the whole space, with its plan, to-dos and board' : w ? w.couple + (w.deleted_at ? ' (removed)' : '') : t.startsWith('budget') ? 'Shared home costs' : ''];
+    if (t === 'budget_areas') bits.push('planned ' + inr(Number(r.planned) || 0));
+    if (t === 'budget_items') bits.push(inr(Number(r.amount) || 0) + (r.paid_at ? ' · paid' : ''));
     if (t === 'steps') { const a = store.find('areas', r.area_id); if (a) bits.push('in ' + a.title); }
     if (t === 'areas') { const s = store.find('stages', r.stage_id); if (s) bits.push('in ' + s.title); }
     if (t === 'stages') { const n = store.rows('areas').filter(a => a.stage_id === r.id && !a.deleted_at).length; if (n) bits.push(`with ${n} ${n === 1 ? 'area' : 'areas'} inside`); }
@@ -137,7 +147,7 @@ export function renderBin() {
       h('div', {}, h('div', { style: { fontWeight: 500 } }, label(it)), h('div', { class: 'muted', style: { fontSize: '14px' } }, context(it))),
       h('div', { class: 'acts' },
         it.t === 'weddings' && !store.me.isAdmin ? h('span', { class: 'muted', style: { fontSize: '13px' } }, 'Only the admin can restore a whole space') :
-        h('button', { class: 'btn soft small', type: 'button', onclick: () => restoreWithParents(it.t, it.r).then(() => toast('Restored')).catch(e => toast(e.message, 'error')) }, 'Restore'),
+        h('button', { class: 'btn soft small', type: 'button', onclick: () => restoreWithParents(it.t, it.r).then((ok) => { if (ok !== false) toast('Restored'); }).catch(e => toast(e.message, 'error')) }, 'Restore'),
         store.me.isAdmin ? h('button', {
           class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
             if (!(await confirmBox('Delete for good?', `“${label(it)}” will be gone for everyone and can't be restored.`, 'Delete for good'))) return;
@@ -148,7 +158,7 @@ export function renderBin() {
   const emptyAll = store.me.isAdmin && rows.length ? h('button', {
     class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
       if (!(await confirmBox('Empty the Bin?', `All ${rows.length} items will be deleted for everyone and can't be restored.`, 'Delete everything in the Bin'))) return;
-      const order = ['files', 'lists', 'board_items', 'todos', 'steps', 'areas', 'stages', 'weddings'];
+      const order = ['budget_items', 'budget_areas', 'files', 'lists', 'board_items', 'todos', 'steps', 'areas', 'stages', 'weddings'];
       for (const t of order) for (const it of rows.filter(x => x.t === t)) { if (store.find(t, it.r.id)) await store.purge(t, it.r.id).catch(e => toast(e.message, 'error')); }
       toast('The Bin is empty');
     }
@@ -161,6 +171,7 @@ export function renderBin() {
 
 // Restoring something inside a removed area or stage brings the parents back too.
 async function restoreWithParents(t, r) {
+  if (t === 'budget_areas' && !(await confirmAreaRestore(r))) return false;
   const chain = [];
   if (t === 'steps') { const a = store.find('areas', r.area_id); if (a) { chain.push(['areas', a]); const s = store.find('stages', a.stage_id); if (s) chain.push(['stages', s]); } }
   if (t === 'areas') { const s = store.find('stages', r.stage_id); if (s) chain.push(['stages', s]); }
