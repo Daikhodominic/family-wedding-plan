@@ -1,6 +1,6 @@
 // Small shared helpers: roles, backup, sharing, calendar files, people.
-import { store } from './store.js?v=17';
-import { h, toast } from './ui.js?v=17';
+import { store } from './store.js?v=18';
+import { h, toast } from './ui.js?v=18';
 
 /* ---------- Roles ---------- */
 export const isDecider = () => !!(store.me && (store.me.isAdmin || store.me.isDecider));
@@ -58,6 +58,7 @@ export async function share(text, url) {
   try { if (navigator.share) { await navigator.share({ text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
   window.open('https://wa.me/?text=' + encodeURIComponent(full), '_blank', 'noopener');
 }
+export async function copyLink(url) { try { await navigator.clipboard.writeText(url); toast('Link copied'); } catch (e) { prompt('Copy this link:', url); } }
 export const siteLink = (hash) => location.origin + location.pathname + location.search.replace(/[?&]demo\b/, '') + hash;
 
 /* ---------- Calendar (.ics) ---------- */

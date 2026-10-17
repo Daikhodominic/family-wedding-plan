@@ -1,12 +1,12 @@
 // Things the mood board does by itself: tidy up, colours from a photo, rates and
 // estimates, "ready to decide?" nudges, favourites, stale cards, and sharing a section.
-import { store } from './store.js?v=17';
-import { h, toast } from './ui.js?v=17';
-import { live } from './app.js?v=17';
-import { together } from './history.js?v=17';
-import { commentsOf, voteCounts, optionKey } from './feedback.js?v=17';
-import { cardTitle } from './decisions.js?v=17';
-import { share, siteLink } from './tools.js?v=17';
+import { store } from './store.js?v=18';
+import { h, toast } from './ui.js?v=18';
+import { live } from './app.js?v=18';
+import { together } from './history.js?v=18';
+import { commentsOf, voteCounts, optionKey } from './feedback.js?v=18';
+import { cardTitle } from './decisions.js?v=18';
+import { share, siteLink } from './tools.js?v=18';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const DAY = 86400000;

@@ -1,18 +1,19 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=17';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=17';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=17';
-import { openStep, lockIcon } from './panel.js?v=17';
-import { planOf, journeyBar } from './map.js?v=17';
-import { listSummary } from './lists.js?v=17';
-import { budgetMath, inr } from './budget.js?v=17';
-import { editStep } from './pipeline.js?v=17';
-import { canonical } from './myjobs.js?v=17';
-import { pictureEl } from './map.js?v=17';
-import { readyToDecide, favScore } from './boardauto.js?v=17';
-import { isDecider } from './tools.js?v=17';
-import { cardTitle } from './decisions.js?v=17';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=17';
+import { store } from './store.js?v=18';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=18';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=18';
+import { openStep, lockIcon } from './panel.js?v=18';
+import { planOf, journeyBar } from './map.js?v=18';
+import { listSummary } from './lists.js?v=18';
+import { budgetMath, inr } from './budget.js?v=18';
+import { editStep } from './pipeline.js?v=18';
+import { canonical } from './myjobs.js?v=18';
+import { pictureEl } from './map.js?v=18';
+import { readyToDecide, favScore } from './boardauto.js?v=18';
+import { isDecider } from './tools.js?v=18';
+import { cardTitle } from './decisions.js?v=18';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=18';
+import { share, siteLink, copyLink } from './tools.js?v=18';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -56,6 +57,38 @@ function block(title, items, empty, opts = {}) {
       : h('p', { class: 'muted o-empty' }, empty));
 }
 
+// Suggestions sent in by the partner family (on a card, or in general).
+function partnerSugg(w) {
+  const list = live(store.rows('comments') || []).filter(c => c.wedding_id === w.id && c.from_partner).sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6);
+  if (!list.length) return null;
+  return h('section', { class: 'oblock partner-sugg' }, h('div', { class: 'ob-h' }, h('h2', {}, 'From the partner family'), h('span', { class: 'count gold' }, String(list.length))),
+    h('div', { class: 'olist' }, list.map(c => { const it = c.item_id && store.find('board_items', c.item_id);
+      return h(it ? 'a' : 'div', { class: 'orow', href: it ? `#/w/${w.id}/board?focus=${it.id}` : null }, h('span', { class: 'o-dot list' }), h('span', { class: 'o-main' }, h('b', {}, '“' + c.body + '”'), h('span', {}, `${c.author_name || 'Partner family'}${it ? ' · on ' + cardTitle(it) : ''} · ${ago(c.created_at)}`))); })));
+}
+
+// Viewer links for the partner family: make one, copy or send it, or turn it off.
+function partnerLinks(w) {
+  if (store.missing && store.missing.partner_links) { toast('The partner view needs database update 9. Ask the admin to run it.', 'error'); return; }
+  const body = h('div', { class: 'pl-body' });
+  const draw = () => {
+    const links = live(store.rows('partner_links') || []).filter(l => l.wedding_id === w.id && !l.revoked_at);
+    const people = (store.rows('partners') || []).filter(p => p.wedding_id === w.id);
+    const label = h('input', { placeholder: 'e.g. Adahrii’s family', maxlength: 60 });
+    body.replaceChildren(
+      h('p', { class: 'muted', style: { margin: 0 } }, 'Anyone with the link can see this wedding’s mood board, what’s been decided (no prices) and how far along it is, and can react and send suggestions. They never see the budget, phone numbers, lists, files or family comments.'),
+      h('a', { class: 'btn ghost small', href: `#/p/preview-${w.id}`, onclick: () => document.querySelector('.modal-wrap') && document.querySelector('.modal-wrap').remove() }, 'See exactly what they see'),
+      ...(links.length ? links.map(l => { const url = siteLink('#/p/' + l.token);
+        return h('div', { class: 'pl-row' }, h('div', {}, h('b', {}, l.label), h('span', { class: 'ft-sub' }, ` · ${people.filter(p => p.link_id === l.id).length} joined`), h('div', { class: 'pl-url' }, url)),
+          h('div', { class: 'acts' }, h('button', { type: 'button', class: 'btn small', onclick: () => copyLink(url) }, 'Copy'),
+            h('button', { type: 'button', class: 'btn small ghost', onclick: () => share(`${w.couple} — have a look at our wedding plans and ideas, and send us your suggestions:`, url) }, 'WhatsApp'),
+            h('button', { type: 'button', class: 'btn small ghost', style: { color: 'var(--warn)' }, onclick: () => store.update('partner_links', l.id, { revoked_at: new Date().toISOString() }).then(() => { toast('That link no longer works'); draw(); }).catch(e => toast(e.message, 'error')) }, 'Turn off'))); })
+        : [h('p', { class: 'ft-sub' }, 'No link yet.')]),
+      h('div', { class: 'pl-new' }, label, h('button', { type: 'button', class: 'btn', onclick: () => store.insert('partner_links', { wedding_id: w.id, label: label.value.trim() || 'Partner family', token: crypto.randomUUID() }).then(() => { toast('Link made — copy it or send it on WhatsApp'); draw(); }).catch(e => toast(e.message, 'error')) }, 'Make a link')));
+  };
+  draw();
+  modal({ title: 'Share with the partner family', wide: true, body });
+}
+
 export function renderOverview(root, w, params = {}) {
   const t = themeOf(w);
   const days = daysUntil(w.wedding_date);
@@ -93,6 +126,7 @@ export function renderOverview(root, w, params = {}) {
     h('button', { type: 'button', class: 'btn ghost small', onclick: () => shareWeek(w) }, 'Share this week on WhatsApp'),
     h('button', { type: 'button', class: 'btn ghost small', onclick: () => calendarFor(w) }, 'Add dates to my calendar'),
     isDecider() ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => newAnnouncement(w) }, '+ Announcement') : null,
+    isDecider() ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => partnerLinks(w) }, 'Share with the partner family') : h('a', { class: 'btn ghost small', href: `#/p/preview-${w.id}` }, 'What the partner family sees'),
     store.me.isAdmin && !fw ? h('a', { class: 'btn ghost small', href: `#/w/${w.id}?finalweek=1` }, 'Preview final-week mode') : null));
   const db = datesBanner(w); if (db) root.append(db);
   const lf = looksFinished(w);
@@ -168,6 +202,7 @@ export function renderOverview(root, w, params = {}) {
       h('section', { class: 'oblock' },
         h('div', { class: 'ob-h' }, h('h2', {}, 'Recently done'), h('a', { class: 'ob-link', href: '#/history' }, 'Edit history →')),
         recent.length ? feedList(recent, { compact: true }) : h('p', { class: 'muted o-empty' }, 'Things ticked off or made final will show here.')),
+      partnerSugg(w),
       favs.length ? h('section', { class: 'oblock' }, h('div', { class: 'ob-h' }, h('h2', {}, 'Family favourites'), h('a', { class: 'ob-link', href: `#/w/${w.id}/board` }, 'Board →')),
         h('div', { class: 'olist' }, favs.map(({ i, s }) => h('a', { class: 'orow', href: `#/w/${w.id}/board?focus=${i.id}` }, h('span', { class: 'o-dot list' }), h('span', { class: 'o-main' }, h('b', {}, cardTitle(i)), h('span', {}, `${s} likes and votes`)))))) : null,
       listsEl, moneyEl)));

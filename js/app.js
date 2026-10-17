@@ -1,22 +1,23 @@
-import { store, onStatus, syncState } from './store.js?v=17';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=17';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=17';
-import { renderBoard } from './board.js?v=17';
-import { renderTodo } from './todo.js?v=17';
-import { renderFiles } from './files.js?v=17';
-import { renderDecide } from './decide.js?v=17';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=17';
-import { clearPage, clearAll } from './clear.js?v=17';
-import { undoButtons } from './history.js?v=17';
-import { downloadBackup } from './tools.js?v=17';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=17';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=17';
-import { announcementBars } from './planauto.js?v=17';
-import { renderOverview, editDate } from './overview.js?v=17';
-import { renderLists } from './lists.js?v=17';
-import { planOf } from './map.js?v=17';
-import { openStep } from './panel.js?v=17';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=17';
+import { store, onStatus, syncState } from './store.js?v=18';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=18';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=18';
+import { renderBoard } from './board.js?v=18';
+import { renderTodo } from './todo.js?v=18';
+import { renderFiles } from './files.js?v=18';
+import { renderDecide } from './decide.js?v=18';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=18';
+import { clearPage, clearAll } from './clear.js?v=18';
+import { undoButtons } from './history.js?v=18';
+import { downloadBackup } from './tools.js?v=18';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=18';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=18';
+import { announcementBars } from './planauto.js?v=18';
+import { renderPartner } from './partner.js?v=18';
+import { renderOverview, editDate } from './overview.js?v=18';
+import { renderLists } from './lists.js?v=18';
+import { planOf } from './map.js?v=18';
+import { openStep } from './panel.js?v=18';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=18';
 
 const app = document.getElementById('app');
 
@@ -32,7 +33,7 @@ export function themeOf(w) {
   return { ...base, ...((w && w.theme_custom) || {}) };
 }
 const TOKEN = { bg: '--w-bg', surface: '--w-surface', ink: '--w-ink', muted: '--w-muted', line: '--w-line', soft: '--w-soft', accent: '--w-accent', accentInk: '--w-accent-ink', light: '--w-light', deep: '--w-deep', gold: '--gold', goldLine: '--gold-line', goldFill: '--gold-fill' };
-function applyTheme(t) {
+export function applyTheme(t) {
   const el = document.body;
   for (const [k, v] of Object.entries(TOKEN)) { if (t && t[k]) el.style.setProperty(v, t[k]); else el.style.removeProperty(v); }
   el.dataset.theme = t ? t.deco : '';
@@ -401,6 +402,7 @@ export function render() {
   document.documentElement.style.background = '';
   if (!parts.length) { applyTheme(null); view = renderLanding(); }
   else if (!booted) { view = h('div', { class: 'loading' }, 'Opening the plans…'); }
+  else if (parts[0] === 'p') view = renderPartner(parts[1] || '');
   else if (!store.me) view = renderGate();
   else if (parts[0] === 'w') { view = renderSpace(parts[1], parts[2], params); const w = wedding(parts[1]); if (w) document.title = w.couple + ' · The Wedding War Room'; }
   else if (parts[0] === 'activity' || parts[0] === 'history') view = familyPage(renderActivity());
@@ -409,7 +411,7 @@ export function render() {
   else if (parts[0] === 'me') view = familyPage(renderMyJobs());
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
   else { view = renderHome(); setTimeout(maybeWelcome, 400); }
-  document.body.dataset.page = !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me'].includes(parts[0]) ? 'home' : 'page';
+  document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   app.dataset.view = key;
   const boardView = $('.board-view');

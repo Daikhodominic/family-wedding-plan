@@ -1,12 +1,12 @@
-import { store } from './store.js?v=17';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=17';
-import { live, ui, render } from './app.js?v=17';
-import { openStep, lockIcon } from './panel.js?v=17';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=17';
-import { personInput } from './tools.js?v=17';
-import { openIdeas, sectionFor } from './decisions.js?v=17';
-import { renderGlimpse } from './glimpse.js?v=17';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=17';
+import { store } from './store.js?v=18';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=18';
+import { live, ui, render } from './app.js?v=18';
+import { openStep, lockIcon } from './panel.js?v=18';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=18';
+import { personInput } from './tools.js?v=18';
+import { openIdeas, sectionFor } from './decisions.js?v=18';
+import { renderGlimpse } from './glimpse.js?v=18';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=18';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

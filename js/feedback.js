@@ -1,7 +1,7 @@
 // Reactions, comments & suggestions, and option votes on mood board cards.
-import { store } from './store.js?v=17';
-import { h, toast, ago, ICONS } from './ui.js?v=17';
-import { live } from './app.js?v=17';
+import { store } from './store.js?v=18';
+import { h, toast, ago, ICONS } from './ui.js?v=18';
+import { live } from './app.js?v=18';
 
 export const EMOJI = ['❤️', '👍', '😍', '😂', '😮', '🙏'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -104,6 +104,7 @@ export function openThread(itemId) {
             h('div', { class: 'cm-h' },
               h('b', {}, c.author_name || store.memberName(c.created_by) || 'Someone'),
               c.kind === 'suggestion' ? h('span', { class: 'cm-tag' }, 'Suggestion') : null,
+              c.from_partner ? h('span', { class: 'cm-tag partner' }, 'Partner family') : null,
               isFresh ? h('span', { class: 'cm-new' }, 'New') : c === latest ? h('span', { class: 'cm-latest' }, 'Latest') : null,
               h('span', { class: 'cm-t' }, ago(c.created_at))),
             h('div', { class: 'cm-b' }, c.body),
