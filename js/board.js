@@ -1,8 +1,8 @@
-import { store } from './store.js?v=10';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=10';
-import { live, ui, render } from './app.js?v=10';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=10';
-import { together } from './history.js?v=10';
+import { store } from './store.js?v=11';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=11';
+import { live, ui, render } from './app.js?v=11';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=11';
+import { together } from './history.js?v=11';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },

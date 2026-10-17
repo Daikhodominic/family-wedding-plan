@@ -1,14 +1,17 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=10';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=10';
-import { uploadFile, pickFiles } from './board.js?v=10';
+import { store } from './store.js?v=11';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=11';
+import { uploadFile, pickFiles } from './board.js?v=11';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
-  guest: { title: 'Guest list', columns: ['Name', 'Side', 'Phone', 'Count', 'Notes'] },
-  invite: { title: 'Invitation list', columns: ['Name', 'Address', 'Phone', 'Card sent', 'Notes'] },
-  shopping: { title: 'Shopping list', columns: ['Item', 'Qty', 'Price (₹)', 'Bought', 'Notes'] },
-  blank: { title: 'New list', columns: ['Name', 'Notes'] }
+  guest: { title: 'Guest list', columns: ['Name', 'Side', 'Phone', 'Count', 'Confirmed', 'Notes'], blurb: 'Who is coming, how many, and who has confirmed' },
+  gifts: { title: 'Gifts', columns: ['Gift', 'For whom', 'Bought', 'Price (₹)', 'Packed', 'Notes'], blurb: 'Gifts to buy, wrap and hand over' },
+  vehicles: { title: 'Vehicles & drivers', columns: ['Vehicle', 'Driver', 'Phone', 'Seats', 'Pick-up / route', 'Time', 'Notes'], blurb: 'Cars, drivers and who goes where, when' },
+  songs: { title: 'Songs & performances', columns: ['Song / item', 'By whom', 'When', 'Length', 'Ready', 'Notes'], blurb: 'Hymns, specials, choir items, speeches and dances' },
+  invite: { title: 'Invitation list', columns: ['Name', 'Address', 'Phone', 'Card sent', 'Notes'], blurb: 'Who gets a card and whether it has gone out' },
+  shopping: { title: 'Shopping list', columns: ['Item', 'Qty', 'Price (₹)', 'Bought', 'Notes'], blurb: 'Things to buy, how many and what they cost' },
+  blank: { title: 'New list', columns: ['Name', 'Notes'], blurb: 'Start with two columns and make your own' }
 };
 const live = (rows) => rows.filter(r => !r.deleted_at);
 function fail(e) { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); }
@@ -80,7 +83,7 @@ export function newList(weddingId, stepId) {
               openList(list.id); resolve(list);
             } catch (e) { fail(e); resolve(null); }
           }
-        }, h('span', {}, t.title), h('span', { class: 'muted', style: { fontSize: '13px' } }, t.columns.join(' · ')))))
+        }, h('span', {}, t.title), h('span', { class: 'muted', style: { fontSize: '13px' } }, t.blurb || t.columns.join(' · ')))))
     });
   });
 }
@@ -96,74 +99,11 @@ export function listRow(l, { showStep = false } = {}) {
     h('button', { type: 'button', class: 'pill', onclick: () => openList(l.id) }, 'Open'));
 }
 
+// Lists open as their own page in the wedding's Lists tab.
 export function openList(listId) {
-  let wrap = null;
-  const draw = () => {
-    const l = store.find('lists', listId);
-    if (!l || l.deleted_at) { close(); return; }
-    const rows = live(store.rows('list_rows')).filter(r => r.list_id === l.id).sort((a, b) => a.position - b.position);
-    const cols = l.columns || [];
-    const countIdx = cols.findIndex(c => /^(count|qty|people|guests|no\.?)$/i.test(c.trim()));
-    const total = countIdx >= 0 ? rows.reduce((s, r) => s + (parseFloat((r.cells || [])[countIdx]) || 0), 0) : null;
-    const saveCell = (r, i, v) => {
-      const cells = cols.map((_, j) => (r.cells || [])[j] ?? '');
-      if ((cells[i] || '') === v) return;
-      cells[i] = v;
-      store.update('list_rows', r.id, { cells }).catch(fail);
-    };
-    const table = h('table', { class: 'ltable' },
-      h('thead', {}, h('tr', {}, h('th', { class: 'num' }, '#'), cols.map((c, i) => h('th', {},
-        h('button', {
-          type: 'button', class: 'colbtn', onclick: () => {
-            const inp = h('input', { value: c, maxlength: 40 });
-            modal({
-              title: 'Column', body: field('Column name', inp), actions: [
-                { label: 'Remove column', kind: 'ghost', onClick: async () => { if (cols.length < 2) return false; const nc = cols.filter((_, j) => j !== i); await store.update('lists', l.id, { columns: nc }).catch(fail); for (const r of rows) await store.update('list_rows', r.id, { cells: (r.cells || []).filter((_, j) => j !== i) }).catch(fail); } },
-                { label: 'Save', onClick: async () => { const v = inp.value.trim(); if (!v) return false; const nc = cols.slice(); nc[i] = v; await store.update('lists', l.id, { columns: nc }).catch(fail); } }
-              ]
-            });
-          }
-        }, c))), h('th', {}, h('button', { type: 'button', class: 'colbtn add', 'aria-label': 'Add a column', onclick: () => store.update('lists', l.id, { columns: cols.concat(['New column']) }).catch(fail) }, '+')))),
-      h('tbody', {}, rows.map((r, ri) => h('tr', {},
-        h('td', { class: 'num' }, String(ri + 1)),
-        cols.map((c, i) => h('td', {}, h('input', { value: (r.cells || [])[i] ?? '', 'aria-label': `${c}, row ${ri + 1}`, onchange: (e) => saveCell(r, i, e.target.value), onkeydown: (e) => { if (e.key === 'Enter') e.target.blur(); } }))),
-        h('td', {}, h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Delete row ${ri + 1}`, html: ICONS.trash, onclick: () => store.del('list_rows', r.id).catch(fail) }))))));
-    const addRow = async () => {
-      const last = rows.length ? rows[rows.length - 1].position : 0;
-      await store.insert('list_rows', { list_id: l.id, wedding_id: l.wedding_id, cells: cols.map(() => ''), position: last + 1000 }).catch(fail);
-      setTimeout(() => { const ins = wrap && wrap.querySelectorAll('tbody tr:last-child input'); if (ins && ins[0]) ins[0].focus(); }, 80);
-    };
-    const titleIn = h('input', { value: l.title, class: 'ltitle', maxlength: 80, 'aria-label': 'List name', onchange: (e) => { const v = e.target.value.trim(); if (v && v !== l.title) store.update('lists', l.id, { title: v }).catch(fail); } });
-    const step = l.step_id ? store.find('steps', l.step_id) : null;
-    const body = h('div', { class: 'lpanel' },
-      h('div', { class: 'lhead' },
-        titleIn,
-        h('div', { class: 'lacts' },
-          h('button', { type: 'button', class: 'btn small', onclick: () => downloadList(l) }, 'Download (Excel / CSV)'),
-          h('button', { type: 'button', class: 'btn ghost small', onclick: async () => { if (await confirmBox('Move this list to the Bin?', 'Anyone can restore it from the Bin.', 'Move to Bin')) { store.remove('lists', l.id).then(() => toast('Moved to the Bin')).catch(fail); } } }, 'Move to Bin'),
-          h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', html: ICONS.close, onclick: () => close() }))),
-      h('div', { class: 'muted', style: { fontSize: '13px' } }, `${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`, total !== null ? ` · ${cols[countIdx]} total: ${total}` : '', step ? ` · attached to “${step.title}”` : '', ' · tap a column name to rename or remove it'),
-      h('div', { class: 'ltable-wrap' }, table),
-      h('button', { type: 'button', class: 'dashed', onclick: addRow }, '+ Add a row'));
-    if (!wrap) {
-      wrap = h('div', { class: 'modal-wrap list-wrap', onmousedown: (e) => { if (e.target === wrap) close(); } });
-      document.body.append(wrap);
-    }
-    const keep = document.activeElement && wrap.contains(document.activeElement) ? document.activeElement.getAttribute('aria-label') : null;
-    wrap.replaceChildren(h('div', { class: 'modal wide list-modal', role: 'dialog', 'aria-label': l.title }, body));
-    if (keep) { const el = wrap.querySelector(`[aria-label="${CSS.escape(keep)}"]`); if (el) el.focus(); }
-  };
-  let pending = false;
-  const off = store.onChange(({ table }) => {
-    if (!['lists', 'list_rows'].includes(table)) return;
-    const a = document.activeElement;
-    if (a && wrap && wrap.contains(a) && a.tagName === 'INPUT') { if (!pending) { pending = true; a.addEventListener('blur', () => { pending = false; setTimeout(draw, 50); }, { once: true }); } return; }
-    draw();
-  });
-  const onKey = (e) => { if (e.key === 'Escape') close(); };
-  function close() { off(); document.removeEventListener('keydown', onKey); if (wrap) wrap.remove(); wrap = null; }
-  document.addEventListener('keydown', onKey);
-  draw();
+  const l = store.find('lists', listId); if (!l) return;
+  if (current) current.close();
+  location.hash = `#/w/${l.wedding_id}/lists?list=${listId}`;
 }
 
 /* ---------- The step panel ---------- */

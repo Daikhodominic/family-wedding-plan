@@ -1,10 +1,10 @@
-import { store } from './store.js?v=10';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=10';
-import { live, ui, render, stepVisible } from './app.js?v=10';
-import { editStep } from './pipeline.js?v=10';
+import { store } from './store.js?v=11';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=11';
+import { live, ui, render, stepVisible } from './app.js?v=11';
+import { editStep } from './pipeline.js?v=11';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
-let show = 'open';      // open | all | done
+let showDone = false;   // the Done section starts folded
 let person = '';        // filter by person in charge
 
 function fail(e) { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); }
@@ -17,7 +17,9 @@ export function renderTodo(root, w, params) {
   const all = live(store.rows('todos')).filter(t => t.wedding_id === w.id).sort((a, b) => (a.position || 0) - (b.position || 0));
   const owners = [...new Set(all.map(t => (t.owner || '').trim()).filter(Boolean))].sort();
   if (person && !owners.includes(person)) person = '';
-  const list = all.filter(t => (show === 'all' || (show === 'done' ? t.status === 'done' : t.status !== 'done')) && (!person || t.owner === person));
+  const mineOnly = (t) => !person || t.owner === person;
+  const list = all.filter(t => t.status !== 'done' && mineOnly(t));
+  const doneList = all.filter(t => t.status === 'done' && mineOnly(t));
   const openCount = all.filter(t => t.status !== 'done').length;
 
   // Quick add
@@ -44,10 +46,12 @@ export function renderTodo(root, w, params) {
       h('div', { class: 'panel', style: { padding: '18px 20px' } },
         h('div', { class: 'add-line', style: { flexWrap: 'wrap', marginTop: 0 } }, input, who, due, h('button', { class: 'btn small', type: 'button', onclick: add }, 'Add')),
         h('div', { class: 'filters' },
-          [['open', 'Still to do'], ['done', 'Done'], ['all', 'Everything']].map(([k, l]) => h('button', { class: 'filter', type: 'button', 'aria-pressed': String(show === k), onclick: () => { show = k; render(); } }, l)),
-          owners.length ? h('span', { class: 'muted', style: { alignSelf: 'center', fontSize: '13px', margin: '0 4px 0 8px' } }, 'Person:') : null,
+          owners.length ? h('span', { class: 'muted', style: { alignSelf: 'center', fontSize: '13px', margin: '0 4px 0 0' } }, 'Show:') : null,
           owners.length ? [['', 'Anyone'], ...owners.map(o => [o, o])].map(([k, l]) => h('button', { class: 'filter', type: 'button', 'aria-pressed': String(person === k), onclick: () => { person = k; render(); } }, l)) : null),
-        list.length ? ul : h('p', { class: 'muted' }, show === 'done' ? 'Nothing ticked off yet.' : all.length ? 'Nothing here with this filter.' : 'No to-dos yet. Type one above, like “Call the caterer about the tasting”.'),
+        list.length ? ul : h('p', { class: 'muted' }, all.length ? (doneList.length ? 'All done! Nothing left on the list.' : 'Nothing here for this person.') : 'No to-dos yet. Type one above, like “Call the caterer about the tasting”.'),
+        doneList.length ? h('div', { class: 'done-sec' },
+          h('button', { type: 'button', class: 'done-toggle', 'aria-expanded': String(showDone), onclick: () => { showDone = !showDone; render(); } }, (showDone ? '▾ ' : '▸ ') + `Done · ${doneList.length}`),
+          showDone ? h('ul', { class: 'steps todo-list done-list' }, doneList.map(t => todoEl(t))) : null) : null,
         list.length ? h('p', { class: 'muted', style: { fontSize: '13px', margin: '10px 0 0' } }, 'Drag to reorder (press and hold on a phone). Tap a to-do to add a person, date or notes.') : null),
       h('aside', { class: 'panel', style: { padding: '18px 20px' } },
         h('h3', { class: 'serif', style: { margin: '0 0 6px', fontSize: '22px', fontWeight: 500 } }, 'Coming up in the plan'),
@@ -81,6 +85,13 @@ export function renderTodo(root, w, params) {
   });
 }
 
+function toastUndo(text, undoFn) {
+  const holder = document.getElementById('toasts') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'toasts' }));
+  const el = h('div', { class: 'toast with-act' }, text, h('button', { type: 'button', onclick: () => { undoFn(); el.remove(); } }, 'Undo'));
+  holder.append(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 500); }, 5000);
+}
+
 function todoEl(t) {
   const late = t.due && t.status !== 'done' && daysUntil(t.due) < 0;
   const sub = [t.owner, t.due && !late ? 'due ' + shortDate(t.due) : null].filter(Boolean).join(' · ');
@@ -88,7 +99,10 @@ function todoEl(t) {
     h('button', {
       class: 'tick ' + t.status, type: 'button', html: t.status === 'done' ? ICONS.check : '',
       'aria-label': t.status === 'done' ? `Mark “${t.title}” as not done` : `Mark “${t.title}” as done`,
-      onclick: () => store.update('todos', t.id, { status: t.status === 'done' ? 'todo' : 'done' }).catch(fail)
+      onclick: () => {
+        const was = t.status;
+        store.update('todos', t.id, { status: was === 'done' ? 'todo' : 'done' }).then(() => { if (was !== 'done') toastUndo(`Done: ${t.title}`, () => store.update('todos', t.id, { status: was })); }).catch(fail);
+      }
     }),
     h('button', { class: 'txt', type: 'button', onclick: () => editStep(t, 'todos') },
       h('span', { class: 't' }, t.title),

@@ -1,8 +1,8 @@
-import { store } from './store.js?v=10';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=10';
-import { live, ui, render } from './app.js?v=10';
-import { openStep, lockIcon } from './panel.js?v=10';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=10';
+import { store } from './store.js?v=11';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=11';
+import { live, ui, render } from './app.js?v=11';
+import { openStep, lockIcon } from './panel.js?v=11';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=11';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -74,7 +74,7 @@ export function renderPlanHead(root, w, current, plan = planOf(w), onPick) {
   const setView = (v) => {
     if (v === 'todo') { location.hash = '#/w/' + w.id + '/todo'; return; }
     try { localStorage.setItem('fwp-view-' + w.id, v); } catch (e) { }
-    if (location.hash !== '#/w/' + w.id) location.hash = '#/w/' + w.id; else render();
+    if (location.hash !== '#/w/' + w.id + '/plan') location.hash = '#/w/' + w.id + '/plan'; else render();
   };
   root.append(h('div', { class: 'plan-head' },
     h('div', { class: 'ph-title' },
@@ -84,7 +84,7 @@ export function renderPlanHead(root, w, current, plan = planOf(w), onPick) {
       [['list', 'List'], ['map', 'Map'], ['todo', 'To-do']].map(([k, l]) =>
         h('button', { type: 'button', 'aria-pressed': String(current === k), onclick: () => setView(k) }, l)))));
   root.append(journeyBar(w, plan, {
-    onPick: onPick || ((areaId) => { try { localStorage.setItem('fwp-view-' + w.id, 'list'); } catch (e) { } location.hash = '#/w/' + w.id + '?focus=' + areaId; })
+    onPick: onPick || ((areaId) => { try { localStorage.setItem('fwp-view-' + w.id, 'list'); } catch (e) { } location.hash = '#/w/' + w.id + '/plan?focus=' + areaId; })
   }));
 }
 

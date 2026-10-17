@@ -1,16 +1,18 @@
-import { store } from './store.js?v=10';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=10';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=10';
-import { renderBoard } from './board.js?v=10';
-import { renderTodo } from './todo.js?v=10';
-import { renderFiles } from './files.js?v=10';
-import { renderDecide } from './decide.js?v=10';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=10';
-import { clearPage, clearAll } from './clear.js?v=10';
-import { undoButtons } from './history.js?v=10';
-import { planOf } from './map.js?v=10';
-import { openStep } from './panel.js?v=10';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=10';
+import { store } from './store.js?v=11';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=11';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=11';
+import { renderBoard } from './board.js?v=11';
+import { renderTodo } from './todo.js?v=11';
+import { renderFiles } from './files.js?v=11';
+import { renderDecide } from './decide.js?v=11';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=11';
+import { clearPage, clearAll } from './clear.js?v=11';
+import { undoButtons } from './history.js?v=11';
+import { renderOverview, editDate } from './overview.js?v=11';
+import { renderLists } from './lists.js?v=11';
+import { planOf } from './map.js?v=11';
+import { openStep } from './panel.js?v=11';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=11';
 
 const app = document.getElementById('app');
 
@@ -103,8 +105,8 @@ function avatarMenu(btn) {
 function pageClearItems(item) {
   const { parts } = parseRoute();
   if (parts[0] !== 'w' || !wedding(parts[1])) return [];
-  const sub = parts[2] || 'plan';
-  const section = sub === 'plan' || !sub ? 'plan' : sub;
+  const sub = parts[2] || 'overview';
+  const section = sub;
   const names = { plan: 'the plan', todo: 'the to-do list', board: 'the mood board', files: 'files and lists', budget: 'the budget' };
   if (!names[section]) return [];
   return [item('broom', 'Clear ' + names[section] + '…', () => clearPage(parts[1], section === 'budget' ? 'budget' : section))];
@@ -190,7 +192,7 @@ function comingUp() {
   const todos = store.missing && store.missing.todos ? [] : live(store.rows('todos') || []).filter(t => t.status !== 'done' && t.due).map(t => ({ ...t, kind: 'todo' }));
   return [...steps, ...todos].filter(x => wedding(x.wedding_id) && !wedding(x.wedding_id).deleted_at && daysUntil(x.due) <= 45).sort((a, b) => a.due.localeCompare(b.due));
 }
-const stepLink = (s) => s.kind === 'todo' ? `#/w/${s.wedding_id}/todo?focus=${s.id}` : `#/w/${s.wedding_id}?open=${s.id}`;
+const stepLink = (s) => s.kind === 'todo' ? `#/w/${s.wedding_id}/todo?focus=${s.id}` : `#/w/${s.wedding_id}/plan?open=${s.id}`;
 
 function renderHome() {
   applyTheme(null);
@@ -214,7 +216,7 @@ function renderHome() {
     h('div', { class: 'hc-label' }, `Waiting on a decision · ${waiting.length}`),
     waiting.length ? waiting.slice(0, 3).map(s => {
       const a = store.find('areas', s.area_id); const w = wedding(s.wedding_id);
-      return h('a', { class: 'hrow', href: `#/w/${s.wedding_id}?open=${s.id}` }, h('b', {}, s.title), h('span', {}, `${firstName(w)} · ${a ? a.title : ''}${s.due ? ' · by ' + shortDate(s.due) : ''}`));
+      return h('a', { class: 'hrow', href: `#/w/${s.wedding_id}/plan?open=${s.id}` }, h('b', {}, s.title), h('span', {}, `${firstName(w)} · ${a ? a.title : ''}${s.due ? ' · by ' + shortDate(s.due) : ''}`));
     }) : h('p', { class: 'muted hc-empty' }, 'No open lock points. Mark a step as a lock point and it shows here until it’s locked.'),
     waiting.length > 3 ? h('span', { class: 'hc-more' }, `+ ${waiting.length - 3} more`) : null);
 
@@ -242,22 +244,22 @@ function renderHome() {
 }
 
 /* ---------- Wedding space ---------- */
-const TABS = [['plan', 'Plan', 'plan'], ['decide', 'Decide', 'decide'], ['board', 'Board', 'board'], ['budget', 'Budget', 'budget'], ['files', 'Files', 'folder']];
-const tabOf = (t) => (!t || t === 'todo') ? 'plan' : t;
+const TABS = [['overview', 'Overview', 'overview'], ['plan', 'Plan', 'plan'], ['decide', 'Decide', 'decide'], ['board', 'Board', 'board'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget'], ['files', 'Files', 'folder']];
+const tabOf = (t, params = {}) => !t ? (params.focus ? 'plan' : 'overview') : t === 'todo' ? 'plan' : t;
 
 function renderSpace(id, sub, params) {
   const w = wedding(id);
   if (!w || w.deleted_at) { applyTheme(null); return h('div', { class: 'page' }, pageBar(), h('div', { class: 'wrap' }, h('p', {}, 'That wedding was not found. ', h('a', { href: '#/home' }, 'Go back')))); }
   const t = themeOf(w);
   applyTheme(t);
-  const tab = tabOf(sub);
+  const tab = tabOf(sub, params);
   const days = daysUntil(w.wedding_date);
   const others = weddings().filter(x => x.id !== id);
   const nWait = waitingDecisions().filter(s => s.wedding_id === id).length;
   const when = w.wedding_date
     ? `${new Date(w.wedding_date + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}${days !== null && days >= 0 ? ` · ${days} ${days === 1 ? 'day' : 'days'}` : ''}`
     : `${w.date_note || 'Date'} · to be fixed`;
-  const link = (k) => '#/w/' + id + (k === 'plan' ? '' : '/' + k);
+  const link = (k) => '#/w/' + id + (k === 'overview' ? '' : '/' + k);
 
   const root = h('div', { class: 'space deco-' + t.deco + (tab === 'board' ? ' on-board' : '') });
   root.append(
@@ -267,9 +269,9 @@ function renderSpace(id, sub, params) {
         h('a', { href: '#/home', class: 'shead-mono', 'aria-label': 'Back to both weddings' }, monogram(w, 'sm')),
         h('div', { class: 'shead-names' },
           h('a', { href: link('plan'), class: 'shead-couple' }, w.couple),
-          h('span', { class: 'shead-sub' }, when,
+          h('span', { class: 'shead-sub' }, store.me.isAdmin ? h('button', { type: 'button', class: 'date-btn', title: 'Set or change the wedding date', onclick: () => editDate(w) }, when) : when,
             others.length ? others.map(o => h('span', {}, ' · ', h('a', { href: '#/w/' + o.id + (sub && sub !== 'todo' ? '/' + sub : '') }, 'switch to ' + firstName(o)))) : null,
-            store.me.isAdmin && !w.wedding_date ? h('span', {}, ' · ', h('a', { href: '#/settings' }, 'set the date')) : null)),
+            store.me.isAdmin && !w.wedding_date ? h('span', {}, ' · ', h('button', { type: 'button', class: 'date-btn', onclick: () => editDate(w) }, 'set the date')) : null)),
         h('nav', { class: 'snav', 'aria-label': 'Sections' }, TABS.map(([k, label, icon]) =>
           h('a', { href: link(k), 'aria-current': tab === k ? 'page' : null },
             h('span', { class: 'snav-ic', html: ICONS[icon] }), h('span', { class: 'snav-t' }, label),
@@ -285,6 +287,8 @@ function renderSpace(id, sub, params) {
   else if (tab === 'decide') renderDecide(body, w, params);
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
+  else if (tab === 'lists') renderLists(body, w, params);
+  else if (tab === 'overview') renderOverview(body, w, params);
   else if (sub === 'todo') { renderPlanHead(body, w, 'todo'); renderTodo(body, w, params); }
   else renderPipeline(body, w, params);
 

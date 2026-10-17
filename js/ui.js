@@ -217,6 +217,8 @@ export const ICONS = {
   logout: sv('<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>'),
   lock: sv('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
   comment: sv('<path d="M4 5h16v11H9l-5 4z"/>'),
+  overview: sv('<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>'),
+  list: sv('<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/>'),
   undo: sv('<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>'),
   redo: sv('<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/>'),
   search: sv('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.3-4.3"/>'),

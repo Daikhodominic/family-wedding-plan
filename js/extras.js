@@ -1,8 +1,8 @@
-import { store } from './store.js?v=10';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=10';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=10';
-import { confirmAreaRestore, inr } from './budget.js?v=10';
-import { clearAll } from './clear.js?v=10';
+import { store } from './store.js?v=11';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=11';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=11';
+import { confirmAreaRestore, inr } from './budget.js?v=11';
+import { clearAll } from './clear.js?v=11';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist' };
@@ -89,13 +89,13 @@ export function linkFor(a) {
   if (a.entity === 'board_items') return `#/w/${w}/board?focus=${a.entity_id}`;
   if (a.entity === 'comments') return `#/w/${row.wedding_id}/board?focus=${row.item_id}`;
   if (a.entity === 'todos') return `#/w/${w}/todo?focus=${a.entity_id}`;
-  if (a.entity === 'files' || a.entity === 'lists') return row.step_id && store.find('steps', row.step_id) ? `#/w/${w}?focus=${row.step_id}` : `#/w/${w}/files`;
+  if (a.entity === 'files' || a.entity === 'lists') return a.entity === 'lists' ? `#/w/${w}/lists?list=${row.id}` : row.step_id && store.find('steps', row.step_id) ? `#/w/${w}/plan?focus=${row.step_id}` : `#/w/${w}/files`;
   if (a.entity === 'steps') {
     const area = store.find('areas', row.area_id);
     if (!area || area.deleted_at || (store.find('stages', area.stage_id) || {}).deleted_at) return '#/bin';
   }
   if (a.entity === 'areas' && (store.find('stages', row.stage_id) || {}).deleted_at) return '#/bin';
-  return `#/w/${w}?focus=${a.entity_id}`;
+  return `#/w/${w}/plan?focus=${a.entity_id}`;
 }
 
 /* ---------- Activity ---------- */
