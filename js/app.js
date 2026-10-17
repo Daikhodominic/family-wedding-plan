@@ -8,6 +8,7 @@ import { renderDecide } from './decide.js?v=11';
 import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=11';
 import { clearPage, clearAll } from './clear.js?v=11';
 import { undoButtons } from './history.js?v=11';
+import { downloadBackup } from './tools.js?v=11';
 import { renderOverview, editDate } from './overview.js?v=11';
 import { renderLists } from './lists.js?v=11';
 import { planOf } from './map.js?v=11';
@@ -89,6 +90,7 @@ function avatarMenu(btn) {
     item('budget', 'Family budget', () => go('#/budget')),
     item('trash', 'Bin', () => go('#/bin')),
     store.me.isAdmin ? item('settings', 'Settings', () => go('#/settings')) : null,
+    item('folder', 'Download a backup', downloadBackup),
     ...pageClearItems(item),
     store.me.isAdmin ? item('broom', 'Clear all and start over…', () => { const { parts } = parseRoute(); clearAll(parts[0] === 'w' ? { weddingId: parts[1] } : {}); }) : null,
     item('user', 'Change your name', profileMenu),

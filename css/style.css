@@ -1036,3 +1036,6 @@ div.oh-date { cursor: default; }
   .bq, .foil, .pulse, .area.flash, .step.flash, .card.flash, .mnode.flash { animation: none; }
   .drawer, .drawer-shade, .emb, .menu-pop, .modal { transition: none; animation: none; }
 }
+.role-tag { margin-left: 8px; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--gold-fill); color: var(--gold); }
+.owed-tag { font-size: 12px; color: var(--w-muted); padding: 4px 10px; border-radius: 999px; background: var(--w-soft); }
+.ro-note { margin-top: -6px; }

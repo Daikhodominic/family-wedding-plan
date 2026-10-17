@@ -3,6 +3,7 @@ import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } fro
 import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=11';
 import { confirmAreaRestore, inr } from './budget.js?v=11';
 import { clearAll } from './clear.js?v=11';
+import { downloadBackup } from './tools.js?v=11';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist' };
@@ -310,18 +311,23 @@ export function renderSettings() {
   const people = h('section', { class: 'panel' },
     h('h2', { class: 'serif', style: { margin: '0 0 6px', fontWeight: 500, fontSize: '26px' } }, 'Who has joined'),
     h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Removing someone signs them out of the plans. They can come back only with the passcode — change it too if they shouldn’t.'),
+    h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Deciders can change money, make decisions final and choose between options. Everyone else can add, suggest, vote and tick off their jobs.'),
     h('div', {}, store.rows('members').map(m => h('div', { class: 'bin-row' },
-      h('span', {}, m.name, m.is_admin ? h('span', { class: 'muted' }, ' · admin') : null),
-      m.is_admin ? h('span') : h('button', {
+      h('span', {}, m.name, m.is_admin ? h('span', { class: 'muted' }, ' · admin') : m.is_decider ? h('span', { class: 'role-tag' }, 'Decider') : null),
+      m.is_admin ? h('span') : h('span', { class: 'acts' },
+        h('button', { class: 'btn small ' + (m.is_decider ? 'soft' : 'ghost'), type: 'button', onclick: () => store.setDecider(m.user_id, !m.is_decider).then(() => toast(m.is_decider ? `${m.name} is no longer a Decider` : `${m.name} is now a Decider`)).catch(e => toast(e.message, 'error')) }, m.is_decider ? 'Remove as Decider' : 'Make a Decider'),
+        h('button', {
         class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
           if (!(await confirmBox(`Remove ${m.name}?`, 'They will no longer see or change the plans on their devices.', 'Remove'))) return;
           store.removeMember(m.user_id).then(() => toast('Removed')).catch(e => toast(e.message, 'error'));
         }
-      }, 'Remove')))));
+      }, 'Remove'))))));
 
   return h('main', { class: 'wrap', style: { paddingBottom: '60px' } },
     h('div', { class: 'eyebrow' }, 'Admin only'), h('h1', { class: 'page-title' }, 'Settings'),
-    h('div', { style: { margin: '6px 0 14px' } }, h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: () => clearAll() }, 'Clear all and start over…')),
+    h('div', { style: { margin: '6px 0 14px', display: 'flex', gap: '8px', flexWrap: 'wrap' } },
+      h('button', { class: 'btn ghost small', type: 'button', onclick: downloadBackup }, 'Download a backup'),
+      h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: () => clearAll() }, 'Clear all and start over…')),
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Only you can see this page.'),
     h('div', { class: 'settings-grid' }, cards),
     h('div', { class: 'settings-grid' }, pass, people));

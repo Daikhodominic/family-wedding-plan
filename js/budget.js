@@ -8,6 +8,7 @@ import { store } from './store.js?v=11';
 import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS } from './ui.js?v=11';
 import { live, weddings, themeOf, stepVisible } from './app.js?v=11';
 import { openStep } from './panel.js?v=11';
+import { deciderOnly, isDecider, deciderNames } from './tools.js?v=11';
 
 /* ---------- Money helpers ---------- */
 // Accepts "1,20,000", "120000", "1.2 lakh", "1.2L", "50k", "₹ 45,000".
@@ -84,6 +85,7 @@ function warnings(m) {
 const amountInput = (v, ph = 'e.g. 1,20,000 or 1.2 lakh') => h('input', { inputmode: 'decimal', placeholder: ph, value: v ? Math.round(Number(v)).toLocaleString('en-IN') : '' });
 
 function editBudget(id, opts, m) {
+  if (!deciderOnly('change money')) return;
   const total = amountInput(m.b && m.b.total, 'e.g. 15,00,000 or 15 lakh');
   const cont = amountInput(m.b && m.b.contingency, '0');
   modal({
@@ -103,6 +105,7 @@ function editBudget(id, opts, m) {
 }
 
 function editArea(id, area, m) {
+  if (!deciderOnly('change money')) return;
   const title = h('input', { value: area ? area.title : '', maxlength: 80, placeholder: 'e.g. Catering' });
   const planned = amountInput(area && area.planned);
   const free = h('p', { class: 'hint' }, `Free to reassign right now: ${inr(m.free + (area ? Number(area.planned) || 0 : 0))}`);
@@ -124,6 +127,7 @@ function editArea(id, area, m) {
 }
 
 function editItem(id, item, m, preset = {}) {
+  if (!deciderOnly('change money')) return;
   const it = item || preset;
   const title = h('input', { value: it.title || '', maxlength: 120, placeholder: 'e.g. Caterer advance' });
   const payee = h('input', { value: it.payee || '', maxlength: 80, placeholder: 'Vendor, shop or person' });
@@ -163,6 +167,7 @@ function editItem(id, item, m, preset = {}) {
 
 // Move planned money between areas, contingency and "free to reassign".
 function moveMoney(id, m, fromKey) {
+  if (!deciderOnly('change money')) return;
   const opts = [['free', `Free to reassign (${inr(m.free)})`], ['cont', `Contingency (${inr(m.C)})`], ...m.areaRows.map(r => [r.area.id, `${r.area.title} (${inr(r.planned)})`])];
   const sel = (v) => h('select', {}, opts.map(([k, l]) => h('option', { value: k, selected: k === v ? true : null }, l)));
   const from = sel(fromKey || 'free'), to = sel(fromKey === 'free' || !fromKey ? (m.areaRows[0] ? m.areaRows[0].area.id : 'cont') : 'free');
@@ -199,13 +204,14 @@ export async function confirmAreaRestore(area) {
 }
 
 async function removeArea(r) {
+  if (!deciderOnly('change money')) return;
   const unpaid = r.items.filter(i => !i.paid_at);
   const text = `${inr(r.left)} of unspent money goes to Free to reassign.` + (r.paid ? ` The ${inr(r.paid)} already paid stays on record.` : '') + (unpaid.length ? ` ${unpaid.length} unpaid ${unpaid.length === 1 ? 'payment is' : 'payments are'} cancelled with it.` : '') + ' Anyone can bring it back from the Bin.';
   if (await confirmBox(`Remove “${r.area.title}”?`, text, 'Remove area')) store.remove('budget_areas', r.area.id).then(() => toast('Moved to the Bin')).catch(fail);
 }
 
-const markPaid = (i) => store.update('budget_items', i.id, { paid_at: new Date().toISOString() }).then(() => toast('Marked paid')).catch(fail);
-const markUnpaid = (i) => store.update('budget_items', i.id, { paid_at: null }).catch(fail);
+const markPaid = (i) => !deciderOnly('change money') ? null : store.update('budget_items', i.id, { paid_at: new Date().toISOString() }).then(() => toast('Marked paid')).catch(fail);
+const markUnpaid = (i) => !deciderOnly('change money') ? null : store.update('budget_items', i.id, { paid_at: null }).catch(fail);
 
 /* ---------- Pieces ---------- */
 function stat(label, value, sub, cls = '') {
@@ -251,7 +257,7 @@ function itemRow(id, i, m, opts = {}) {
     h('span', { class: 'brow-amt' }, inr(Number(i.amount || 0))),
     opts.cancelled ? h('span') : i.paid_at
       ? h('button', { type: 'button', class: 'paid-tag', title: 'Tap to mark as not paid', onclick: () => markUnpaid(i) }, h('span', { html: ICONS.check }), 'Paid')
-      : h('button', { type: 'button', class: 'btn small soft', onclick: () => markPaid(i) }, 'Mark paid'));
+      : isDecider() ? h('button', { type: 'button', class: 'btn small soft', onclick: () => markPaid(i) }, 'Mark paid') : h('span', { class: 'owed-tag' }, 'To pay'));
 }
 
 function monthChart(owing, lockOwing) {
@@ -293,15 +299,17 @@ export function renderBudgetView(root, opts) {
       h('div', { class: 'eyebrow' }, 'Start here'),
       h('h2', {}, 'Set the total budget'),
       h('p', {}, opts.blurb || 'Write down the total you have for this. Then split it into areas, keep some aside for surprises, and add payments as they come up.'),
-      h('button', { class: 'btn', type: 'button', onclick: () => editBudget(id, opts, m) }, 'Set the total')));
+      isDecider() ? h('button', { class: 'btn', type: 'button', onclick: () => editBudget(id, opts, m) }, 'Set the total') : h('p', { class: 'hint' }, `One of the Deciders (${deciderNames()}) can set it up.`)));
     return;
   }
 
+  const can = isDecider();
   root.append(secHead('Money', opts.heading || 'Budget',
-    h('button', { class: 'btn', type: 'button', onclick: () => editItem(id, null, m) }, '+ Payment'),
-    h('button', { class: 'btn ghost', type: 'button', onclick: () => editArea(id, null, m) }, '+ Area'),
-    h('button', { class: 'btn ghost', type: 'button', onclick: () => moveMoney(id, m) }, 'Move money'),
+    can ? h('button', { class: 'btn', type: 'button', onclick: () => editItem(id, null, m) }, '+ Payment') : null,
+    can ? h('button', { class: 'btn ghost', type: 'button', onclick: () => editArea(id, null, m) }, '+ Area') : null,
+    can ? h('button', { class: 'btn ghost', type: 'button', onclick: () => moveMoney(id, m) }, 'Move money') : null,
     opts.family !== false ? famLink : null));
+  if (!can) root.append(h('p', { class: 'hint ro-note' }, `You can see everything here. Only the Deciders (${deciderNames()}) can change money.`));
 
   root.append(h('div', { class: 'stats five' },
     h('button', { type: 'button', class: 'stat as-btn', onclick: () => editBudget(id, opts, m), title: 'Change the total' }, h('span', {}, 'Total budget'), h('b', {}, inr(m.T)), h('small', {}, 'Tap to change')),
@@ -334,7 +342,7 @@ export function renderBudgetView(root, opts) {
         })),
       areaBar(r),
       r.items.length ? h('div', { class: 'blist' }, r.items.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999')).map(i => itemRow(id, i, m))) : null,
-      h('button', { type: 'button', class: 'dashed', onclick: () => editItem(id, null, m, { area_id: r.area.id }) }, '+ Add a payment'))));
+      isDecider() ? h('button', { type: 'button', class: 'dashed', onclick: () => editItem(id, null, m, { area_id: r.area.id }) }, '+ Add a payment') : null)));
 
   // Unplanned, locked decisions not yet added, removed areas
   const extras = h('div', {});
@@ -360,6 +368,7 @@ export function renderBudgetView(root, opts) {
 }
 
 async function addLockToBudget(id, x, m) {
+  if (!deciderOnly('change money')) return;
   const pick = h('select', {}, m.areaRows.map(r => h('option', { value: r.area.id }, r.area.title)), h('option', { value: '' }, 'Unplanned — from contingency'));
   modal({
     title: 'Put in an area',

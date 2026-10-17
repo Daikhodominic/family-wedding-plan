@@ -3,6 +3,7 @@ import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fil
 import { live, ui, render } from './app.js?v=11';
 import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=11';
 import { together } from './history.js?v=11';
+import { isDecider } from './tools.js?v=11';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -404,8 +405,8 @@ function cardBody(item) {
               o.notes ? h('span', {}, o.notes) : null,
               h('div', { class: 'opt-acts' },
                 voteBar(item, optionKey(o, i)),
-                store.me.isAdmin
-                  ? h('button', { class: 'pill' + (o.chosen ? ' on' : ''), type: 'button', title: 'Only the admin can choose', onclick: () => choose(i) }, o.chosen ? '✓ Chosen' : 'Choose')
+                isDecider()
+                  ? h('button', { class: 'pill' + (o.chosen ? ' on' : ''), type: 'button', title: 'Only the Deciders can choose', onclick: () => choose(i) }, o.chosen ? '✓ Chosen' : 'Choose')
                   : o.chosen ? h('span', { class: 'pill on', style: { cursor: 'default' } }, '✓ Chosen') : null),
               !o.chosen && leader === i ? h('span', { class: 'lead-tag' }, 'Most votes') : null));
         })) : h('div', { class: 'by' }, 'No options yet — tap the pencil to add them.'), byline);

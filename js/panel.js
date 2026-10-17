@@ -2,6 +2,7 @@
 import { store } from './store.js?v=11';
 import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=11';
 import { uploadFile, pickFiles } from './board.js?v=11';
+import { isDecider, deciderNames } from './tools.js?v=11';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -160,7 +161,7 @@ export function openStep(stepId) {
     } else {
       lockBlock = h('div', { class: 'd-lock' },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
-          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Lock this decision'),
+          isDecider() ? h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Lock this decision') : h('span', { class: 'ft-sub' }, `Only the Deciders (${deciderNames()}) can make this final.`),
           h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Lock point')),
         h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Lock it once it’s confirmed, like a vendor booked or a menu agreed. A lock point is a key decision, shown as a gold gate on the map.'));
     }

@@ -3,9 +3,9 @@
 //  - DemoStore keeps sample data in this browser only (for previews)
 import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=11';
 
-export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'activity', 'members'];
-const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions'];  // tables added by later database updates
-const UNLOGGED = ['list_rows', 'reactions'];
+export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'activity', 'members'];
+const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen'];  // tables added by later database updates
+const UNLOGGED = ['list_rows', 'reactions', 'announcement_seen'];
 
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -69,7 +69,7 @@ class LiveStore extends BaseStore {
     if (!u || !u.user) return false;
     const { data, error } = await this.sb.from('members').select('*').eq('user_id', u.user.id).maybeSingle();
     if (error || !data) return false;
-    this.me = { id: data.user_id, name: data.name, isAdmin: data.is_admin, lastSeen: Number(data.last_seen_activity) || 0 };
+    this.me = { id: data.user_id, name: data.name, isAdmin: data.is_admin, isDecider: !!(data.is_admin || data.is_decider), lastSeen: Number(data.last_seen_activity) || 0 };
     return true;
   }
 
@@ -190,6 +190,12 @@ class LiveStore extends BaseStore {
     return data.signedUrl;
   }
 
+  async setDecider(userId, on) {
+    const { error } = await this.sb.rpc('set_decider', { p_user: userId, p_on: on });
+    if (error) throw new Error(/set_decider/.test(error.message) ? 'Run database update 8 in Supabase first.' : error.message);
+    this.upsertLocal('members', { user_id: userId, is_decider: on }); this.emit({ table: 'members' });
+  }
+
   async setPasscode(p) {
     const { error } = await this.sb.rpc('set_passcode', { p_passcode: p });
     if (error) throw new Error(error.message);
@@ -227,7 +233,7 @@ class LiveStore extends BaseStore {
 /* ------------------------------------------------------------------ */
 /*  Demo: sample data kept in this browser                             */
 /* ------------------------------------------------------------------ */
-const DEMO_KEY = 'fwp-demo-v4';
+const DEMO_KEY = 'fwp-demo-v5';
 const GATES = ['Fix the wedding date and church', 'Book the reception venue for the date', 'Pay the advance', 'Finalise the menu', 'Finalise the guest list', 'Print the invitation cards', 'Buy the gifts'];
 const TEMPLATE = [
   ['Before', [
@@ -254,7 +260,7 @@ function demoSeed() {
     { id: 'charani', couple: 'Charani & Adahrii', monogram: 'C&A', wedding_date: '2026-12-07', date_note: '', theme: 'blue', theme_custom: {}, position: 1 },
     { id: 'elow', couple: 'Elow & Maniziia', monogram: 'E&M', wedding_date: null, date_note: 'February – March 2027', theme: 'rose', theme_custom: {}, position: 2 }
   ];
-  c.members = [{ user_id: 'demo-admin', name: 'You', is_admin: true, last_seen_activity: 0 }, { user_id: 'demo-aunty', name: 'Example relative', is_admin: false, last_seen_activity: 0 }];
+  c.members = [{ user_id: 'demo-admin', name: 'You', is_admin: true, last_seen_activity: 0 }, { user_id: 'demo-aunty', name: 'Example relative', is_admin: false, is_decider: false, last_seen_activity: 0 }, { user_id: 'demo-charani', name: 'Charani', is_admin: false, is_decider: true, last_seen_activity: 0 }, { user_id: 'demo-elow', name: 'Elow', is_admin: false, is_decider: true, last_seen_activity: 0 }];
   c.todos = [
     { id: uid(), wedding_id: 'charani', title: 'Example: call the florist about boutonniere samples', owner: '', due: null, status: 'todo', notes: '', position: 1000, created_at: nowIso(), deleted_at: null },
     { id: uid(), wedding_id: 'charani', title: 'Example: pick up the invitation proofs', owner: '', due: null, status: 'todo', notes: '', position: 2000, created_at: nowIso(), deleted_at: null },
@@ -333,7 +339,7 @@ class DemoStore extends BaseStore {
     if (saved && saved.cache) { this.cache = { ...this.cache, ...saved.cache }; for (const t of TABLES) if (!this.cache[t]) this.cache[t] = []; this.nextAct = saved.nextAct || 1; }
     else { this.cache = demoSeed(); this.save(); }
     const m = this.cache.members[0];
-    this.me = { id: m.user_id, name: m.name, isAdmin: true, lastSeen: Number(m.last_seen_activity) || 0 };
+    this.me = { id: m.user_id, name: m.name, isAdmin: true, isDecider: true, lastSeen: Number(m.last_seen_activity) || 0 };
     return 'ready';
   }
   async join() { }
@@ -398,6 +404,7 @@ class DemoStore extends BaseStore {
     this.save(); this.emit({ table });
   }
   async setPasscode() { }
+  async setDecider(userId, on) { this.upsertLocal('members', { user_id: userId, is_decider: on }); this.save(); this.emit({ table: 'members' }); }
   async addTemplate(weddingId) {
     TEMPLATE.forEach(([stage, areas], si) => {
       const s = { id: uid(), wedding_id: weddingId, title: stage, position: (si + 1) * 1000, created_at: nowIso(), deleted_at: null };
