@@ -69,35 +69,45 @@ export function editStep(step, table = 'steps') {
   });
 }
 
+// Heading, progress line and the List / Map / To-do switch shared by the Plan views.
+export function renderPlanHead(root, w, current, plan = planOf(w), onPick) {
+  const setView = (v) => {
+    if (v === 'todo') { location.hash = '#/w/' + w.id + '/todo'; return; }
+    try { localStorage.setItem('fwp-view-' + w.id, v); } catch (e) { }
+    if (location.hash !== '#/w/' + w.id) location.hash = '#/w/' + w.id; else render();
+  };
+  root.append(h('div', { class: 'plan-head' },
+    h('div', { class: 'ph-title' },
+      h('div', { class: 'eyebrow' }, current === 'todo' ? 'Little jobs' : 'Start to finish'),
+      h('h1', {}, current === 'todo' ? 'To-do list' : 'The plan')),
+    h('div', { class: 'viewtoggle', role: 'group', 'aria-label': 'View' },
+      [['list', 'List'], ['map', 'Map'], ['todo', 'To-do']].map(([k, l]) =>
+        h('button', { type: 'button', 'aria-pressed': String(current === k), onclick: () => setView(k) }, l)))));
+  root.append(journeyBar(w, plan, {
+    onPick: onPick || ((areaId) => { try { localStorage.setItem('fwp-view-' + w.id, 'list'); } catch (e) { } location.hash = '#/w/' + w.id + '?focus=' + areaId; })
+  }));
+}
+
 export function renderPipeline(root, w, params) {
   const stages = live(store.rows('stages')).filter(s => s.wedding_id === w.id).sort(byPos);
   const areasAll = live(store.rows('areas')).filter(a => a.wedding_id === w.id);
   const stepsAll = live(store.rows('steps')).filter(s => s.wedding_id === w.id);
   const visibleAreaIds = new Set(areasAll.filter(a => stages.some(s => s.id === a.stage_id)).map(a => a.id));
   const visSteps = stepsAll.filter(s => visibleAreaIds.has(s.area_id));
-  void visSteps;
-  let view = 'columns';
-  try { view = localStorage.getItem('fwp-view-' + w.id) || 'columns'; } catch (e) { }
-  const setView = (v) => { try { localStorage.setItem('fwp-view-' + w.id, v); } catch (e) { } render(); };
+  let view = 'list';
+  try { view = localStorage.getItem('fwp-view-' + w.id) === 'map' ? 'map' : 'list'; } catch (e) { }
   const plan = planOf(w);
 
-  root.append(h('div', { class: 'pipeline-head' },
-    h('h2', {}, 'The plan, start to finish'),
-    h('div', { class: 'viewtoggle', role: 'group', 'aria-label': 'View' },
-      h('button', { type: 'button', 'aria-pressed': String(view !== 'map'), onclick: () => setView('columns') }, 'Columns'),
-      h('button', { type: 'button', 'aria-pressed': String(view === 'map'), onclick: () => setView('map') }, 'Map'))));
-  root.append(journeyBar(w, plan, {
-    onPick: (areaId) => {
-      const el = root.querySelector(`[data-area="${CSS.escape(areaId)}"]`) || root.querySelector(`.area[data-id="${CSS.escape(areaId)}"]`);
-      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
-    }
-  }));
+  renderPlanHead(root, w, view, plan, (areaId) => {
+    const el = root.querySelector(`[data-area="${CSS.escape(areaId)}"]`) || root.querySelector(`.area[data-id="${CSS.escape(areaId)}"]`);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
+  });
   if (view === 'map') {
-    root.append(h('p', { class: 'muted', style: { margin: '0 0 12px', fontSize: '14px' } }, 'Tap any step to open its details, lock it, or add files and lists. Gold ◆ marks a lock point; switch to Columns to add or rearrange steps.'));
+    root.append(h('p', { class: 'hint' }, 'Tap any step to open its details, lock it, or add files and lists. ◆ marks a lock point. Switch to List to add or rearrange.'));
     renderMap(root, w, plan, params);
     return;
   }
-  root.append(h('p', { class: 'muted', style: { margin: '0 0 14px', fontSize: '14px' } }, 'Tap a step to open its details, files and lists. Drag by the dots to reorder; on a phone, press and hold a step to move it.'));
+  root.append(h('p', { class: 'hint' }, 'Tap a step to open its details, files and lists. Drag by the dots to reorder; on a phone, press and hold a step to move it.'));
 
   const stagesEl = h('div', { class: 'stages' });
   for (const st of stages) {
@@ -164,7 +174,7 @@ export function renderPipeline(root, w, params) {
   if (S) {
     const common = { animation: 160, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', onStart: () => { ui.busy = true; } };
     S.create(stagesEl, {
-      ...common, handle: '.stage-grip', draggable: '.stage', direction: 'horizontal',
+      ...common, handle: '.stage-grip', draggable: '.stage', direction: 'vertical',
       onEnd: (e) => {
         ui.busy = false; const id = e.item.dataset.id;
         if (e.oldIndex === e.newIndex) return;

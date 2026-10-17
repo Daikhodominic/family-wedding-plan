@@ -1,26 +1,32 @@
 import { store } from './store.js';
-import { h, $, toast, modal, field, daysUntil, fancyDate, ago, ICONS, confirmBox } from './ui.js';
-import { renderPipeline } from './pipeline.js';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js';
+import { renderPipeline, renderPlanHead } from './pipeline.js';
 import { renderBoard } from './board.js';
 import { renderTodo } from './todo.js';
 import { renderFiles } from './files.js';
+import { renderDecide, renderBudget } from './decide.js';
 import { planOf } from './map.js';
+import { openStep } from './panel.js';
 import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js';
 
 const app = document.getElementById('app');
 
-/* ---------- Themes ---------- */
+/* ---------- Themes ----------
+   Each wedding re-points the --w-* tokens. "gold" is the accent metal:
+   antique gold for Charani's dusty blue, rose gold for Elow's Chateau Rose. */
 export const THEMES = {
-  blue: { bg: '#F9F7F2', surface: '#FFFFFF', ink: '#2B3540', muted: '#5C6B78', line: '#DCE3E9', soft: '#E7EDF2', accent: '#4F6A84', accentInk: '#FFFFFF', light: '#AFBEC8', deco: 'blue' },
-  rose: { bg: '#F7F0E8', surface: '#FFFFFF', ink: '#3A2A30', muted: '#7D6A6F', line: '#EAD8CF', soft: '#F6E8E3', accent: '#7A4A5C', accentInk: '#FFFFFF', light: '#DCAFA6', deco: 'rose' }
+  blue: { bg: '#F8F5EF', surface: '#FFFEFB', ink: '#25303B', muted: '#66717C', line: '#E7E0D3', soft: '#EAEFF4', accent: '#2C4562', accentInk: '#FFFFFF', light: '#AFBEC8', deep: '#223650', gold: '#A87C22', goldLine: '#D9C597', goldFill: '#F6EBCF', deco: 'blue' },
+  rose: { bg: '#F9F3EE', surface: '#FFFDFB', ink: '#3A2A30', muted: '#7D6A6F', line: '#EDDDD4', soft: '#F5E7E3', accent: '#6B3247', accentInk: '#FFFFFF', light: '#D9AFA6', deep: '#5A2536', gold: '#A46E55', goldLine: '#DFBCA9', goldFill: '#F7E5DA', deco: 'rose' }
 };
 export function themeOf(w) {
   const base = THEMES[w && w.theme] || THEMES.blue;
   return { ...base, ...((w && w.theme_custom) || {}) };
 }
-function applyTheme(el, t) {
-  const map = { bg: '--w-bg', surface: '--w-surface', ink: '--w-ink', muted: '--w-muted', line: '--w-line', soft: '--w-soft', accent: '--w-accent', accentInk: '--w-accent-ink', light: '--w-light' };
-  for (const [k, v] of Object.entries(map)) if (t[k]) el.style.setProperty(v, t[k]);
+const TOKEN = { bg: '--w-bg', surface: '--w-surface', ink: '--w-ink', muted: '--w-muted', line: '--w-line', soft: '--w-soft', accent: '--w-accent', accentInk: '--w-accent-ink', light: '--w-light', deep: '--w-deep', gold: '--gold', goldLine: '--gold-line', goldFill: '--gold-fill' };
+function applyTheme(t) {
+  const el = document.body;
+  for (const [k, v] of Object.entries(TOKEN)) { if (t && t[k]) el.style.setProperty(v, t[k]); else el.style.removeProperty(v); }
+  el.dataset.theme = t ? t.deco : '';
 }
 
 /* ---------- Routing ---------- */
@@ -36,31 +42,69 @@ export const go = (hash) => { if (location.hash === hash) render(); else locatio
 export const weddings = () => store.rows('weddings').filter(w => !w.deleted_at).sort((a, b) => (a.position || 0) - (b.position || 0));
 export const wedding = (id) => store.rows('weddings').find(w => w.id === id);
 export const live = (rows) => rows.filter(r => !r.deleted_at);
+const firstName = (w) => (w.couple || '').split('&')[0].trim();
+const initials = (w) => { const [a, b] = (w.monogram || '').split('&'); return [(a || '').trim(), (b || '').trim()]; };
 
-/* ---------- Shell ---------- */
-function unreadCount() {
-  if (!store.me) return 0;
-  return store.rows('activity').filter(a => a.id > store.me.lastSeen && a.actor !== store.me.id).length;
+export function stepVisible(s) {
+  const a = store.find('areas', s.area_id);
+  if (!a || a.deleted_at) return false;
+  const st = store.find('stages', a.stage_id);
+  return !!(st && !st.deleted_at);
 }
 
-function topbar(current) {
-  const n = unreadCount();
-  return h('div', { class: 'wrap topbar' },
-    h('a', { class: 'brand', href: '#/' }, 'Our Family Wedding Plan'),
-    h('nav', { class: 'topnav', 'aria-label': 'Main' },
-      h('a', { href: '#/activity', 'aria-current': current === 'activity' ? 'page' : null }, 'Activity', n ? h('span', { class: 'badge' }, String(n)) : null),
-      h('a', { href: '#/bin', 'aria-current': current === 'bin' ? 'page' : null }, 'Bin'),
-      store.me && store.me.isAdmin ? h('a', { href: '#/settings', 'aria-current': current === 'settings' ? 'page' : null, 'aria-label': 'Settings', html: ICONS.settings }) : null,
-      h('button', { class: 'navlink', type: 'button', onclick: profileMenu, title: 'Your name' }, store.me ? store.me.name + (store.me.isAdmin ? ' · Admin' : '') : '')
-    ));
+/* ---------- Shared pieces ---------- */
+function unread() {
+  if (!store.me) return [];
+  return store.rows('activity').filter(a => a.id > store.me.lastSeen && a.actor !== store.me.id);
+}
+
+// Monogram: a navy medallion with a gilded wreath (blue themes) or a wax seal (rose themes).
+export function monogram(w, size = 'lg') {
+  const t = themeOf(w);
+  const [a, b] = initials(w);
+  const letters = h('span', { class: 'mono-letters' }, a, h('span', { class: 'amp' }, '&'), b);
+  if (t.deco === 'rose') {
+    return h('span', { class: 'medal seal-m ' + size, 'aria-hidden': 'true' },
+      h('span', { class: 'wax' }, h('span', { class: 'ring' }), h('span', { class: 'ring2' }), letters));
+  }
+  return h('span', { class: 'medal disc ' + size, 'aria-hidden': 'true' },
+    h('img', { class: 'wreath', src: 'assets/wreath_blue.svg', alt: '' }), letters);
+}
+
+function avatarMenu(btn) {
+  const old = document.querySelector('.menu-pop');
+  if (old) { old.remove(); return; }
+  const n = unread().length;
+  const close = () => { pop.remove(); document.removeEventListener('pointerdown', outside, true); };
+  const outside = (e) => { if (!pop.contains(e.target) && e.target !== btn && !btn.contains(e.target)) close(); };
+  const item = (icon, label, onClick, extra) => h('button', { type: 'button', class: 'mi', onclick: () => { close(); onClick(); } }, h('span', { class: 'mi-ic', html: ICONS[icon] }), h('span', {}, label), extra || null);
+  const pop = h('div', { class: 'menu-pop', role: 'menu' },
+    h('div', { class: 'mp-head' }, h('b', {}, store.me.name), h('span', {}, store.me.isAdmin ? 'Admin' : 'Family')),
+    item('history', 'Edit history', () => go('#/history'), n ? h('span', { class: 'badge' }, String(n)) : null),
+    item('trash', 'Bin', () => go('#/bin')),
+    store.me.isAdmin ? item('settings', 'Settings', () => go('#/settings')) : null,
+    item('user', 'Change your name', profileMenu),
+    store.mode === 'demo' ? item('restore', 'Reset the sample', () => store.resetDemo()) : null,
+    store.mode === 'live' ? item('logout', 'Sign out of this device', async () => { if (await confirmBox('Sign out?', 'You will need the family passcode to come back in on this device.', 'Sign out')) { await store.signOut(); location.hash = '#/'; location.reload(); } }) : null);
+  document.body.append(pop);
+  const r = btn.getBoundingClientRect();
+  pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+  pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', outside, true));
+}
+
+function avatar() {
+  const n = unread().length;
+  const b = h('button', { class: 'avatar', type: 'button', 'aria-label': 'Menu: edit history, bin, settings, your name', onclick: (e) => avatarMenu(e.currentTarget) },
+    (store.me.name || '?').trim().charAt(0).toUpperCase(), n ? h('span', { class: 'avatar-dot', 'aria-hidden': 'true' }) : null);
+  return b;
 }
 
 function profileMenu() {
   const name = h('input', { value: store.me.name, maxlength: 60, autocomplete: 'name' });
   modal({
     title: 'Your name',
-    body: [field('This is how your changes are signed', name),
-      store.mode === 'live' ? h('button', { class: 'link-btn', type: 'button', onclick: async () => { if (await confirmBox('Sign out?', 'You will need the family passcode to come back in on this device.', 'Sign out')) { await store.signOut(); location.hash = '#/'; location.reload(); } } }, 'Sign out of this device') : null],
+    body: [field('This is how your changes are signed', name)],
     actions: [{ label: 'Save', onClick: async () => { const v = name.value.trim(); if (!v) return false; await store.rename(v); toast('Saved'); render(); } }]
   });
 }
@@ -71,152 +115,197 @@ function demoFlag() {
     h('button', { type: 'button', onclick: () => store.resetDemo() }, 'Reset the sample'));
 }
 
-/* ---------- Home ---------- */
-function archFor(w) {
-  const t = themeOf(w);
-  const isRose = t.deco === 'rose';
-  const days = daysUntil(w.wedding_date);
-  const plan = planOf(w);
-  const sprig = isRose ? 'assets/sprig_rose.svg' : 'assets/sprig_blue.svg';
-  const [a, b] = (w.monogram || '').split('&');
-  return h('a', { class: 'arch ' + (isRose ? 'rose' : 'blue'), href: '#/w/' + w.id, style: isRose ? null : null },
-    h('img', { class: 'deco', src: sprig, alt: '', 'aria-hidden': 'true', style: isRose ? { right: '-64px', top: '-30px', transform: 'rotate(32deg)' } : { left: '-64px', top: '-30px', transform: 'rotate(-32deg)' } }),
-    h('img', { class: 'deco', src: sprig, alt: '', 'aria-hidden': 'true', style: isRose ? { left: '-58px', bottom: '-36px', width: '180px', transform: 'scaleX(-1) rotate(8deg)' } : { right: '-58px', bottom: '-36px', width: '180px', transform: 'scaleX(-1) rotate(-8deg)' } }),
-    h('span', { class: 'swag', 'aria-hidden': 'true' }),
-    isRose
-      ? h('div', { class: 'mono' }, h('div', { class: 'seal' }, (a || '').trim(), h('span', { style: { fontSize: '17px', margin: '0 2px' } }, '&'), (b || '').trim()))
-      : h('div', { class: 'mono' }, h('img', { src: 'assets/wreath_blue.svg', alt: '' }), (a || '').trim(), h('span', { style: { fontSize: '18px', margin: '0 2px' } }, '&'), (b || '').trim()),
-    h('div', { class: 'couple', style: { color: t.accent } }, w.couple),
-    h('div', { class: 'when', style: { color: t.ink } }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date to be fixed')),
-    w.wedding_date && days !== null
-      ? h('div', { class: 'count' }, h('b', { style: { color: t.ink } }, String(Math.max(0, days))), h('span', { style: { color: t.muted } }, days === 0 ? 'today!' : days < 0 ? 'married!' : days === 1 ? 'day to go' : 'days to go'))
-      : h('div', {}, h('div', { class: 'tbd', style: { color: t.ink } }, 'Date to be fixed'), h('div', { class: 'muted', style: { fontSize: '14px' } }, 'The countdown starts once the date is set')),
-    plan.total ? h('div', { style: { width: '78%', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' } },
-      h('div', { style: { width: '100%', height: '6px', borderRadius: '6px', background: 'rgba(0,0,0,.07)', overflow: 'hidden' } }, h('div', { style: { width: plan.pct + '%', height: '100%', background: t.accent } })),
-      h('div', { class: 'muted', style: { fontSize: '14px' } }, `${plan.pct}% there`, plan.locked ? ` · ${plan.locked} locked` : '')) : null,
-    h('span', { class: 'btn', style: { background: t.accent, color: t.accentInk } }, `Open ${w.couple.split('&')[0].trim()}'s plan`, h('span', { 'aria-hidden': 'true' }, '→'))
-  );
+function frame() {
+  return [h('span', { class: 'frame f1', 'aria-hidden': 'true' }), h('span', { class: 'frame f2', 'aria-hidden': 'true' })];
 }
 
-function petals() {
-  const spec = [
-    ['22%', '18%', 14, 9, '#AFBEC8', 20, 0, 'l'], ['31%', '62%', 10, 7, '#C9D5DE', -30, -3, 'l'], ['12%', '40%', 8, 6, '#8F9EAF', 50, -6, 'l'],
-    ['24%', '22%', 14, 9, '#DCAFA6', -15, -2, 'r'], ['33%', '66%', 10, 7, '#E8C6BE', 35, -5, 'r'], ['13%', '44%', 8, 6, '#C9967F', -40, -7, 'r']
-  ];
-  return spec.map(([x, y, w, hh, c, r, d, side]) => h('span', {
-    class: 'petal', 'aria-hidden': 'true',
-    style: { [side === 'l' ? 'left' : 'right']: x, top: y, width: w + 'px', height: hh + 'px', background: c, animationDelay: d + 's', borderRadius: side === 'l' ? '60% 0 60% 0' : '0 60% 0 60%', '--r': r + 'deg' }
-  }));
+/* ---------- Landing ---------- */
+function renderLanding() {
+  const ws = weddings();
+  const names = ws.length ? ws.map(w => w.couple).join(' · ') : 'Charani & Adahrii · Elow & Maniziia';
+  return h('div', { class: 'landing' },
+    frame(),
+    h('img', { class: 'bq l', src: 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
+    h('img', { class: 'bq r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
+    h('div', { class: 'land-inner' },
+      h('div', { class: 'land-eyebrow' }, names),
+      h('h1', { class: 'foil' }, 'Our Family', h('br'), 'Wedding Plan'),
+      h('div', { class: 'flourish', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')),
+      h('p', { class: 'land-sub' }, 'Two weddings, one family, every plan in one place'),
+      h('a', { class: 'enter', href: '#/home' }, 'Step inside')));
+}
+
+/* ---------- Choose a wedding ---------- */
+function todayLabel() {
+  return new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function emblem(w) {
+  const t = themeOf(w);
+  const days = daysUntil(w.wedding_date);
+  const plan = planOf(w);
+  return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, style: { '--e-deep': t.deep, '--e-gold': t.gold } },
+    monogram(w, 'xl'),
+    h('span', { class: 'emb-name' }, w.couple),
+    h('span', { class: 'emb-date' }, w.wedding_date ? fancyDate(w.wedding_date) : `${w.date_note || 'Date'} · date to be fixed`),
+    h('span', { class: 'emb-meta' },
+      w.wedding_date && days !== null ? h('span', {}, h('b', {}, String(Math.max(0, days))), days === 0 ? ' today' : days < 0 ? ' married' : days === 1 ? ' day to go' : ' days to go') : null,
+      plan.total ? h('span', { class: 'emb-prog' }, h('i', { style: { width: plan.pct + '%' } })) : null,
+      plan.total ? h('span', {}, plan.pct + '% there') : null));
 }
 
 export function feedList(items, { compact = false } = {}) {
-  return h('ul', { class: 'feed' }, items.map(a => {
+  return h('ul', { class: 'feed' + (compact ? ' compact' : '') }, items.map(a => {
     const d = describe(a);
-    const unread = store.me && a.id > store.me.lastSeen && a.actor !== store.me.id;
-    return h('li', {}, h('a', { class: 'row' + (unread ? ' unread' : ''), href: linkFor(a) },
-      h('span', { class: 'dot ' + (a.wedding_id && wedding(a.wedding_id) ? a.wedding_id === 'elow' ? 'elow' : a.wedding_id === 'charani' ? 'charani' : 'none' : 'none'), style: dotStyle(a) }),
-      h('span', {}, h('strong', {}, a.actor_name || 'Someone'), ' ', d.text,
-        a.wedding_id && wedding(a.wedding_id) ? h('span', { class: 'muted' }, ' · ' + wedding(a.wedding_id).couple.split('&')[0].trim()) : null,
+    const isNew = store.me && a.id > store.me.lastSeen && a.actor !== store.me.id;
+    const w = a.wedding_id && wedding(a.wedding_id);
+    return h('li', {}, h('a', { class: 'row' + (isNew && !compact ? ' unread' : ''), href: linkFor(a) },
+      h('span', { class: 'dot', style: w ? { background: themeOf(w).accent } : null }),
+      h('span', { class: 'ftxt' }, h('strong', {}, a.actor_name || 'Someone'), ' ', d.text,
+        w ? h('span', { class: 'muted' }, ' · ' + firstName(w)) : null,
         !compact && d.changes.length ? h('span', { class: 'changes' }, d.changes) : null),
       h('span', { class: 'time' }, ago(a.created_at))));
   }));
 }
-function dotStyle(a) { const w = wedding(a.wedding_id); return w ? { background: themeOf(w).accent } : null; }
+
+function waitingDecisions() {
+  return live(store.rows('steps')).filter(s => s.gate && !s.locked_at && stepVisible(s) && wedding(s.wedding_id) && !wedding(s.wedding_id).deleted_at)
+    .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+}
+function comingUp() {
+  const steps = live(store.rows('steps')).filter(s => !s.locked_at && s.status !== 'done' && s.due && stepVisible(s)).map(s => ({ ...s, kind: 'step' }));
+  const todos = store.missing && store.missing.todos ? [] : live(store.rows('todos') || []).filter(t => t.status !== 'done' && t.due).map(t => ({ ...t, kind: 'todo' }));
+  return [...steps, ...todos].filter(x => wedding(x.wedding_id) && !wedding(x.wedding_id).deleted_at && daysUntil(x.due) <= 45).sort((a, b) => a.due.localeCompare(b.due));
+}
+const stepLink = (s) => s.kind === 'todo' ? `#/w/${s.wedding_id}/todo?focus=${s.id}` : `#/w/${s.wedding_id}?open=${s.id}`;
 
 function renderHome() {
+  applyTheme(null);
   const ws = weddings();
-  const unread = store.rows('activity').filter(a => store.me && a.id > store.me.lastSeen && a.actor !== store.me.id);
-  const recent = (unread.length ? unread : store.rows('activity')).slice(0, 5);
-  return h('div', {},
+  const fresh = unread();
+  const waiting = waitingDecisions();
+  const soon = comingUp();
+  const top = store.rows('activity')[0];
+
+  const changes = h('section', { class: 'hcard changes-card', 'aria-label': 'New since you last looked' },
+    fresh.length
+      ? [h('div', { class: 'hc-head' },
+          h('b', {}, `${fresh.length} new since you last looked`),
+          h('button', { type: 'button', class: 'gotit', onclick: async () => { await store.markSeen(top.id); toast('All caught up'); render(); } }, 'Got it')),
+        h('div', { class: 'hc-scroll' }, feedList(fresh.slice(0, 12), { compact: true }))]
+      : [h('div', { class: 'hc-head' }, h('b', {}, 'You’re all caught up')),
+        h('p', { class: 'muted hc-empty' }, 'Nothing new since you last looked. Changes other people make will appear here until you tap Got it.')],
+    h('a', { class: 'hc-foot', href: '#/history' }, 'Edit history →'));
+
+  const decide = h('section', { class: 'hcol', 'aria-label': 'Waiting on a decision' },
+    h('div', { class: 'hc-label' }, `Waiting on a decision · ${waiting.length}`),
+    waiting.length ? waiting.slice(0, 3).map(s => {
+      const a = store.find('areas', s.area_id); const w = wedding(s.wedding_id);
+      return h('a', { class: 'hrow', href: `#/w/${s.wedding_id}?open=${s.id}` }, h('b', {}, s.title), h('span', {}, `${firstName(w)} · ${a ? a.title : ''}${s.due ? ' · by ' + shortDate(s.due) : ''}`));
+    }) : h('p', { class: 'muted hc-empty' }, 'No open lock points. Mark a step as a lock point and it shows here until it’s locked.'),
+    waiting.length > 3 ? h('span', { class: 'hc-more' }, `+ ${waiting.length - 3} more`) : null);
+
+  const coming = h('section', { class: 'hcol', 'aria-label': 'Coming up' },
+    h('div', { class: 'hc-label' }, 'Coming up'),
+    soon.length ? soon.slice(0, 3).map(s => {
+      const w = wedding(s.wedding_id); const late = daysUntil(s.due) < 0;
+      return h('a', { class: 'hrow', href: stepLink(s) }, h('b', {}, s.title), h('span', { class: late ? 'late' : '' }, `${firstName(w)}${s.owner ? ' · ' + s.owner : ''} · ${late ? 'overdue since ' : ''}${shortDate(s.due)}`));
+    }) : h('p', { class: 'muted hc-empty' }, 'Nothing due in the next few weeks. Give steps a due date and they’ll appear here.'),
+    ws.length ? h('a', { class: 'hrow budget-link', href: `#/w/${(ws.find(w => w.theme === 'rose') || ws[0]).id}/budget` }, h('span', {}, 'Budgets'), h('span', {}, 'open →')) : null);
+
+  return h('div', { class: 'home' },
     demoFlag(),
-    topbar('home'),
-    h('header', { class: 'hero' },
-      h('div', { class: 'bloom l', 'aria-hidden': 'true' }), h('div', { class: 'bloom r', 'aria-hidden': 'true' }),
-      h('img', { class: 'sprig l', src: 'assets/sprig_blue.svg', alt: '', 'aria-hidden': 'true' }),
-      h('img', { class: 'sprig r', src: 'assets/sprig_rose.svg', alt: '', 'aria-hidden': 'true' }),
-      petals(),
-      h('div', { class: 'wrap' },
-        h('div', { class: 'hero-text' },
-          h('div', { class: 'eyebrow' }, 'Two weddings · one family'),
-          h('h1', {}, 'Our Family Wedding Plan'),
-          h('p', { class: 'lede' }, "Every plan, idea and sample for both weddings, in one place. Add what you find, tick off what's done, and see what changed while you were away.")),
-        h('div', { class: 'arches' }, ws.map(archFor)))),
-    h('section', { class: 'wrap' },
-      h('div', { class: 'panel' },
-        h('div', { class: 'panel-head' },
-          h('h2', {}, unread.length ? 'Since your last visit' : 'Latest changes'),
-          h('a', { href: '#/activity', style: { fontWeight: 500 } }, unread.length ? `See all ${unread.length} new →` : 'See all activity →')),
-        recent.length ? feedList(recent, { compact: true }) : h('p', { class: 'muted' }, 'Nothing has changed yet. Open a plan and add the first step or photo.'))),
-    h('footer', { class: 'wrap foot' },
-      h('span', {}, 'Removed something by mistake? Anyone can restore it from the ', h('a', { href: '#/bin' }, 'Bin'), '.'),
-      h('span', {}, 'Only the admin can delete permanently.')));
+    h('div', { class: 'home-stage' },
+      frame(),
+      h('img', { class: 'hb l', src: 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
+      h('img', { class: 'hb r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
+      h('header', { class: 'home-top' },
+        h('a', { class: 'brand', href: '#/' }, 'Our Family Wedding Plan'),
+        h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), avatar())),
+      h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
+        ws.length ? ws.flatMap((w, i) => i ? [h('span', { class: 'divider', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')), emblem(w)] : [emblem(w)])
+          : h('p', { class: 'muted' }, store.me.isAdmin ? h('span', {}, 'No weddings yet. ', h('a', { href: '#/settings' }, 'Add one in Settings')) : 'No weddings yet.')),
+      h('main', { class: 'home-row' }, changes, decide, coming)));
 }
 
 /* ---------- Wedding space ---------- */
-export function stepVisible(s) {
-  const a = store.find('areas', s.area_id);
-  if (!a || a.deleted_at) return false;
-  const st = store.find('stages', a.stage_id);
-  return !!(st && !st.deleted_at);
-}
+const TABS = [['plan', 'Plan', 'plan'], ['decide', 'Decide', 'decide'], ['board', 'Board', 'board'], ['budget', 'Budget', 'budget'], ['files', 'Files', 'folder']];
+const tabOf = (t) => (!t || t === 'todo') ? 'plan' : t;
 
-function renderSpace(id, tab, params) {
+function renderSpace(id, sub, params) {
   const w = wedding(id);
-  if (!w || w.deleted_at) return h('div', {}, topbar(), h('div', { class: 'wrap' }, h('p', {}, 'That wedding was not found. ', h('a', { href: '#/' }, 'Go home'))));
+  if (!w || w.deleted_at) { applyTheme(null); return h('div', { class: 'page' }, pageBar(), h('div', { class: 'wrap' }, h('p', {}, 'That wedding was not found. ', h('a', { href: '#/home' }, 'Go back')))); }
   const t = themeOf(w);
-  const root = h('div', { class: 'space' });
-  applyTheme(root, t);
+  applyTheme(t);
+  const tab = tabOf(sub);
   const days = daysUntil(w.wedding_date);
-  const [a, b] = (w.monogram || '').split('&');
-  const mono = t.deco === 'rose'
-    ? h('div', { class: 'mono', style: { width: '96px', height: '96px' } }, h('div', { class: 'seal', style: { width: '82px', height: '82px', fontSize: '24px', background: t.accent } }, (a || '').trim(), '&', (b || '').trim()))
-    : h('div', { class: 'mono', style: { width: '96px', height: '96px', fontSize: '26px', color: t.accent } }, h('img', { src: 'assets/wreath_blue.svg', alt: '' }), (a || '').trim(), h('span', { style: { fontSize: '16px', margin: '0 2px' } }, '&'), (b || '').trim());
-  const ribbon = t.deco === 'rose'
-    ? '<svg class="ribbon" viewBox="0 0 1200 28" preserveAspectRatio="none" aria-hidden="true"><path d="M0 4 Q 100 26 200 4 Q 300 26 400 4 Q 500 26 600 4 Q 700 26 800 4 Q 900 26 1000 4 Q 1100 26 1200 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>'
-    : '<svg class="ribbon" viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 12 C 150 2, 300 22, 450 12 S 750 2, 900 12 S 1100 20, 1200 10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+  const others = weddings().filter(x => x.id !== id);
+  const nWait = waitingDecisions().filter(s => s.wedding_id === id).length;
+  const when = w.wedding_date
+    ? `${new Date(w.wedding_date + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}${days !== null && days >= 0 ? ` · ${days} ${days === 1 ? 'day' : 'days'}` : ''}`
+    : `${w.date_note || 'Date'} · to be fixed`;
+  const link = (k) => '#/w/' + id + (k === 'plan' ? '' : '/' + k);
 
+  const root = h('div', { class: 'space deco-' + t.deco + (tab === 'board' ? ' on-board' : '') });
   root.append(
     demoFlag() || '',
-    h('div', { class: 'wrap topbar' },
-      h('a', { href: '#/', class: 'brand', style: { letterSpacing: '.02em', textTransform: 'none', fontFamily: 'var(--sans)', fontSize: '15px' } }, '← Home'),
-      h('div', { class: 'toggle', role: 'group', 'aria-label': 'Choose wedding' },
-        weddings().map(x => h('a', { href: '#/w/' + x.id + (['board', 'todo', 'files'].includes(tab) ? '/' + tab : ''), 'aria-current': x.id === id ? 'page' : null }, x.couple))),
-      h('nav', { class: 'topnav' },
-        h('a', { href: '#/activity' }, 'Activity', unreadCount() ? h('span', { class: 'badge' }, String(unreadCount())) : null),
-        h('a', { href: '#/bin' }, 'Bin'))),
-    h('div', { class: 'wrap space-head' },
-      mono,
-      h('div', { class: 'names' },
-        h('h1', {}, w.couple),
-        h('div', { class: 'when caps', style: { fontSize: '14px' } },
-          w.wedding_date ? `${fancyDate(w.wedding_date)}${days !== null && days >= 0 ? ` · ${days} ${days === 1 ? 'day' : 'days'} to go` : ''}` : `${w.date_note || 'Date'} · date to be fixed`,
-          store.me.isAdmin ? h('a', { href: '#/settings', class: 'pill', style: { letterSpacing: 0, textTransform: 'none', fontFamily: 'var(--sans)', textDecoration: 'none' } }, w.wedding_date ? 'Edit' : 'Set the date') : null)),
-      h('nav', { class: 'tabs', 'aria-label': 'Sections' },
-        h('a', { href: '#/w/' + id, 'aria-current': !['board', 'todo', 'files'].includes(tab) ? 'page' : null }, 'Pipeline'),
-        h('a', { href: '#/w/' + id + '/todo', 'aria-current': tab === 'todo' ? 'page' : null }, 'To-do'),
-        h('a', { href: '#/w/' + id + '/board', 'aria-current': tab === 'board' ? 'page' : null }, 'Mood board'),
-        h('a', { href: '#/w/' + id + '/files', 'aria-current': tab === 'files' ? 'page' : null }, 'Files'))),
-    h('div', { class: 'wrap', style: { color: t.light }, html: ribbon }));
+    h('header', { class: 'shead' },
+      h('div', { class: 'wrap shead-in' },
+        h('a', { href: '#/home', class: 'shead-mono', 'aria-label': 'Back to both weddings' }, monogram(w, 'sm')),
+        h('div', { class: 'shead-names' },
+          h('a', { href: link('plan'), class: 'shead-couple' }, w.couple),
+          h('span', { class: 'shead-sub' }, when,
+            others.length ? others.map(o => h('span', {}, ' · ', h('a', { href: '#/w/' + o.id + (sub && sub !== 'todo' ? '/' + sub : '') }, 'switch to ' + firstName(o)))) : null,
+            store.me.isAdmin && !w.wedding_date ? h('span', {}, ' · ', h('a', { href: '#/settings' }, 'set the date')) : null)),
+        h('nav', { class: 'snav', 'aria-label': 'Sections' }, TABS.map(([k, label, icon]) =>
+          h('a', { href: link(k), 'aria-current': tab === k ? 'page' : null },
+            h('span', { class: 'snav-ic', html: ICONS[icon] }), h('span', { class: 'snav-t' }, label),
+            k === 'decide' && nWait ? h('span', { class: 'nbadge' }, String(nWait)) : null))),
+        avatar())),
+    h('div', { class: 'shead-rule', 'aria-hidden': 'true' }),
+    h('img', { class: 'space-flora', src: t.deco === 'rose' ? 'assets/lush_rose.svg' : 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }));
 
-  const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap' });
+  const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap sbody' });
   root.append(body);
   if (tab === 'board') renderBoard(body, w, params);
-  else if (tab === 'todo') renderTodo(body, w, params);
+  else if (tab === 'decide') renderDecide(body, w, params);
+  else if (tab === 'budget') renderBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
+  else if (sub === 'todo') { renderPlanHead(body, w, 'todo'); renderTodo(body, w, params); }
   else renderPipeline(body, w, params);
+
+  if (params.open) {
+    const sid = params.open;
+    history.replaceState(null, '', location.pathname + location.search + '#/w/' + id + (sub ? '/' + sub : ''));
+    setTimeout(() => openStep(sid), 60);
+  }
   return root;
+}
+
+/* ---------- Family-wide pages ---------- */
+function pageBar() {
+  return h('header', { class: 'pbar' },
+    h('div', { class: 'wrap pbar-in' },
+      h('a', { class: 'brand', href: '#/home' }, h('span', { class: 'pbar-back', html: ICONS.back }), 'Our Family Wedding Plan'),
+      h('nav', { class: 'pnav', 'aria-label': 'Weddings' }, weddings().map(w => h('a', { href: '#/w/' + w.id, style: { color: themeOf(w).deep } }, w.couple))),
+      avatar()));
+}
+function familyPage(content) {
+  applyTheme(null);
+  return h('div', { class: 'page' }, demoFlag(), pageBar(), h('div', { class: 'shead-rule', 'aria-hidden': 'true' }), content);
 }
 
 /* ---------- Gate ---------- */
 function renderGate() {
+  applyTheme(null);
   const err = h('div', { class: 'err', role: 'alert' });
   const pass = h('input', { type: 'password', autocomplete: 'current-password', required: true });
   const name = h('input', { autocomplete: 'name', maxlength: 60, required: true, placeholder: 'e.g. Aunty Ela' });
-  const btn = h('button', { class: 'btn', type: 'submit', style: { background: '#4F6A84' } }, 'Come in');
+  const btn = h('button', { class: 'enter solid', type: 'submit' }, 'Come in');
   const form = h('form', {
     onsubmit: async (e) => {
       e.preventDefault(); err.textContent = ''; btn.disabled = true; btn.textContent = 'Checking…';
-      try { await store.join(pass.value, name.value.trim()); await boot(); }
+      try { await store.join(pass.value, name.value.trim()); location.hash = '#/home'; await boot(); }
       catch (x) { err.textContent = x.message; btn.disabled = false; btn.textContent = 'Come in'; }
     }
   }, field('Family passcode', pass), field('Your name', name, 'So everyone knows who added what.'), err, btn);
@@ -228,40 +317,46 @@ function renderGate() {
     hidden: true,
     onsubmit: async (e) => {
       e.preventDefault(); aErr.textContent = '';
-      try { await store.adminSignIn(email.value.trim(), pw.value); await boot(); }
+      try { await store.adminSignIn(email.value.trim(), pw.value); location.hash = '#/home'; await boot(); }
       catch (x) { aErr.textContent = x.message; }
     }
-  }, field('Admin email', email), field('Password', pw), aErr, h('button', { class: 'btn', type: 'submit', style: { background: '#2F2B2C' } }, 'Sign in as admin'));
+  }, field('Admin email', email), field('Password', pw), aErr, h('button', { class: 'enter solid', type: 'submit' }, 'Sign in as admin'));
 
-  return h('div', { class: 'gate' },
-    h('div', { class: 'hero', style: { position: 'absolute', inset: 0, padding: 0 } },
-      h('div', { class: 'bloom l' }), h('div', { class: 'bloom r' }),
-      h('img', { class: 'sprig l', src: 'assets/sprig_blue.svg', alt: '' }), h('img', { class: 'sprig r', src: 'assets/sprig_rose.svg', alt: '' })),
-    h('div', { class: 'card' },
-      h('div', { class: 'eyebrow' }, 'Two weddings · one family'),
-      h('h1', {}, 'Our Family Wedding Plan'),
-      h('p', { class: 'muted', style: { margin: 0 } }, 'Enter the family passcode to see and add to the plans.'),
+  return h('div', { class: 'landing gate-page' },
+    frame(),
+    h('img', { class: 'bq l', src: 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
+    h('img', { class: 'bq r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
+    h('div', { class: 'gate-card' },
+      h('div', { class: 'land-eyebrow' }, 'Family only'),
+      h('h1', { class: 'foil' }, 'Come inside'),
+      h('div', { class: 'flourish', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')),
+      h('p', { class: 'land-sub' }, 'Enter the family passcode to see and add to the plans.'),
       form,
-      h('button', { class: 'link-btn', type: 'button', style: { color: 'var(--muted)', fontSize: '14px' }, onclick: () => { adminForm.hidden = !adminForm.hidden; form.hidden = !adminForm.hidden ? true : false; } }, 'Admin sign-in'),
-      adminForm));
+      h('button', { class: 'link-btn gate-switch', type: 'button', onclick: (e) => { adminForm.hidden = !adminForm.hidden; form.hidden = !adminForm.hidden; e.currentTarget.textContent = adminForm.hidden ? 'Admin sign-in' : 'Family passcode instead'; } }, 'Admin sign-in'),
+      adminForm,
+      h('a', { class: 'gate-back', href: '#/' }, '← Back')));
 }
 
 /* ---------- Render loop ---------- */
 let pending = false;
 export function render() {
-  if (!store.me) { app.replaceChildren(renderGate()); return; }
   const { parts, params } = parseRoute();
-  let view; let key = parts.join('/');
+  const key = parts.join('/');
   document.title = 'Our Family Wedding Plan';
-  if (parts[0] === 'w') { view = renderSpace(parts[1], parts[2], params); const w = wedding(parts[1]); if (w) document.title = w.couple + ' · Family Wedding Plan'; }
-  else if (parts[0] === 'activity') view = h('div', {}, demoFlag(), topbar('activity'), renderActivity());
-  else if (parts[0] === 'bin') view = h('div', {}, demoFlag(), topbar('bin'), renderBin());
-  else if (parts[0] === 'settings') view = h('div', {}, demoFlag(), topbar('settings'), renderSettings());
+  let view;
+  if (!parts.length) { applyTheme(null); view = renderLanding(); }
+  else if (!store.me) view = renderGate();
+  else if (parts[0] === 'w') { view = renderSpace(parts[1], parts[2], params); const w = wedding(parts[1]); if (w) document.title = w.couple + ' · Family Wedding Plan'; }
+  else if (parts[0] === 'activity' || parts[0] === 'history') view = familyPage(renderActivity());
+  else if (parts[0] === 'bin') view = familyPage(renderBin());
+  else if (parts[0] === 'settings') view = familyPage(renderSettings());
   else view = renderHome();
+  document.body.dataset.page = !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   app.dataset.view = key;
   const boardView = $('.board-view');
   const boardScroll = boardView ? [boardView.scrollLeft, boardView.scrollTop] : null;
+  const pop = document.querySelector('.menu-pop'); if (pop) pop.remove();
   app.replaceChildren(view);
   window.scrollTo(0, keepScroll);
   const nb = $('.board-view');
@@ -276,26 +371,27 @@ function scheduleRender() {
   const tryRender = () => {
     const a = document.activeElement;
     const typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && app.contains(a);
-    if (ui.busy || typing || document.querySelector('.modal-wrap')) { setTimeout(tryRender, 600); return; }
+    if (ui.busy || typing || document.querySelector('.modal-wrap') || document.querySelector('.menu-pop')) { setTimeout(tryRender, 600); return; }
     pending = false; render();
   };
   requestAnimationFrame(tryRender);
 }
 
 async function boot() {
-  app.replaceChildren(h('div', { class: 'loading' }, 'Opening the plans…'));
+  const onLanding = !parseRoute().parts.length;
+  if (!onLanding) app.replaceChildren(h('div', { class: 'loading' }, 'Opening the plans…'));
   try {
     const state = await store.init();
     if (state !== 'ready') { render(); return; }
     await store.loadAll();
   } catch (e) {
     console.error(e);
-    app.replaceChildren(h('div', { class: 'gate' }, h('div', { class: 'card' }, h('h1', {}, 'Could not open the plans'), h('p', { class: 'muted' }, e.message || 'Check your internet connection and reload the page.'), h('button', { class: 'btn', onclick: () => location.reload() }, 'Try again'))));
+    app.replaceChildren(h('div', { class: 'landing' }, h('div', { class: 'gate-card' }, h('h1', { class: 'foil' }, 'Could not open the plans'), h('p', { class: 'land-sub' }, e.message || 'Check your internet connection and reload the page.'), h('button', { class: 'enter solid', onclick: () => location.reload() }, 'Try again'))));
     return;
   }
   render();
 }
 
 store.onChange(() => scheduleRender());
-window.addEventListener('hashchange', () => { if (!store.me) return; render(); });
+window.addEventListener('hashchange', () => { document.querySelectorAll('.modal-wrap').forEach(m => m.remove()); render(); });
 boot();

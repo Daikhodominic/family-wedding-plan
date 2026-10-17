@@ -1,6 +1,6 @@
 // The Files tab: every file and list for one wedding, in one place.
 import { store } from './store.js';
-import { h } from './ui.js';
+import { h, secHead } from './ui.js';
 import { render } from './app.js';
 import { fileTile, listRow, uploadTo, newList } from './panel.js';
 import { pickFiles } from './board.js';
@@ -24,10 +24,9 @@ export function renderFiles(root, w) {
   drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files.length) uploadTo(w.id, null, [...e.dataTransfer.files]); });
 
   root.append(h('div', { class: 'files-page' },
-    h('div', { class: 'pipeline-head', style: { marginBottom: 0 } }, h('h2', {}, 'Files and lists'),
-      h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } },
-        h('button', { class: 'btn', type: 'button', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(w.id, null, fs); } }, '+ Upload files'),
-        h('button', { class: 'btn ghost', type: 'button', onclick: () => newList(w.id, null) }, '+ New list'))),
+    secHead('Shared with the family', 'Files and lists',
+      h('button', { class: 'btn', type: 'button', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(w.id, null, fs); } }, '+ Upload files'),
+      h('button', { class: 'btn ghost', type: 'button', onclick: () => newList(w.id, null) }, '+ New list')),
     h('section', { class: 'panel' },
       h('div', { class: 'd-sec-h', style: { marginBottom: '6px' } }, h('h3', { class: 'serif', style: { margin: 0, fontWeight: 500, fontSize: '24px' } }, 'Lists'), h('span', { class: 'ft-sub' }, 'Guest lists, invitation lists, shopping lists — download any of them for Excel')),
       lists.length ? h('div', {}, lists.map(l => listRow(l, { showStep: true }))) : h('p', { class: 'muted', style: { margin: 0 } }, 'No lists yet. Start one with “New list”, or from a step in the pipeline.')),

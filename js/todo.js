@@ -39,7 +39,7 @@ export function renderTodo(root, w, params) {
   const soon = live(store.rows('steps')).filter(s => s.wedding_id === w.id && s.status !== 'done' && s.due && daysUntil(s.due) <= 14 && stepVisible(s)).sort((a, b) => a.due.localeCompare(b.due));
 
   root.append(
-    h('div', { class: 'pipeline-head' }, h('h2', {}, 'To-do list'), h('span', { class: 'muted', style: { fontSize: '14px' } }, openCount ? `${openCount} still to do` : 'All done')),
+    h('p', { class: 'hint' }, openCount ? `${openCount} still to do. Quick jobs that don’t need a place in the plan.` : 'All done. Add quick jobs that don’t need a place in the plan.'),
     h('div', { class: 'todo-grid' },
       h('div', { class: 'panel', style: { padding: '18px 20px' } },
         h('div', { class: 'add-line', style: { flexWrap: 'wrap', marginTop: 0 } }, input, who, due, h('button', { class: 'btn small', type: 'button', onclick: add }, 'Add')),

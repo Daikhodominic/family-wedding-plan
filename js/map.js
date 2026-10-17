@@ -31,22 +31,22 @@ export function planOf(w) {
   return { stages: out, total, complete, locked, pct: total ? Math.round(complete / total * 100) : 0, here };
 }
 
-// The journey bar: one segment per area, coloured by how far along it is.
+// The progress line: one slim segment per area, coloured by how far along it is.
 export function journeyBar(w, plan, { onPick } = {}) {
+  const hereArea = plan.stages.flatMap(st => st.areas).find(a => a.id === plan.here);
   return h('div', { class: 'journey' },
-    h('div', { class: 'journey-h' },
-      h('span', { class: 'journey-pct' }, plan.pct + '% there'),
-      h('span', { class: 'ft-sub' }, `${plan.complete} of ${plan.total} steps done or locked`, plan.locked ? h('span', { class: 'jlock' }, h('span', { html: lockIcon(14) }), ` ${plan.locked} locked`) : null)),
     h('div', { class: 'journey-track' }, plan.stages.map(st => h('div', { class: 'jstage', style: { flex: Math.max(1, st.areas.length) } },
-      h('div', { class: 'jstage-name' }, st.title),
       h('div', { class: 'jsegs' }, st.areas.length ? st.areas.map(a => h('button', {
         type: 'button', class: 'jseg ' + a.state + (plan.here === a.id ? ' here' : ''), title: `${a.title}: ${a.complete} of ${a.steps.length}`,
         'aria-label': `${a.title}, ${a.complete} of ${a.steps.length} done`, onclick: () => onPick && onPick(a.id)
       })) : h('span', { class: 'jseg empty' })),
-      h('div', { class: 'jlabels' }, st.areas.map(a => h('span', { class: plan.here === a.id ? 'here' : '' }, a.title + (plan.here === a.id ? ' ▲' : ''))))))),
-    h('div', { class: 'jlegend' },
-      h('span', {}, h('i', { class: 'jseg todo' }), 'Not started'), h('span', {}, h('i', { class: 'jseg doing' }), 'In progress'),
-      h('span', {}, h('i', { class: 'jseg done' }), 'Done'), h('span', {}, h('i', { class: 'jseg locked' }), 'Locked'), h('span', {}, '▲ You are here')));
+      h('div', { class: 'jstage-name' }, st.title)))),
+    h('div', { class: 'journey-sum' },
+      h('b', {}, plan.pct + '% there'),
+      hereArea ? h('span', {}, ' · you are here: ', h('b', { class: 'here-name' }, hereArea.title)) : plan.total ? h('span', {}, ' · everything is done') : h('span', {}, ' · no steps yet'),
+      plan.locked ? h('span', { class: 'jlock' }, h('span', { html: lockIcon(13) }), ` ${plan.locked} locked`) : null,
+      h('span', { class: 'jlegend' },
+        h('span', {}, h('i', { class: 'jseg doing' }), 'Underway'), h('span', {}, h('i', { class: 'jseg done' }), 'Done'), h('span', {}, h('i', { class: 'jseg locked' }), 'Locked'))));
 }
 
 // The map: stages left to right, areas as columns of numbered nodes, joined by lines.

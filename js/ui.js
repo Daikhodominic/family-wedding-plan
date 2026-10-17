@@ -176,6 +176,11 @@ export async function copyText(text) {
   catch (e) { toast('Could not copy — press and hold to copy instead'); }
 }
 
+// Section heading used across the wedding pages: small caps eyebrow, serif title, optional controls.
+export function secHead(eyebrow, title, ...right) {
+  return h('div', { class: 'plan-head' }, h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, eyebrow), h('h1', {}, title)), right.length ? h('div', { class: 'ph-right' }, right) : null);
+}
+
 /* ---------- Icons (inline stroke SVG) ---------- */
 const sv = (p, extra = '') => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${p}</svg>`;
 export const ICONS = {
@@ -201,5 +206,14 @@ export const ICONS = {
   zoomOut: sv('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.3-4.3M8 11h6"/>'),
   external: sv('<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>'),
   settings: sv('<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/>'),
-  back: sv('<path d="M15 5l-7 7 7 7"/>')
+  back: sv('<path d="M15 5l-7 7 7 7"/>'),
+  plan: sv('<path d="M5 6h14M5 12h14M5 18h9"/><circle cx="19" cy="18" r="1.4" fill="currentColor"/>'),
+  decide: sv('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
+  board: sv('<rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>'),
+  budget: sv('<path d="M7 5h10M7 9.5h10M10 5c3.5 0 5 2 5 4.5S13 14 10 14H7l7 6"/>'),
+  folder: sv('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+  history: sv('<path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5"/><path d="M4 4v4.5h4.5M12 8v4.5l3 2"/>'),
+  user: sv('<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/>'),
+  logout: sv('<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>'),
+  lock: sv('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>')
 };

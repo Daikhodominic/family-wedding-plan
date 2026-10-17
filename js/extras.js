@@ -103,7 +103,7 @@ export function renderActivity() {
   const top = all[0];
   if (top) setTimeout(() => store.markSeen(top.id), 1500);
   return h('main', { class: 'wrap', style: { paddingBottom: '60px' } },
-    h('h1', { class: 'page-title' }, 'Activity'),
+    h('div', { class: 'eyebrow' }, 'Both weddings'), h('h1', { class: 'page-title' }, 'Edit history'),
     h('p', { class: 'muted', style: { margin: 0 } }, newCount ? `${newCount} new since your last visit, highlighted below. Tap any change to see it.` : 'Every change across both weddings. Tap any change to see it.'),
     h('div', { class: 'filters', role: 'group', 'aria-label': 'Filter' },
       [['all', 'Both weddings'], ...weddings().map(w => [w.id, w.couple])].map(([k, l]) =>
@@ -154,7 +154,7 @@ export function renderBin() {
     }
   }, 'Empty the Bin') : null;
   return h('main', { class: 'wrap', style: { paddingBottom: '60px' } },
-    h('div', { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: '10px' } }, h('h1', { class: 'page-title' }, 'Bin'), emptyAll),
+    h('div', { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: '10px' } }, h('div', {}, h('div', { class: 'eyebrow' }, 'Anyone can restore'), h('h1', { class: 'page-title' }, 'Bin')), emptyAll),
     h('p', { class: 'muted', style: { marginTop: 0 } }, store.me.isAdmin ? 'Anyone can restore things from here. Only you, as admin, can delete them for good.' : 'Anything removed waits here. Anyone can restore it; only the admin can delete it for good.'),
     list);
 }
@@ -280,7 +280,7 @@ export function renderSettings() {
       }, 'Remove')))));
 
   return h('main', { class: 'wrap', style: { paddingBottom: '60px' } },
-    h('h1', { class: 'page-title' }, 'Settings'),
+    h('div', { class: 'eyebrow' }, 'Admin only'), h('h1', { class: 'page-title' }, 'Settings'),
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Only you can see this page.'),
     h('div', { class: 'settings-grid' }, cards),
     h('div', { class: 'settings-grid' }, pass, people));

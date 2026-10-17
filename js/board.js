@@ -481,7 +481,7 @@ export function renderBoard(root, w, params) {
     if (!sel) return;
     store.update('board_items', sel.id, { data: { ...sel.data, ...patch } }).catch(fail);
   };
-  const drawBar = h('div', { class: 'drawbar', role: 'toolbar', 'aria-label': 'Drawing and zoom' },
+  const drawBar = h('div', { class: 'drawbar palette', role: 'toolbar', 'aria-label': 'Drawing tools' },
     h('div', { class: 'seg' }, DRAW_TOOLS.map(([k, label, p]) => h('button', { type: 'button', class: 'dt' + (board.tool === k ? ' on' : ''), title: label, 'aria-label': label, 'aria-pressed': String(board.tool === k), html: drawIcon(p), onclick: () => setTool(k) }))),
     h('div', { class: 'seg' }, COLORS.map(c => h('button', {
       type: 'button', class: 'swatch' + (((sel && sel.data.color) || board.color) === c ? ' on' : ''), style: { background: c }, 'aria-label': 'Colour ' + c,
@@ -491,16 +491,19 @@ export function renderBoard(root, w, params) {
       type: 'button', class: 'dt' + (((sel && sel.data.size) || board.size) === sz ? ' on' : ''), 'aria-label': ['Thin', 'Medium', 'Thick'][sz - 1], title: ['Thin', 'Medium', 'Thick'][sz - 1],
       html: `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="${SIZES[sz]}"/></svg>`,
       onclick: () => { board.size = sz; if (sel) restyle({ size: sz }); else render(); }
-    }))),
-    sel ? h('div', { class: 'seg' },
-      sel.kind === 'connector' || (sel.data && (sel.data.shape === 'line' || sel.data.shape === 'arrow'))
-        ? h('button', { type: 'button', class: 'dt wide', onclick: () => sel.kind === 'connector' ? restyle({ arrow: sel.data.arrow === false }) : restyle({ shape: sel.data.shape === 'arrow' ? 'line' : 'arrow' }) }, (sel.kind === 'connector' ? sel.data.arrow !== false : sel.data.shape === 'arrow') ? 'Remove arrowhead' : 'Add arrowhead') : null,
-      h('button', { type: 'button', class: 'dt wide danger', onclick: () => { const id = sel.id; board.selected = null; store.remove('board_items', id).then(() => toast('Moved to the Bin')).catch(fail); } }, 'Delete')) : null,
-    h('div', { class: 'seg zoomseg' },
-      h('button', { type: 'button', class: 'dt', 'aria-label': 'Zoom out', html: ICONS.zoomOut, onclick: () => setZoom(board.zoom / 1.25) }), zl,
-      h('button', { type: 'button', class: 'dt', 'aria-label': 'Zoom in', html: ICONS.zoomIn, onclick: () => setZoom(board.zoom * 1.25) }),
-      h('button', { type: 'button', class: 'dt wide', onclick: fit, title: 'Zoom to show everything' }, 'Fit'),
-      h('button', { type: 'button', class: 'dt wide', onclick: () => { board.full = !board.full; render(); } }, board.full ? 'Exit full screen' : 'Full screen')));
+    }))));
+  const selBar = sel ? h('div', { class: 'selbar', role: 'toolbar', 'aria-label': 'Selected drawing' },
+    sel.kind === 'connector' || (sel.data && (sel.data.shape === 'line' || sel.data.shape === 'arrow'))
+      ? h('button', { type: 'button', class: 'dt wide', onclick: () => sel.kind === 'connector' ? restyle({ arrow: sel.data.arrow === false }) : restyle({ shape: sel.data.shape === 'arrow' ? 'line' : 'arrow' }) }, (sel.kind === 'connector' ? sel.data.arrow !== false : sel.data.shape === 'arrow') ? 'Remove arrowhead' : 'Add arrowhead') : null,
+    h('button', { type: 'button', class: 'dt wide danger', onclick: () => { const id = sel.id; board.selected = null; store.remove('board_items', id).then(() => toast('Moved to the Bin')).catch(fail); } }, 'Delete')) : null;
+  const zoomBar = h('div', { class: 'zoompill', role: 'toolbar', 'aria-label': 'Zoom' },
+    h('button', { type: 'button', class: 'dt', 'aria-label': 'Zoom out', html: ICONS.zoomOut, onclick: () => setZoom(board.zoom / 1.25) }), zl,
+    h('button', { type: 'button', class: 'dt', 'aria-label': 'Zoom in', html: ICONS.zoomIn, onclick: () => setZoom(board.zoom * 1.25) }),
+    h('button', { type: 'button', class: 'dt wide', onclick: fit, title: 'Zoom to show everything' }, 'Fit'),
+    h('button', { type: 'button', class: 'dt wide', onclick: () => { board.full = !board.full; render(); } }, board.full ? 'Exit full screen' : 'Full screen'));
+  const addMenu = h('div', { class: 'addmenu', hidden: true, onclick: (e) => { if (e.target.closest('button')) addMenu.hidden = true; } }, h('div', { class: 'am-h' }, 'Add to the board'), addBar);
+  const fab = h('button', { type: 'button', class: 'fab', 'aria-label': 'Add to the board', 'aria-expanded': 'false', html: ICONS.plus,
+    onclick: () => { addMenu.hidden = !addMenu.hidden; fab.setAttribute('aria-expanded', String(!addMenu.hidden)); } });
 
   const hint = {
     select: 'Drag empty space to move around · pinch or Ctrl + scroll to zoom · tap a drawing to select it',
@@ -512,10 +515,10 @@ export function renderBoard(root, w, params) {
   const wrapCls = 'board-shell' + (board.full ? ' full' : '');
   root.append(h('div', { class: wrapCls },
     h('div', { class: 'wrap' },
-      h('div', { class: 'board-bar' }, h('h2', {}, 'Mood board'), addBar),
-      drawBar,
-      h('p', { class: 'board-hint' }, hint)),
-    h('div', { class: 'wrap board-holder' }, view)));
+      h('div', { class: 'plan-head board-bar' },
+        h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
+        h('p', { class: 'board-hint' }, hint))),
+    h('div', { class: 'wrap board-holder' }, view, drawBar, selBar, zoomBar, fab, addMenu)));
 
   /* --- pointer handling: pan, pinch, draw, select, connect --- */
   const pointers = new Map();

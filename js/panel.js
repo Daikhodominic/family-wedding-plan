@@ -204,7 +204,7 @@ export function openStep(stepId) {
           note.advance ? [h('dt', {}, 'Advance paid'), h('dd', {}, '₹ ' + note.advance)] : null,
           note.notes ? [h('dt', {}, 'Notes'), h('dd', {}, note.notes)] : null),
         store.me.isAdmin
-          ? h('button', { type: 'button', class: 'btn ghost small', onclick: async () => { if (await confirmBox('Unlock this?', 'It can be edited and changed again. The unlock is recorded in Activity.', 'Unlock', '')) set({ locked_at: null, lock_note: note }); } }, 'Unlock')
+          ? h('button', { type: 'button', class: 'btn ghost small', onclick: async () => { if (await confirmBox('Unlock this?', 'It can be edited and changed again. The unlock is recorded in the edit history.', 'Unlock', '')) set({ locked_at: null, lock_note: note }); } }, 'Unlock')
           : h('div', { class: 'ft-sub' }, 'Only the admin can unlock this.'));
     } else if (lockForm) {
       const wWith = h('input', { placeholder: 'Vendor, venue or person', value: note.with || '' });
@@ -215,12 +215,12 @@ export function openStep(stepId) {
         h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(20) }), h('b', {}, 'Lock this decision')),
         h('div', { class: 'form-grid' }, h('div', { class: 'full' }, field('Who or what it’s with', wWith)), field('Amount (₹)', wAmt), field('Advance paid (₹)', wAdv), h('div', { class: 'full' }, field('Notes', wNotes))),
         h('div', { style: { display: 'flex', gap: '8px', marginTop: '10px' } },
-          h('button', { type: 'button', class: 'btn', style: { background: '#B07D12' }, onclick: () => { lockForm = false; set({ locked_at: new Date().toISOString(), status: 'done', lock_note: { with: wWith.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value } }); toast('Locked'); } }, 'Lock it'),
+          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = false; set({ locked_at: new Date().toISOString(), status: 'done', lock_note: { with: wWith.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value } }); toast('Locked'); } }, 'Lock it'),
           h('button', { type: 'button', class: 'btn ghost', onclick: () => { lockForm = false; draw(); } }, 'Cancel')));
     } else {
       lockBlock = h('div', { class: 'd-lock' },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
-          h('button', { type: 'button', class: 'btn', style: { background: '#B07D12' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Lock this decision'),
+          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Lock this decision'),
           h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Lock point')),
         h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Lock it once it’s confirmed, like a vendor booked or a menu agreed. A lock point is a key decision, shown as a gold gate on the map.'));
     }
