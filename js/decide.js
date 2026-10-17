@@ -1,8 +1,10 @@
 // Decide and Budget pages. Both read the same data as the plan, so they update live.
-import { store } from './store.js?v=13';
-import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=13';
-import { live, stepVisible } from './app.js?v=13';
-import { openStep, lockIcon } from './panel.js?v=13';
+import { store } from './store.js?v=14';
+import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=14';
+import { live, stepVisible } from './app.js?v=14';
+import { openStep, lockIcon } from './panel.js?v=14';
+import { cardsForStep } from './decisions.js?v=14';
+import { voteCounts, optionKey } from './feedback.js?v=14';
 
 const where = (s) => {
   const a = store.find('areas', s.area_id); const st = a && store.find('stages', a.stage_id);
@@ -27,6 +29,8 @@ export function renderDecide(root, w) {
       h('span', { class: 'dc-meta' },
         [s.owner ? 'With ' + s.owner : null, s.due ? (late ? 'overdue since ' : 'decide by ') + shortDate(s.due) : null, n ? n + ' attached' : null].filter(Boolean).join(' · ') || 'Nobody assigned yet'),
       s.notes ? h('span', { class: 'dc-notes' }, s.notes.length > 140 ? s.notes.slice(0, 138) + '…' : s.notes) : null,
+      (() => { const c = cardsForStep(s.id).find(x => x.kind === 'compare'); if (!c) return null; const os = c.data.options || [];
+        return h('span', { class: 'dc-votes' }, os.map((o, i) => { const v = voteCounts(c, optionKey(o, i)); return h('span', {}, `${o.title || String.fromCharCode(65 + i)}: ▲${v.up.length} ▼${v.down.length}`); })); })(),
       h('span', { class: 'dc-go' }, 'Open the decision →'));
   };
 

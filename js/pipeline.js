@@ -1,9 +1,10 @@
-import { store } from './store.js?v=13';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=13';
-import { live, ui, render } from './app.js?v=13';
-import { openStep, lockIcon } from './panel.js?v=13';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=13';
-import { personInput } from './tools.js?v=13';
+import { store } from './store.js?v=14';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=14';
+import { live, ui, render } from './app.js?v=14';
+import { openStep, lockIcon } from './panel.js?v=14';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=14';
+import { personInput } from './tools.js?v=14';
+import { openIdeas, sectionFor } from './decisions.js?v=14';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -227,6 +228,7 @@ function areaEl(a, steps, w) {
     h('div', { class: 'area-h' },
       h('button', { class: 'icon-btn grip area-grip', type: 'button', 'aria-label': 'Drag to move area', html: ICONS.grip }),
       h('h4', { onclick: () => renameBox('Rename area', a.title, v => store.update('areas', a.id, { title: v })) }, a.title),
+      h('button', { type: 'button', class: 'ideas-link' + (sectionFor(a.id) ? ' has' : ''), title: 'See the mood board ideas for ' + a.title, onclick: () => openIdeas(w, a) }, 'Ideas'),
       h('span', { class: 'meta' }, steps.length ? `${done} of ${steps.length}` : ''),
       menu({
         title: a.title, list: [

@@ -1,13 +1,13 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=13';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=13';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=13';
-import { openStep, lockIcon } from './panel.js?v=13';
-import { planOf, journeyBar } from './map.js?v=13';
-import { listSummary } from './lists.js?v=13';
-import { budgetMath, inr } from './budget.js?v=13';
-import { editStep } from './pipeline.js?v=13';
-import { canonical } from './myjobs.js?v=13';
+import { store } from './store.js?v=14';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=14';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=14';
+import { openStep, lockIcon } from './panel.js?v=14';
+import { planOf, journeyBar } from './map.js?v=14';
+import { listSummary } from './lists.js?v=14';
+import { budgetMath, inr } from './budget.js?v=14';
+import { editStep } from './pipeline.js?v=14';
+import { canonical } from './myjobs.js?v=14';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;

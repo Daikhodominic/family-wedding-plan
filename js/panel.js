@@ -1,8 +1,10 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=13';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=13';
-import { uploadFile, pickFiles } from './board.js?v=13';
-import { isDecider, deciderNames, personInput } from './tools.js?v=13';
+import { store } from './store.js?v=14';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=14';
+import { uploadFile, pickFiles } from './board.js?v=14';
+import { isDecider, deciderNames, personInput } from './tools.js?v=14';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal } from './decisions.js?v=14';
+import { voteCounts, optionKey } from './feedback.js?v=14';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -10,6 +12,8 @@ export const LIST_TEMPLATES = {
   gifts: { title: 'Gifts', columns: ['Gift', 'For whom', 'Bought', 'Price (₹)', 'Packed', 'Notes'], blurb: 'Gifts to buy, wrap and hand over' },
   vehicles: { title: 'Vehicles & drivers', columns: ['Vehicle', 'Driver', 'Phone', 'Seats', 'Pick-up / route', 'Time', 'Notes'], blurb: 'Cars, drivers and who goes where, when' },
   songs: { title: 'Songs & performances', columns: ['Song / item', 'By whom', 'When', 'Length', 'Ready', 'Notes'], blurb: 'Hymns, specials, choir items, speeches and dances' },
+  vendors: { title: 'Vendors', columns: ['Vendor', 'For', 'Phone', 'Rate', 'Booked', 'Notes'], blurb: 'Caterer, decorator, florist, photographer — fills in as decisions become final' },
+  runsheet: { title: 'Day-of run sheet', columns: ['Time', 'What', 'Who', 'Where', 'Done'], blurb: 'The wedding day hour by hour — shows in final-week mode' },
   invite: { title: 'Invitation list', columns: ['Name', 'Address', 'Phone', 'Card sent', 'Notes'], blurb: 'Who gets a card and whether it has gone out' },
   shopping: { title: 'Shopping list', columns: ['Item', 'Qty', 'Price (₹)', 'Bought', 'Notes'], blurb: 'Things to buy, how many and what they cost' },
   blank: { title: 'New list', columns: ['Name', 'Notes'], blurb: 'Start with two columns and make your own' }
@@ -141,6 +145,7 @@ export function openStep(stepId) {
         h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(22) }), h('b', {}, 'Final'), h('span', { class: 'ft-sub' }, `by ${store.memberName(s.locked_by) || 'someone'} · ${longDate(String(s.locked_at).slice(0, 10))}`)),
         h('dl', { class: 'd-dl' },
           note.with ? [h('dt', {}, 'With'), h('dd', {}, note.with)] : null,
+          note.phone ? [h('dt', {}, 'Phone'), h('dd', {}, h('a', { href: 'tel:' + note.phone.replace(/[^\d+]/g, '') }, note.phone))] : null,
           note.amount ? [h('dt', {}, 'Amount'), h('dd', {}, '₹ ' + note.amount)] : null,
           note.advance ? [h('dt', {}, 'Advance paid'), h('dd', {}, '₹ ' + note.advance)] : null,
           note.notes ? [h('dt', {}, 'Notes'), h('dd', {}, note.notes)] : null),
@@ -151,12 +156,13 @@ export function openStep(stepId) {
       const wWith = h('input', { placeholder: 'Vendor, venue or person', value: note.with || '' });
       const wAmt = h('input', { placeholder: 'e.g. 85000', inputmode: 'decimal', value: note.amount || '' });
       const wAdv = h('input', { placeholder: 'e.g. 20000', inputmode: 'decimal', value: note.advance || '' });
+      const wPhone = h('input', { type: 'tel', placeholder: 'Their phone number', value: note.phone || '' });
       const wNotes = h('textarea', { rows: 2, placeholder: 'Anything to remember about this deal' }); wNotes.value = note.notes || '';
       lockBlock = h('div', { class: 'd-lock' },
         h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(20) }), h('b', {}, 'Make this decision final')),
-        h('div', { class: 'form-grid' }, h('div', { class: 'full' }, field('Who or what it’s with', wWith)), field('Amount (₹)', wAmt), field('Advance paid (₹)', wAdv), h('div', { class: 'full' }, field('Notes', wNotes))),
+        h('div', { class: 'form-grid' }, field('Who or what it’s with', wWith), field('Phone', wPhone), field('Amount (₹)', wAmt), field('Advance paid (₹)', wAdv), h('div', { class: 'full' }, field('Notes', wNotes))),
         h('div', { style: { display: 'flex', gap: '8px', marginTop: '10px' } },
-          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = false; set({ locked_at: new Date().toISOString(), status: 'done', lock_note: { with: wWith.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value } }); toast('Final ✓'); } }, 'Make it final'),
+          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: async () => { lockForm = false; const ln = { ...note, with: wWith.value.trim(), vendor: wWith.value.trim(), phone: wPhone.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value }; await store.update('steps', s.id, { locked_at: new Date().toISOString(), status: 'done', lock_note: ln }).then(() => afterFinal(s, ln)).then(() => toast('Final ✓ — vendor saved, balance reminder added if anything is owed')).catch(fail); } }, 'Make it final'),
           h('button', { type: 'button', class: 'btn ghost', onclick: () => { lockForm = false; draw(); } }, 'Cancel')));
     } else {
       lockBlock = h('div', { class: 'd-lock' },
@@ -185,6 +191,7 @@ export function openStep(stepId) {
         lockBlock,
         h('div', { class: 'form-grid' }, field('Person in charge', owner), field('Due by', due)),
         field('Notes', notes),
+        boardSection(s, area),
         h('section', { class: 'd-sec' },
           h('div', { class: 'd-sec-h' }, h('h3', {}, 'Files'), missing.files ? null : h('button', { type: 'button', class: 'btn small soft', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(s.wedding_id, s.id, fs); } }, '+ Upload')),
           missing.files ? h('div', { class: 'ft-sub' }, 'Files need database update 4.') : dropZone),
@@ -212,6 +219,32 @@ export function openStep(stepId) {
   }
   current = { close, root };
   draw();
+}
+
+// Ideas pinned from the mood board, and the comparison that decides this step.
+function thumb(path) { const im = h('img', { alt: '', loading: 'lazy' }); if (path) store.url(path).then(u => { if (u) im.src = u; }); return im; }
+function boardSection(s, area) {
+  const cards = cardsForStep(s.id);
+  const w = store.find('weddings', s.wedding_id);
+  const compare = cards.find(c => c.kind === 'compare');
+  const others = cards.filter(c => c !== compare);
+  const pic = (c) => { const d = c.data || {}; return c.kind === 'image' ? d.path : c.kind === 'gallery' && d.images && d.images[0] ? d.images[0].path : d.thumb || null; };
+  return h('section', { class: 'd-sec' },
+    h('div', { class: 'd-sec-h' }, h('h3', {}, 'From the board'),
+      area ? h('button', { type: 'button', class: 'btn small soft', onclick: () => { if (current) current.close(); openIdeas(w, area); } }, 'See ideas') : null),
+    compare ? h('div', { class: 'd-compare' },
+      h('div', { class: 'ft-sub' }, 'Decided by: ' + cardTitle(compare)),
+      h('div', { class: 'dc-opts' }, (compare.data.options || []).map((o, i) => {
+        const v = voteCounts(compare, optionKey(o, i));
+        return h('div', { class: 'dc-opt' + (o.chosen ? ' chosen' : '') },
+          o.image ? thumb(o.image) : h('span', { class: 'dc-noimg' }),
+          h('b', {}, o.title || 'Option ' + String.fromCharCode(65 + i)),
+          h('span', { class: 'ft-sub' }, [o.rate ? '₹ ' + o.rate : null, `▲ ${v.up.length} · ▼ ${v.down.length}`].filter(Boolean).join(' · ')),
+          o.chosen ? h('span', { class: 'chip lockchip' }, '✓ Chosen') : isDecider() && !s.locked_at ? h('button', { type: 'button', class: 'pill', onclick: () => chooseOption(compare, i) }, 'Choose this') : null);
+      }))) : null,
+    others.length ? h('div', { class: 'd-pins' }, others.map(c => h('a', { class: 'd-pin', href: `#/w/${c.wedding_id}/board?focus=${c.id}`, onclick: () => { if (current) current.close(); } },
+      pic(c) ? thumb(pic(c)) : h('span', { class: 'd-pin-k' }, c.kind), h('span', {}, cardTitle(c))))) : null,
+    !cards.length ? h('div', { class: 'ft-sub' }, 'Nothing pinned yet. On the board, tap ⋯ on a card → “Pin to a step” to show it here. Pin a comparison and choosing an option makes this step final.') : null);
 }
 
 export function lockIcon(size = 16) {

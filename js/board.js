@@ -1,9 +1,10 @@
-import { store } from './store.js?v=13';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=13';
-import { live, ui, render } from './app.js?v=13';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=13';
-import { together } from './history.js?v=13';
-import { isDecider } from './tools.js?v=13';
+import { store } from './store.js?v=14';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=14';
+import { live, ui, render } from './app.js?v=14';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=14';
+import { together } from './history.js?v=14';
+import { isDecider } from './tools.js?v=14';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=14';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -387,10 +388,7 @@ function cardBody(item) {
       const scores = opts.map((o, i) => { const v = voteCounts(item, optionKey(o, i)); return v.up.length - v.down.length; });
       const top = Math.max(0, ...scores);
       const leader = top > 0 && scores.filter(x => x === top).length === 1 ? scores.indexOf(top) : -1;
-      const choose = (i) => {
-        const next = opts.map((o, j) => ({ ...o, chosen: j === i ? !o.chosen : false }));
-        store.update('board_items', item.id, { data: { ...d, options: next } }).catch(fail);
-      };
+      const choose = (i) => chooseOption(item, i);
       return h('div', { class: 'body' },
         h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'baseline' } },
           h('div', { class: 'ttl' }, d.title || 'Comparison'), h('span', { class: 'by' }, opts.length + (opts.length === 1 ? ' option' : ' options'))),
@@ -440,18 +438,23 @@ function cardBody(item) {
 function cardEl(item, w, onMove) {
   const d = item.data || {};
   const tint = item.kind === 'note' ? ' ' + (d.tint || 'yellow') : '';
-  const card = h('article', { class: 'card ' + item.kind + tint + (board.multi.has(item.id) ? ' picked' : ''), dataset: { id: item.id }, style: { left: item.x + 'px', top: item.y + 'px', width: (item.w || (KIND[item.kind] || { w: 260 }).w) + 'px', zIndex: item.z || 1 } });
+  const st = (item.data && item.data.status) || '';
+  const card = h('article', { class: 'card ' + item.kind + tint + (board.multi.has(item.id) ? ' picked' : '') + (st ? ' st-' + st : ''), dataset: { id: item.id }, style: { left: item.x + 'px', top: item.y + 'px', width: (item.w || (KIND[item.kind] || { w: 260 }).w) + 'px', zIndex: item.z || 1 } });
   const handle = h('div', { class: 'handle', title: 'Drag to move' },
     h('span', { class: 'kind' }, KIND[item.kind] ? KIND[item.kind].label : ''),
     board.multi.has(item.id) ? h('span', { class: 'pick-tick', 'aria-label': 'Selected', html: ICONS.check }) : null,
     h('button', { type: 'button', 'aria-label': 'Edit', html: ICONS.edit, onclick: (e) => { e.stopPropagation(); editItem(item, w); } }),
+    h('button', { type: 'button', 'aria-label': 'More: status, pin to a step, make a job, share', title: 'Status, pin to a step, make a job, share', html: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></svg>', onclick: (e) => { e.stopPropagation(); cardMenu(item, w, cardExtras(item, w)); } }),
     h('button', {
       type: 'button', 'aria-label': 'Move to Bin', html: ICONS.trash, onclick: (e) => {
         e.stopPropagation();
         store.remove('board_items', item.id).then(() => toast('Moved to the Bin — restore it from there anytime')).catch(fail);
       }
     }));
+  if (st === 'chosen') card.append(h('span', { class: 'ribbon-chosen' }, '✓ Chosen'));
   card.append(handle, ...[].concat(cardBody(item)).filter(Boolean));
+  const meta = cardMeta(item);
+  if (meta) card.append(meta);
   if (item.kind !== 'label') { card.append(cardFooter(item)); if (newCount(item.id)) card.classList.add('has-new'); }
   const rz = h('span', { class: 'resize', 'aria-hidden': 'true' });
   card.append(rz);
@@ -459,6 +462,19 @@ function cardEl(item, w, onMove) {
   dragify(card, rz, item, w, 'resize', onMove);
   return card;
 }
+
+function cardMeta(item) {
+  const d = item.data || {};
+  const tags = [];
+  if (d.status && d.status !== 'chosen') tags.push(h('span', { class: 'ctag st' }, STATUS[d.status] || d.status));
+  if (d.step_id) { const s = store.find('steps', d.step_id); if (s && !s.deleted_at) tags.push(h('a', { class: 'ctag step' + (s.locked_at ? ' final' : ''), href: `#/w/${item.wedding_id}/plan?open=${s.id}`, title: 'Open this step in the plan' }, (s.locked_at ? '✓ ' : 'For: ') + s.title)); }
+  if (d.job_id) { const j = store.find('todos', d.job_id); if (j && !j.deleted_at) tags.push(h('a', { class: 'ctag job' + (j.status === 'done' ? ' done' : ''), href: `#/w/${item.wedding_id}/todo?focus=${j.id}` }, (j.status === 'done' ? '✓ Job done' : 'Job') + (j.owner ? ' · ' + j.owner : ''))); }
+  if (item.kind === 'label' && d.area_id) { const a = store.find('areas', d.area_id); if (a && !a.deleted_at) tags.push(h('a', { class: 'ctag step', href: `#/w/${item.wedding_id}/plan?focus=${a.id}` }, 'Plan: ' + a.title)); }
+  return tags.length ? h('div', { class: 'cmeta' }, tags) : null;
+}
+// Extra menu items for some card types (filled in by later features).
+const cardExtras = (item, w) => (cardExtraFns || []).map(f => f(item, w)).filter(Boolean);
+export const cardExtraFns = [];
 
 export function togglePick(id) {
   if (board.multi.has(id)) board.multi.delete(id); else board.multi.add(id);
@@ -690,7 +706,8 @@ export function renderBoard(root, w, params) {
     tool('label', 'Section', () => addThenEdit('label', { text: '' })),
     tool('palette', 'Colours', () => addThenEdit('palette', { title: 'Colours', colors: [{ name: 'Colour', hex: '#cccccc' }] })),
     tool('collage', 'Collage', async () => { const fs = (await pickFiles('image/*')).filter(f => /^image\//.test(f.type)); if (fs.length) addFiles(fs, null, 'grid'); }),
-    tool('checklist', 'Checklist', () => addThenEdit('checklist', { title: '', items: [] })));
+    tool('checklist', 'Checklist', () => addThenEdit('checklist', { title: '', items: [] })),
+    tool('label', 'Sections from the plan', () => sectionsFromPlan(w)));
   const addBar = mkAdd();
   // One "+ Add" button with everything inside, instead of a row of ten.
   const topAdd = () => {
@@ -1095,6 +1112,18 @@ function groupBar() {
     }).catch(fail);
     board.multi.clear(); toast('Made a collage — undo if you change your mind');
   };
+  const toCompare = async () => {
+    measure();
+    const src = [...rs].filter(o => !['label', 'compare', 'shape', 'connector'].includes(o.it.kind)).sort(byPosn);
+    if (src.length < 2) { toast('Pick at least two photos, links or notes to compare'); return; }
+    const opt = (o) => { const d = o.it.data || {}; return { oid: 'o' + Math.random().toString(36).slice(2, 10), title: cardTitle(o.it), rate: d.rate || '', contact: d.phone || '', notes: [d.url, d.kind === 'note' ? '' : d.caption].filter(Boolean).join(' · '), image: o.it.kind === 'image' ? d.path : o.it.kind === 'gallery' && d.images && d.images[0] ? d.images[0].path : d.thumb || null, chosen: false }; };
+    const x = Math.min(...src.map(o => o.r.x)), y = Math.min(...src.map(o => o.r.y));
+    await together(async () => {
+      await store.insert('board_items', { wedding_id: ctx.w.id, kind: 'compare', x, y, w: Math.min(1100, 260 * src.length + 40), z: topZ(ctx.w) + 1, data: { title: 'Which one?', options: src.map(opt) } });
+      await store.removeMany('board_items', src.map(o => o.id));
+    }).catch(fail);
+    board.multi.clear(); toast('Comparison made — everyone can vote now. Undo if you change your mind.');
+  };
   return h('div', { class: 'selbar groupbar', role: 'toolbar', 'aria-label': 'Selected cards' },
     h('span', { class: 'gb-n' }, `${els.length} selected`),
     h('button', { type: 'button', class: 'dt wide', onclick: column, title: 'Stack them in a neat column' }, 'Column'),
@@ -1104,6 +1133,7 @@ function groupBar() {
     h('button', { type: 'button', class: 'dt wide', onclick: alignTop }, 'Align top'),
     h('button', { type: 'button', class: 'dt wide', onclick: sameWidth, title: 'Make them all as wide as the first' }, 'Same width'),
     images.length >= 2 ? h('button', { type: 'button', class: 'dt wide', onclick: toCollage }, 'Make a collage') : null,
+    els.length >= 2 ? h('button', { type: 'button', class: 'dt wide', onclick: toCompare, title: 'Put these side by side so the family can vote' }, 'Compare these') : null,
     h('button', { type: 'button', class: 'dt wide danger', onclick: () => { board.multi.clear(); store.removeMany('board_items', ids).then(() => toast(`Moved ${ids.length} to the Bin`)).catch(fail); } }, 'Delete'),
     h('button', { type: 'button', class: 'dt', 'aria-label': 'Clear selection', html: ICONS.close, onclick: () => { board.multi.clear(); render(); } }));
 }
