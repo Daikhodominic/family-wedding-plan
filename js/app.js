@@ -1,13 +1,13 @@
-import { store } from './store.js';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js';
-import { renderPipeline, renderPlanHead } from './pipeline.js';
-import { renderBoard } from './board.js';
-import { renderTodo } from './todo.js';
-import { renderFiles } from './files.js';
-import { renderDecide, renderBudget } from './decide.js';
-import { planOf } from './map.js';
-import { openStep } from './panel.js';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js';
+import { store } from './store.js?v=6';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=6';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=6';
+import { renderBoard } from './board.js?v=6';
+import { renderTodo } from './todo.js?v=6';
+import { renderFiles } from './files.js?v=6';
+import { renderDecide, renderBudget } from './decide.js?v=6';
+import { planOf } from './map.js?v=6';
+import { openStep } from './panel.js?v=6';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=6';
 
 const app = document.getElementById('app');
 
@@ -142,6 +142,7 @@ function emblem(w) {
   const plan = planOf(w);
   return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, 'aria-label': 'Open ' + w.couple, style: { '--e-deep': t.deep, '--e-gold': t.gold } },
     monogram(w, 'xl'),
+    h('span', { class: 'emb-name' }, w.couple),
     h('span', { class: 'emb-date' }, w.wedding_date ? fancyDate(w.wedding_date) : `${w.date_note || 'Date'} · date to be fixed`),
     h('span', { class: 'emb-meta' },
       w.wedding_date && days !== null ? h('span', {}, h('b', {}, String(Math.max(0, days))), days === 0 ? ' today' : days < 0 ? ' married' : days === 1 ? ' day to go' : ' days to go') : null,

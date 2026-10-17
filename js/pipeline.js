@@ -1,8 +1,8 @@
-import { store } from './store.js';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js';
-import { live, ui, render } from './app.js';
-import { openStep, lockIcon } from './panel.js';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js';
+import { store } from './store.js?v=6';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=6';
+import { live, ui, render } from './app.js?v=6';
+import { openStep, lockIcon } from './panel.js?v=6';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=6';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
