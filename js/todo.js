@@ -1,8 +1,8 @@
-import { store } from './store.js?v=15';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=15';
-import { live, ui, render, stepVisible } from './app.js?v=15';
-import { editStep } from './pipeline.js?v=15';
-import { personInput } from './tools.js?v=15';
+import { store } from './store.js?v=16';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=16';
+import { live, ui, render, stepVisible } from './app.js?v=16';
+import { editStep } from './pipeline.js?v=16';
+import { personInput } from './tools.js?v=16';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 let showDone = false;   // the Done section starts folded

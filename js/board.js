@@ -1,10 +1,11 @@
-import { store } from './store.js?v=15';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=15';
-import { live, ui, render } from './app.js?v=15';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=15';
-import { together } from './history.js?v=15';
-import { isDecider } from './tools.js?v=15';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=15';
+import { store } from './store.js?v=16';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=16';
+import { live, ui, render } from './app.js?v=16';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=16';
+import { together } from './history.js?v=16';
+import { isDecider } from './tools.js?v=16';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=16';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=16';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -406,8 +407,12 @@ function cardBody(item) {
                 isDecider()
                   ? h('button', { class: 'pill' + (o.chosen ? ' on' : ''), type: 'button', title: 'Only the Deciders can choose', onclick: () => choose(i) }, o.chosen ? '✓ Chosen' : 'Choose')
                   : o.chosen ? h('span', { class: 'pill on', style: { cursor: 'default' } }, '✓ Chosen') : null),
-              !o.chosen && leader === i ? h('span', { class: 'lead-tag' }, 'Most votes') : null));
-        })) : h('div', { class: 'by' }, 'No options yet — tap the pencil to add them.'), byline);
+              !o.chosen && leader === i ? h('span', { class: 'lead-tag' }, 'Most votes') : null,
+              (() => { const ins = compareInsight(item); return ins && ins.cheapest === i ? h('span', { class: 'cheap-tag' }, 'Cheapest') : null; })()));
+        })) : h('div', { class: 'by' }, 'No options yet — tap the pencil to add them.'),
+        (() => { const ins = compareInsight(item); return ins ? h('div', { class: 'cmp-ins' }, ins.text) : null; })(),
+        readyToDecide(item) && isDecider() ? h('div', { class: 'ready-tag' }, '✦ Lots of votes — ready to decide?') : null,
+        byline);
     }
   }
   if (item.kind === 'gallery') {
@@ -474,7 +479,10 @@ function cardMeta(item) {
 }
 // Extra menu items for some card types (filled in by later features).
 const cardExtras = (item, w) => (cardExtraFns || []).map(f => f(item, w)).filter(Boolean);
-export const cardExtraFns = [];
+export const cardExtraFns = [
+  (it) => it.kind === 'image' ? ['Get colours from this photo', () => paletteFromImage(it)] : null,
+  (it) => it.kind === 'label' ? ['Share this section on WhatsApp', () => shareSection(it)] : null
+];
 
 export function togglePick(id) {
   if (board.multi.has(id)) board.multi.delete(id); else board.multi.add(id);
@@ -767,7 +775,7 @@ export function renderBoard(root, w, params) {
     h('div', { class: 'wrap' },
       h('div', { class: 'plan-head board-bar' },
         h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
-        topAdd()),
+        h('div', { class: 'ph-right' }, h('button', { type: 'button', class: 'btn ghost', title: 'Arrange every section into neat columns — chosen first', onclick: () => tidyUp(w, cardEls) }, 'Tidy up'), topAdd())),
       findBar(),
       h('p', { class: 'board-hint' }, board.multi.size ? `${board.multi.size} selected · drag any of them to move them together · Esc to clear` : hint)),
     h('div', { class: 'wrap board-holder' }, view, h('div', { class: 'drop-hint', 'aria-hidden': 'true' }, h('span', {}, 'Drop to add to the board')), drawBar, selBar, zoomBar, fab, addMenu)));
@@ -934,6 +942,10 @@ export function renderBoard(root, w, params) {
   // Several files at once: photos can go in as separate cards, a collage, a column or a row.
   const addFiles = async (files, at, preset) => {
     files = [...files];
+    const names = new Set(live(store.rows('board_items')).filter(i => i.wedding_id === w.id).flatMap(i => [i.data && i.data.name, ...((i.data && i.data.images) || []).map(x => x.name)]).filter(Boolean));
+    const dups = files.filter(f => f.name && !/^pasted-|^image\.(png|jpe?g)$/i.test(f.name) && names.has(f.name));
+    if (dups.length && !(await confirmBox(dups.length === 1 ? `“${dups[0].name}” is already on the board` : `${dups.length} of these are already on the board`, 'Add them again anyway?', 'Add again', ''))) files = files.filter(f => !dups.includes(f));
+    if (!files.length) return;
     const imgs = files.filter(f => /^image\//.test(f.type)), rest = files.filter(f => !/^image\//.test(f.type));
     let how = preset || (imgs.length > 1 ? await askLayout(imgs.length) : 'separate');
     if (!how) return;
@@ -942,7 +954,7 @@ export function renderBoard(root, w, params) {
     const total = files.length; let k = 0;
     if (imgs.length && how !== 'separate') {
       const out = [];
-      for (const f of imgs) { progress(++k, total); try { const r = await uploadFile(f); out.push({ path: r.data.path, caption: '' }); } catch (e) { fail(e); } }
+      for (const f of imgs) { progress(++k, total); try { const r = await uploadFile(f); out.push({ path: r.data.path, caption: '', name: f.name }); } catch (e) { fail(e); } }
       if (out.length) await add('gallery', { title: '', layout: how, images: out, caption: '' }, p);
       if (p) p = [p[0] + KIND.gallery.w + 24, p[1]];
     }
@@ -957,6 +969,9 @@ export function renderBoard(root, w, params) {
   };
   const addLink = async (url, at, extra = {}) => {
     const u = safeUrl(url); if (!u) return;
+    const norm = (x) => String(x || '').replace(/^https?:\/\/(www\.)?/, '').replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase();
+    const dup = live(store.rows('board_items')).find(i => i.wedding_id === w.id && i.kind === 'link' && norm(i.data && i.data.url) === norm(u));
+    if (dup && !(await confirmBox('This link is already on the board', `“${cardTitle(dup)}” is already pinned. Add it again anyway?`, 'Add again', ''))) { location.hash = `#/w/${w.id}/board?focus=${dup.id}`; return; }
     const data = { url: u, title: '', caption: '', ...extra };
     if (isImageUrl(u)) data.preview = { image: u, title: '', description: '', url: u };
     const it = await add('link', data, at);
@@ -1020,7 +1035,7 @@ function askLayout(n) {
 }
 
 /* ---------- Search and filters ---------- */
-const FILTERS = [['all', 'Everything'], ['photos', 'Photos'], ['notes', 'Notes'], ['links', 'Links'], ['compare', 'Comparisons'], ['checklist', 'Checklists'], ['suggestions', 'With suggestions'], ['new', 'New comments'], ['mine', 'Added by me']];
+const FILTERS = [['all', 'Everything'], ['favourites', 'Family favourites'], ['chosen', 'Chosen'], ['ready', 'Ready to decide'], ['photos', 'Photos'], ['notes', 'Notes'], ['links', 'Links'], ['compare', 'Comparisons'], ['checklist', 'Checklists'], ['suggestions', 'With suggestions'], ['new', 'New comments'], ['mine', 'Added by me'], ['stale', 'Not touched in a month']];
 function haystack(it) {
   const d = it.data || {};
   const bits = [d.title, d.text, d.caption, d.name, d.url, d.role, d.phone, d.notes, d.preview && d.preview.title, d.preview && d.preview.description,
@@ -1030,6 +1045,10 @@ function haystack(it) {
 }
 function passes(it) {
   const f = board.filter;
+  if (f === 'favourites' && favScore(it) < 2) return false;
+  if (f === 'chosen' && !(it.data && it.data.status === 'chosen') && !(it.kind === 'compare' && (it.data.options || []).some(o => o.chosen))) return false;
+  if (f === 'ready' && !readyToDecide(it)) return false;
+  if (f === 'stale' && !isStale(it)) return false;
   if (f === 'photos' && !['image', 'video', 'gallery'].includes(it.kind)) return false;
   if (f === 'notes' && it.kind !== 'note') return false;
   if (f === 'links' && it.kind !== 'link') return false;

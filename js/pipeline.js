@@ -1,11 +1,11 @@
-import { store } from './store.js?v=15';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=15';
-import { live, ui, render } from './app.js?v=15';
-import { openStep, lockIcon } from './panel.js?v=15';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=15';
-import { personInput } from './tools.js?v=15';
-import { openIdeas, sectionFor } from './decisions.js?v=15';
-import { renderGlimpse } from './glimpse.js?v=15';
+import { store } from './store.js?v=16';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=16';
+import { live, ui, render } from './app.js?v=16';
+import { openStep, lockIcon } from './panel.js?v=16';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=16';
+import { personInput } from './tools.js?v=16';
+import { openIdeas, sectionFor } from './decisions.js?v=16';
+import { renderGlimpse } from './glimpse.js?v=16';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

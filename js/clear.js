@@ -1,9 +1,9 @@
 // Start fresh. Everyone can clear the page they're on; the admin can clear everything.
 // Cleared things go to the Bin together (same timestamp), so they can be restored together.
-import { store, nowIso } from './store.js?v=15';
-import { h, toast, modal, field } from './ui.js?v=15';
-import { weddings, wedding } from './app.js?v=15';
-import { together } from './history.js?v=15';
+import { store, nowIso } from './store.js?v=16';
+import { h, toast, modal, field } from './ui.js?v=16';
+import { weddings, wedding } from './app.js?v=16';
+import { together } from './history.js?v=16';
 
 const liveRows = (t, pred) => (store.rows(t) || []).filter(r => !r.deleted_at && pred(r));
 

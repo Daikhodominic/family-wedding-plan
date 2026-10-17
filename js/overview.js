@@ -1,14 +1,17 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=15';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=15';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=15';
-import { openStep, lockIcon } from './panel.js?v=15';
-import { planOf, journeyBar } from './map.js?v=15';
-import { listSummary } from './lists.js?v=15';
-import { budgetMath, inr } from './budget.js?v=15';
-import { editStep } from './pipeline.js?v=15';
-import { canonical } from './myjobs.js?v=15';
-import { pictureEl } from './map.js?v=15';
+import { store } from './store.js?v=16';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=16';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=16';
+import { openStep, lockIcon } from './panel.js?v=16';
+import { planOf, journeyBar } from './map.js?v=16';
+import { listSummary } from './lists.js?v=16';
+import { budgetMath, inr } from './budget.js?v=16';
+import { editStep } from './pipeline.js?v=16';
+import { canonical } from './myjobs.js?v=16';
+import { pictureEl } from './map.js?v=16';
+import { readyToDecide, favScore } from './boardauto.js?v=16';
+import { isDecider } from './tools.js?v=16';
+import { cardTitle } from './decisions.js?v=16';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -81,6 +84,12 @@ export function renderOverview(root, w) {
       h('div', { class: 'ost' + (overdue.length ? ' warn' : '') }, h('b', {}, String(overdue.length)), h('span', {}, 'overdue')),
       h('div', { class: 'ost gold' }, h('b', {}, String(plan.locked)), h('span', {}, 'final')))));
   root.append(journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } }));
+  const boardItems = live(store.rows('board_items')).filter(i => i.wedding_id === w.id && !['shape', 'connector', 'label'].includes(i.kind));
+  const ready = isDecider() ? boardItems.filter(readyToDecide) : [];
+  if (ready.length) root.append(h('section', { class: 'tip ready' }, h('span', { class: 'tip-i' }, '✦'),
+    h('span', {}, h('b', {}, `Ready to decide: `), ready.map(r => cardTitle(r)).join(', '), ' — the family has voted.'),
+    h('a', { class: 'tip-x', href: `#/w/${w.id}/board?focus=${ready[0].id}` }, 'Have a look')));
+  const favs = boardItems.map(i => ({ i, s: favScore(i) })).filter(x => x.s >= 2).sort((a, b) => b.s - a.s).slice(0, 6);
   const finals = all.filter(x => x.kind === 'step' && x.locked_at).sort((a, b) => String(b.locked_at).localeCompare(String(a.locked_at)));
   if (finals.length) root.append(h('section', { class: 'decided-strip' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Decided so far'), h('span', { class: 'count gold' }, String(finals.length)), h('a', { class: 'ob-link', href: `#/w/${w.id}/plan?view=glimpse` }, 'See the wedding at a glance →')),
@@ -142,6 +151,8 @@ export function renderOverview(root, w) {
       h('section', { class: 'oblock' },
         h('div', { class: 'ob-h' }, h('h2', {}, 'Recently done'), h('a', { class: 'ob-link', href: '#/history' }, 'Edit history →')),
         recent.length ? feedList(recent, { compact: true }) : h('p', { class: 'muted o-empty' }, 'Things ticked off or made final will show here.')),
+      favs.length ? h('section', { class: 'oblock' }, h('div', { class: 'ob-h' }, h('h2', {}, 'Family favourites'), h('a', { class: 'ob-link', href: `#/w/${w.id}/board` }, 'Board →')),
+        h('div', { class: 'olist' }, favs.map(({ i, s }) => h('a', { class: 'orow', href: `#/w/${w.id}/board?focus=${i.id}` }, h('span', { class: 'o-dot list' }), h('span', { class: 'o-main' }, h('b', {}, cardTitle(i)), h('span', {}, `${s} likes and votes`)))))) : null,
       listsEl, moneyEl)));
   void t; void ago; void lockIcon;
 }

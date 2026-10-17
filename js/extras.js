@@ -1,9 +1,9 @@
-import { store } from './store.js?v=15';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=15';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=15';
-import { confirmAreaRestore, inr } from './budget.js?v=15';
-import { clearAll } from './clear.js?v=15';
-import { downloadBackup } from './tools.js?v=15';
+import { store } from './store.js?v=16';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=16';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=16';
+import { confirmAreaRestore, inr } from './budget.js?v=16';
+import { clearAll } from './clear.js?v=16';
+import { downloadBackup } from './tools.js?v=16';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist' };
