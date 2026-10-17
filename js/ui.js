@@ -217,5 +217,12 @@ export const ICONS = {
   logout: sv('<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>'),
   lock: sv('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
   comment: sv('<path d="M4 5h16v11H9l-5 4z"/>'),
+  undo: sv('<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>'),
+  redo: sv('<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/>'),
+  search: sv('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.3-4.3"/>'),
+  crop: sv('<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M2 6h14a2 2 0 0 1 2 2v14"/>'),
+  checklist: sv('<path d="M4 6l2 2 3-3M4 13l2 2 3-3M12 7h8M12 14h8M12 20h8"/>'),
+  collage: sv('<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="18" height="8" rx="1.5"/>'),
+  select: sv('<rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="3 3"/>'),
   broom: sv('<path d="M14 4l6 6M12 6l6 6-7 7H5v-6z"/><path d="M9 13l2 2"/>')
 };

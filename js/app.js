@@ -1,15 +1,16 @@
-import { store } from './store.js?v=9';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=9';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=9';
-import { renderBoard } from './board.js?v=9';
-import { renderTodo } from './todo.js?v=9';
-import { renderFiles } from './files.js?v=9';
-import { renderDecide } from './decide.js?v=9';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=9';
-import { clearPage, clearAll } from './clear.js?v=9';
-import { planOf } from './map.js?v=9';
-import { openStep } from './panel.js?v=9';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=9';
+import { store } from './store.js?v=10';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=10';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=10';
+import { renderBoard } from './board.js?v=10';
+import { renderTodo } from './todo.js?v=10';
+import { renderFiles } from './files.js?v=10';
+import { renderDecide } from './decide.js?v=10';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=10';
+import { clearPage, clearAll } from './clear.js?v=10';
+import { undoButtons } from './history.js?v=10';
+import { planOf } from './map.js?v=10';
+import { openStep } from './panel.js?v=10';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=10';
 
 const app = document.getElementById('app');
 
@@ -273,6 +274,7 @@ function renderSpace(id, sub, params) {
           h('a', { href: link(k), 'aria-current': tab === k ? 'page' : null },
             h('span', { class: 'snav-ic', html: ICONS[icon] }), h('span', { class: 'snav-t' }, label),
             k === 'decide' && nWait ? h('span', { class: 'nbadge' }, String(nWait)) : null))),
+        undoButtons(),
         avatar())),
     h('div', { class: 'shead-rule', 'aria-hidden': 'true' }),
     h('img', { class: 'space-flora', src: t.deco === 'rose' ? 'assets/lush_rose.svg' : 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }));
@@ -300,6 +302,7 @@ function pageBar() {
     h('div', { class: 'wrap pbar-in' },
       h('a', { class: 'brand', href: '#/home' }, h('span', { class: 'pbar-back', html: ICONS.back }), 'The Wedding War Room'),
       h('nav', { class: 'pnav', 'aria-label': 'Weddings' }, weddings().map(w => h('a', { href: '#/w/' + w.id, style: { color: themeOf(w).deep } }, w.couple))),
+      undoButtons(),
       avatar()));
 }
 function familyPage(content) {

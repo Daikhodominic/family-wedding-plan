@@ -4,10 +4,10 @@
 //   contingency  — set by hand (starts at ₹0); unplanned payments and overspends draw from it
 //   areas        — the total split up; removing one frees its unspent money
 //   payments     — what is owed or paid; no area = unplanned (comes out of contingency)
-import { store } from './store.js?v=9';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS } from './ui.js?v=9';
-import { live, weddings, themeOf, stepVisible } from './app.js?v=9';
-import { openStep } from './panel.js?v=9';
+import { store } from './store.js?v=10';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS } from './ui.js?v=10';
+import { live, weddings, themeOf, stepVisible } from './app.js?v=10';
+import { openStep } from './panel.js?v=10';
 
 /* ---------- Money helpers ---------- */
 // Accepts "1,20,000", "120000", "1.2 lakh", "1.2L", "50k", "₹ 45,000".
@@ -93,7 +93,9 @@ function editBudget(id, opts, m) {
     actions: [{
       label: 'Save', onClick: async () => {
         const patch = { total: money(total.value), contingency: money(cont.value) };
+        const old = store.find('budgets', id);
         if (m.b) await store.update('budgets', id, patch).catch(fail);
+        else if (old) await store.update('budgets', id, { ...patch, deleted_at: null, deleted_by: null }).catch(fail); // set up before, then removed
         else await store.insert('budgets', { id, wedding_id: opts.weddingId || null, title: opts.title, position: opts.position || 0, ...patch }).catch(fail);
       }
     }]

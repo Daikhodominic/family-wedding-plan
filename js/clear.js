@@ -1,8 +1,9 @@
 // Start fresh. Everyone can clear the page they're on; the admin can clear everything.
 // Cleared things go to the Bin together (same timestamp), so they can be restored together.
-import { store, nowIso } from './store.js?v=9';
-import { h, toast, modal, field } from './ui.js?v=9';
-import { weddings, wedding } from './app.js?v=9';
+import { store, nowIso } from './store.js?v=10';
+import { h, toast, modal, field } from './ui.js?v=10';
+import { weddings, wedding } from './app.js?v=10';
+import { together } from './history.js?v=10';
 
 const liveRows = (t, pred) => (store.rows(t) || []).filter(r => !r.deleted_at && pred(r));
 
@@ -18,11 +19,13 @@ const count = (groups) => groups.reduce((t, [, rows]) => t + rows.length, 0);
 async function run(groups, forGood) {
   const ts = nowIso();
   let n = 0;
-  for (const [t, rows] of groups) {
-    if (!rows.length) continue;
-    if (forGood) { for (const r of rows) { if (store.find(t, r.id)) await store.purge(t, r.id); n++; } }
-    else { await store.removeMany(t, rows.map(r => r.id), ts); n += rows.length; }
-  }
+  await together(async () => {   // one Undo brings the whole page back
+    for (const [t, rows] of groups) {
+      if (!rows.length) continue;
+      if (forGood) { for (const r of rows) { if (store.find(t, r.id)) await store.purge(t, r.id); n++; } }
+      else { await store.removeMany(t, rows.map(r => r.id), ts); n += rows.length; }
+    }
+  });
   return n;
 }
 
