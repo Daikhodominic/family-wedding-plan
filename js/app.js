@@ -1,23 +1,23 @@
-import { store, onStatus, syncState } from './store.js?v=18';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=18';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=18';
-import { renderBoard } from './board.js?v=18';
-import { renderTodo } from './todo.js?v=18';
-import { renderFiles } from './files.js?v=18';
-import { renderDecide } from './decide.js?v=18';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=18';
-import { clearPage, clearAll } from './clear.js?v=18';
-import { undoButtons } from './history.js?v=18';
-import { downloadBackup } from './tools.js?v=18';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=18';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=18';
-import { announcementBars } from './planauto.js?v=18';
-import { renderPartner } from './partner.js?v=18';
-import { renderOverview, editDate } from './overview.js?v=18';
-import { renderLists } from './lists.js?v=18';
-import { planOf } from './map.js?v=18';
-import { openStep } from './panel.js?v=18';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=18';
+import { store, onStatus, syncState } from './store.js?v=19';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=19';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=19';
+import { renderBoard } from './board.js?v=19';
+import { renderTodo } from './todo.js?v=19';
+import { renderFiles } from './files.js?v=19';
+import { renderDecide } from './decide.js?v=19';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=19';
+import { clearPage, clearAll } from './clear.js?v=19';
+import { undoButtons } from './history.js?v=19';
+import { downloadBackup } from './tools.js?v=19';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=19';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=19';
+import { announcementBars } from './planauto.js?v=19';
+import { renderPartner } from './partner.js?v=19';
+import { renderOverview, editDate } from './overview.js?v=19';
+import { renderLists } from './lists.js?v=19';
+import { planOf } from './map.js?v=19';
+import { openStep } from './panel.js?v=19';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=19';
 
 const app = document.getElementById('app');
 
@@ -25,8 +25,8 @@ const app = document.getElementById('app');
    Each wedding re-points the --w-* tokens. "gold" is the accent metal:
    antique gold for Charani's dusty blue, rose gold for Elow's Chateau Rose. */
 export const THEMES = {
-  blue: { bg: '#F8F5EF', surface: '#FFFEFB', ink: '#25303B', muted: '#66717C', line: '#E7E0D3', soft: '#EAEFF4', accent: '#2C4562', accentInk: '#FFFFFF', light: '#AFBEC8', deep: '#223650', gold: '#A87C22', goldLine: '#D9C597', goldFill: '#F6EBCF', deco: 'blue' },
-  rose: { bg: '#F9F3EE', surface: '#FFFDFB', ink: '#3A2A30', muted: '#7D6A6F', line: '#EDDDD4', soft: '#F5E7E3', accent: '#6B3247', accentInk: '#FFFFFF', light: '#D9AFA6', deep: '#5A2536', gold: '#A46E55', goldLine: '#DFBCA9', goldFill: '#F7E5DA', deco: 'rose' }
+  blue: { bg: '#DCE3EC', surface: '#FFFFFF', ink: '#16202B', muted: '#4A5663', line: '#BFCAD6', soft: '#D3DDE8', accent: '#2C4562', accentInk: '#FFFFFF', light: '#AFBEC8', deep: '#223650', gold: '#A87C22', goldLine: '#D9C597', goldFill: '#F6EBCF', deco: 'blue' },
+  rose: { bg: '#EDDCD5', surface: '#FFFFFF', ink: '#2A1A20', muted: '#5F4A53', line: '#D8BFB5', soft: '#F1DDD7', accent: '#6B3247', accentInk: '#FFFFFF', light: '#D9AFA6', deep: '#5A2536', gold: '#A46E55', goldLine: '#DFBCA9', goldFill: '#F7E5DA', deco: 'rose' }
 };
 export function themeOf(w) {
   const base = THEMES[w && w.theme] || THEMES.blue;

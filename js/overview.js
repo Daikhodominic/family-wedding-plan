@@ -1,19 +1,19 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=18';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=18';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=18';
-import { openStep, lockIcon } from './panel.js?v=18';
-import { planOf, journeyBar } from './map.js?v=18';
-import { listSummary } from './lists.js?v=18';
-import { budgetMath, inr } from './budget.js?v=18';
-import { editStep } from './pipeline.js?v=18';
-import { canonical } from './myjobs.js?v=18';
-import { pictureEl } from './map.js?v=18';
-import { readyToDecide, favScore } from './boardauto.js?v=18';
-import { isDecider } from './tools.js?v=18';
-import { cardTitle } from './decisions.js?v=18';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=18';
-import { share, siteLink, copyLink } from './tools.js?v=18';
+import { store } from './store.js?v=19';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=19';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=19';
+import { openStep, lockIcon } from './panel.js?v=19';
+import { planOf, journeyBar } from './map.js?v=19';
+import { listSummary } from './lists.js?v=19';
+import { budgetMath, inr } from './budget.js?v=19';
+import { editStep } from './pipeline.js?v=19';
+import { canonical } from './myjobs.js?v=19';
+import { pictureEl } from './map.js?v=19';
+import { readyToDecide, favScore } from './boardauto.js?v=19';
+import { isDecider } from './tools.js?v=19';
+import { cardTitle } from './decisions.js?v=19';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=19';
+import { share, siteLink, copyLink } from './tools.js?v=19';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
