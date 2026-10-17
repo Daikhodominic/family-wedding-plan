@@ -1,11 +1,12 @@
-import { store } from './store.js?v=16';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=16';
-import { live, ui, render } from './app.js?v=16';
-import { openStep, lockIcon } from './panel.js?v=16';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=16';
-import { personInput } from './tools.js?v=16';
-import { openIdeas, sectionFor } from './decisions.js?v=16';
-import { renderGlimpse } from './glimpse.js?v=16';
+import { store } from './store.js?v=17';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=17';
+import { live, ui, render } from './app.js?v=17';
+import { openStep, lockIcon } from './panel.js?v=17';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=17';
+import { personInput } from './tools.js?v=17';
+import { openIdeas, sectionFor } from './decisions.js?v=17';
+import { renderGlimpse } from './glimpse.js?v=17';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=17';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -113,6 +114,7 @@ export function renderPipeline(root, w, params) {
     return;
   }
   root.append(h('p', { class: 'hint' }, 'Tap a step to open its details, files and lists. Drag by the dots to reorder; on a phone, press and hold a step to move it.'));
+  { const db = datesBanner(w); if (db) root.append(db); }
 
   const stagesEl = h('div', { class: 'stages' });
   for (const st of stages) {
@@ -236,6 +238,7 @@ function areaEl(a, steps, w) {
       menu({
         title: a.title, list: [
           { label: 'Rename', onClick: () => renameBox('Rename area', a.title, v => store.update('areas', a.id, { title: v })) },
+          ...otherWeddings(w.id).map(o => ({ label: `Copy this area to ${o.couple}`, onClick: () => copyArea(a, o.id) })),
           { label: 'Move this area to the Bin', kind: 'danger', onClick: () => store.remove('areas', a.id).then(() => toast('Moved to the Bin')).catch(fail) }
         ]
       })),

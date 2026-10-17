@@ -1,10 +1,12 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=16';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=16';
-import { uploadFile, pickFiles } from './board.js?v=16';
-import { isDecider, deciderNames, personInput } from './tools.js?v=16';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=16';
-import { voteCounts, optionKey } from './feedback.js?v=16';
+import { store } from './store.js?v=17';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=17';
+import { uploadFile, pickFiles } from './board.js?v=17';
+import { isDecider, deciderNames, personInput } from './tools.js?v=17';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=17';
+import { voteCounts, optionKey } from './feedback.js?v=17';
+import { suggestDue } from './planauto.js?v=17';
+import { guestCount } from './boardauto.js?v=17';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -193,7 +195,9 @@ export function openStep(stepId) {
         title,
         h('div', { class: 'd-seg', role: 'group', 'aria-label': 'Status' }, Object.entries(STATUS).map(([k, v]) => h('button', { type: 'button', disabled: !canEdit ? true : null, 'aria-pressed': String(s.status === k), class: s.status === k ? 'on' : '', onclick: () => set({ status: k }) }, v))),
         lockBlock,
-        h('div', { class: 'form-grid' }, field('Person in charge', owner), field('Due by', due)),
+        h('div', { class: 'form-grid' }, field('Person in charge', owner), h('div', { class: 'field' }, h('label', {}, 'Due by'), due,
+          (() => { const wd = store.find('weddings', s.wedding_id); const sg = !s.due && !locked && canEdit ? suggestDue(s, wd) : null; return sg ? h('button', { type: 'button', class: 'link-btn sugg', onclick: () => set({ due: sg }) }, `Suggested: ${shortDate(sg)} — use it`) : null; })())),
+        /head ?count|guest/i.test(s.title) && guestCount(s.wedding_id) ? h('div', { class: 'd-card' }, `Guest list so far: ${guestCount(s.wedding_id)} people`, h('a', { href: `#/w/${s.wedding_id}/lists`, style: { marginLeft: '8px' }, onclick: () => close() }, 'Open lists →')) : null,
         field('Notes', notes),
         boardSection(s, area),
         h('section', { class: 'd-sec' },

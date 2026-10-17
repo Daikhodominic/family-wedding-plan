@@ -1,6 +1,6 @@
 // Small shared helpers: roles, backup, sharing, calendar files, people.
-import { store } from './store.js?v=16';
-import { h, toast } from './ui.js?v=16';
+import { store } from './store.js?v=17';
+import { h, toast } from './ui.js?v=17';
 
 /* ---------- Roles ---------- */
 export const isDecider = () => !!(store.me && (store.me.isAdmin || store.me.isDecider));

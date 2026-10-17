@@ -1,21 +1,22 @@
-import { store, onStatus, syncState } from './store.js?v=16';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=16';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=16';
-import { renderBoard } from './board.js?v=16';
-import { renderTodo } from './todo.js?v=16';
-import { renderFiles } from './files.js?v=16';
-import { renderDecide } from './decide.js?v=16';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=16';
-import { clearPage, clearAll } from './clear.js?v=16';
-import { undoButtons } from './history.js?v=16';
-import { downloadBackup } from './tools.js?v=16';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=16';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=16';
-import { renderOverview, editDate } from './overview.js?v=16';
-import { renderLists } from './lists.js?v=16';
-import { planOf } from './map.js?v=16';
-import { openStep } from './panel.js?v=16';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=16';
+import { store, onStatus, syncState } from './store.js?v=17';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=17';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=17';
+import { renderBoard } from './board.js?v=17';
+import { renderTodo } from './todo.js?v=17';
+import { renderFiles } from './files.js?v=17';
+import { renderDecide } from './decide.js?v=17';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=17';
+import { clearPage, clearAll } from './clear.js?v=17';
+import { undoButtons } from './history.js?v=17';
+import { downloadBackup } from './tools.js?v=17';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=17';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=17';
+import { announcementBars } from './planauto.js?v=17';
+import { renderOverview, editDate } from './overview.js?v=17';
+import { renderLists } from './lists.js?v=17';
+import { planOf } from './map.js?v=17';
+import { openStep } from './panel.js?v=17';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=17';
 
 const app = document.getElementById('app');
 
@@ -229,7 +230,9 @@ function renderHome() {
   const soon = comingUp();
   const top = store.rows('activity')[0];
 
+  const anns = announcementBars(null);
   const changes = h('section', { class: 'hcard changes-card', 'aria-label': 'New since you last looked' },
+    anns.length ? h('div', { class: 'h-anns' }, anns) : null,
     fresh.length
       ? [h('div', { class: 'hc-head' },
           h('b', {}, `${fresh.length} new since you last looked`),

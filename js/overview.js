@@ -1,17 +1,18 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=16';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=16';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=16';
-import { openStep, lockIcon } from './panel.js?v=16';
-import { planOf, journeyBar } from './map.js?v=16';
-import { listSummary } from './lists.js?v=16';
-import { budgetMath, inr } from './budget.js?v=16';
-import { editStep } from './pipeline.js?v=16';
-import { canonical } from './myjobs.js?v=16';
-import { pictureEl } from './map.js?v=16';
-import { readyToDecide, favScore } from './boardauto.js?v=16';
-import { isDecider } from './tools.js?v=16';
-import { cardTitle } from './decisions.js?v=16';
+import { store } from './store.js?v=17';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=17';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=17';
+import { openStep, lockIcon } from './panel.js?v=17';
+import { planOf, journeyBar } from './map.js?v=17';
+import { listSummary } from './lists.js?v=17';
+import { budgetMath, inr } from './budget.js?v=17';
+import { editStep } from './pipeline.js?v=17';
+import { canonical } from './myjobs.js?v=17';
+import { pictureEl } from './map.js?v=17';
+import { readyToDecide, favScore } from './boardauto.js?v=17';
+import { isDecider } from './tools.js?v=17';
+import { cardTitle } from './decisions.js?v=17';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=17';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -55,7 +56,7 @@ function block(title, items, empty, opts = {}) {
       : h('p', { class: 'muted o-empty' }, empty));
 }
 
-export function renderOverview(root, w) {
+export function renderOverview(root, w, params = {}) {
   const t = themeOf(w);
   const days = daysUntil(w.wedding_date);
   const plan = planOf(w);
@@ -67,6 +68,10 @@ export function renderOverview(root, w) {
   const waiting = open.filter(x => x.kind === 'step' && x.gate);
   const finished = all.filter(done).length;
 
+  // Announcements and final-week mode come first.
+  root.append(...announcementBars(w.id));
+  const fw = finalWeek(w, params.finalweek === '1' && store.me.isAdmin);
+  if (fw) root.append(fw);
   // Header: date, countdown, progress
   root.append(h('section', { class: 'ohero' },
     h('div', { class: 'oh-when' },
@@ -84,6 +89,18 @@ export function renderOverview(root, w) {
       h('div', { class: 'ost' + (overdue.length ? ' warn' : '') }, h('b', {}, String(overdue.length)), h('span', {}, 'overdue')),
       h('div', { class: 'ost gold' }, h('b', {}, String(plan.locked)), h('span', {}, 'final')))));
   root.append(journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } }));
+  root.append(h('div', { class: 'o-actions' },
+    h('button', { type: 'button', class: 'btn ghost small', onclick: () => shareWeek(w) }, 'Share this week on WhatsApp'),
+    h('button', { type: 'button', class: 'btn ghost small', onclick: () => calendarFor(w) }, 'Add dates to my calendar'),
+    isDecider() ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => newAnnouncement(w) }, '+ Announcement') : null,
+    store.me.isAdmin && !fw ? h('a', { class: 'btn ghost small', href: `#/w/${w.id}?finalweek=1` }, 'Preview final-week mode') : null));
+  const db = datesBanner(w); if (db) root.append(db);
+  const lf = looksFinished(w);
+  if (lf.length) root.append(h('section', { class: 'oblock looks' },
+    h('div', { class: 'ob-h' }, h('h2', {}, 'Looks finished'), h('span', { class: 'count' }, String(lf.length)), h('span', { class: 'ob-sub' }, 'Tick these off?')),
+    h('div', { class: 'olist' }, lf.map(({ s, why }) => h('div', { class: 'orow lf' },
+      h('span', { class: 'o-dot doing' }), h('span', { class: 'o-main' }, h('b', {}, s.title), h('span', {}, 'Because ' + why)),
+      h('button', { type: 'button', class: 'btn small', onclick: () => store.update('steps', s.id, { status: 'done' }).then(() => toast('Done ✓')).catch(fail) }, 'Mark done'))))));
   const boardItems = live(store.rows('board_items')).filter(i => i.wedding_id === w.id && !['shape', 'connector', 'label'].includes(i.kind));
   const ready = isDecider() ? boardItems.filter(readyToDecide) : [];
   if (ready.length) root.append(h('section', { class: 'tip ready' }, h('span', { class: 'tip-i' }, '✦'),

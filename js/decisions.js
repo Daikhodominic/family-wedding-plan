@@ -1,10 +1,10 @@
 // Joins the mood board to the plan: pin cards to steps, card status, card → job,
 // comparisons that become final decisions, and the follow-ups a decision brings.
-import { store } from './store.js?v=16';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=16';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=16';
-import { together } from './history.js?v=16';
-import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=16';
+import { store } from './store.js?v=17';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=17';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=17';
+import { together } from './history.js?v=17';
+import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=17';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -82,7 +82,7 @@ export async function afterFinal(step, note) {
     if (note.with) await addVendor(step.wedding_id, { name: note.vendor || note.with, forWhat: step.title, phone: note.phone || '', rate: note.amount || '' });
     const owed = money(note.amount) - money(note.advance);
     if (owed > 0 && !(store.missing && store.missing.todos)) {
-      const due = w && w.wedding_date ? (() => { const d = new Date(w.wedding_date + 'T00:00'); d.setDate(d.getDate() - 7); return d.toISOString().slice(0, 10); })() : null;
+      const due = w && w.wedding_date ? (() => { const d = new Date(w.wedding_date + 'T00:00'); d.setDate(d.getDate() - 7); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })() : null;
       await store.insert('todos', { wedding_id: step.wedding_id, title: `Pay the balance for “${step.title}” (₹${Math.round(owed).toLocaleString('en-IN')})`, owner: step.owner || '', due, status: 'todo', notes: note.vendor || note.with ? 'To: ' + (note.vendor || note.with) + (note.phone ? ' · ' + note.phone : '') : '', position: -Date.now() });
     }
   } catch (e) { console.warn(e); }

@@ -1,10 +1,11 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { store } from './store.js?v=16';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=16';
-import { live } from './app.js?v=16';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=16';
-import { renderFiles } from './files.js?v=16';
+import { store } from './store.js?v=17';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=17';
+import { live } from './app.js?v=17';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=17';
+import { renderFiles } from './files.js?v=17';
+import { copyList, otherWeddings } from './planauto.js?v=17';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -117,6 +118,7 @@ function renderListPage(root, w, l) {
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => window.print() }, 'Print'),
+        ...otherWeddings(w.id).map(o => h('button', { type: 'button', class: 'btn ghost', onclick: () => copyList(l, o.id) }, 'Copy to ' + o.couple.split('&')[0].trim())),
         h('button', { type: 'button', class: 'btn ghost', style: { color: 'var(--warn)' }, onclick: async () => { if (await confirmBox('Move this list to the Bin?', 'Anyone can restore it from the Bin.', 'Move to Bin')) { await store.remove('lists', l.id).then(() => { toast('Moved to the Bin'); location.hash = `#/w/${w.id}/lists`; }).catch(fail); } } }, 'Move to Bin'))),
     h('div', { class: 'lp-tools' }, h('label', { class: 'find-in' }, h('span', { html: ICONS.search }), search), h('span', { class: 'hint', style: { margin: 0 } }, 'Tap a column name to rename it. Press Enter to jump to the next row.')),
     h('div', { class: 'ltable-wrap lt-page' }, all.length ? table : h('div', { class: 'lp-empty' }, h('p', {}, 'Nothing here yet.'), h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add the first row'))),
