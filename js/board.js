@@ -1,6 +1,6 @@
-import { store } from './store.js?v=6';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=6';
-import { live, ui, render } from './app.js?v=6';
+import { store } from './store.js?v=7';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=7';
+import { live, ui, render } from './app.js?v=7';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -465,7 +465,7 @@ export function renderBoard(root, w, params) {
   };
 
   /* --- toolbars --- */
-  const addBar = h('div', { class: 'tools', role: 'toolbar', 'aria-label': 'Add to the board' },
+  const mkAdd = (cls = 'tools') => h('div', { class: cls, role: 'toolbar', 'aria-label': 'Add to the board' },
     tool('note', 'Note', () => addThenEdit('note', { text: '', tint: 'yellow' })),
     tool('image', 'Photo or video', () => uploadTool('image/*,video/*')),
     tool('link', 'Link', () => addThenEdit('link', { url: '', title: '' })),
@@ -474,6 +474,7 @@ export function renderBoard(root, w, params) {
     tool('compare', 'Comparison', () => addThenEdit('compare', { title: '', options: [{ title: '', rate: '', contact: '', chosen: false }, { title: '', rate: '', contact: '', chosen: false }] })),
     tool('label', 'Section', () => addThenEdit('label', { text: '' })),
     tool('palette', 'Colours', () => addThenEdit('palette', { title: 'Colours', colors: [{ name: 'Colour', hex: '#cccccc' }] })));
+  const addBar = mkAdd();
 
   const sel = all.find(i => i.id === board.selected);
   const setTool = (t) => { board.tool = t; board.connectFrom = null; if (t !== 'select') board.selected = null; render(); };
@@ -481,7 +482,11 @@ export function renderBoard(root, w, params) {
     if (!sel) return;
     store.update('board_items', sel.id, { data: { ...sel.data, ...patch } }).catch(fail);
   };
-  const drawBar = h('div', { class: 'drawbar palette', role: 'toolbar', 'aria-label': 'Drawing tools' },
+  const palOpen = board.palette || board.tool !== 'select' || !!sel;
+  const drawBar = !palOpen ? h('div', { class: 'drawbar palette closed' },
+    h('button', { type: 'button', class: 'dt wide', title: 'Pen, lines, arrows, circles, boxes, dots and connections', onclick: () => { board.palette = true; render(); } }, h('span', { html: drawIcon(DRAW_TOOLS[1][2]), style: { display: 'inline-flex' } }), 'Draw')) :
+  h('div', { class: 'drawbar palette', role: 'toolbar', 'aria-label': 'Drawing tools' },
+    h('button', { type: 'button', class: 'pal-close', 'aria-label': 'Hide drawing tools', title: 'Hide drawing tools', html: ICONS.close, onclick: () => { board.palette = false; board.tool = 'select'; board.selected = null; render(); } }),
     h('div', { class: 'seg' }, DRAW_TOOLS.map(([k, label, p]) => h('button', { type: 'button', class: 'dt' + (board.tool === k ? ' on' : ''), title: label, 'aria-label': label, 'aria-pressed': String(board.tool === k), html: drawIcon(p), onclick: () => setTool(k) }))),
     h('div', { class: 'seg' }, COLORS.map(c => h('button', {
       type: 'button', class: 'swatch' + (((sel && sel.data.color) || board.color) === c ? ' on' : ''), style: { background: c }, 'aria-label': 'Colour ' + c,
@@ -517,7 +522,8 @@ export function renderBoard(root, w, params) {
     h('div', { class: 'wrap' },
       h('div', { class: 'plan-head board-bar' },
         h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
-        h('p', { class: 'board-hint' }, hint))),
+        mkAdd('addrow')),
+      h('p', { class: 'board-hint' }, hint)),
     h('div', { class: 'wrap board-holder' }, view, drawBar, selBar, zoomBar, fab, addMenu)));
 
   /* --- pointer handling: pan, pinch, draw, select, connect --- */

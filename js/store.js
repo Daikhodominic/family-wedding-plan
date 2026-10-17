@@ -1,10 +1,10 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=6';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=7';
 
-export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'activity', 'members'];
-const OPTIONAL = ['todos', 'files', 'lists', 'list_rows'];  // tables added by later database updates
+export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'activity', 'members'];
+const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items'];  // tables added by later database updates
 const UNLOGGED = ['list_rows'];
 
 
@@ -31,7 +31,9 @@ class BaseStore {
   }
   dropChildren(table, id) {
     const kill = (t, pred) => { this.cache[t] = this.cache[t].filter(r => !pred(r)); };
-    if (table === 'weddings') for (const t of ['stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows']) kill(t, r => r.wedding_id === id);
+    if (table === 'weddings') for (const t of ['stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items']) kill(t, r => r.wedding_id === id);
+    if (table === 'budgets') { kill('budget_areas', r => r.budget_id === id); kill('budget_items', r => r.budget_id === id); }
+    if (table === 'budget_areas') this.cache.budget_items.forEach(r => { if (r.area_id === id) r.area_id = null; });
     if (table === 'lists') kill('list_rows', r => r.list_id === id);
     if (table === 'stages') { const areas = this.cache.areas.filter(a => a.stage_id === id).map(a => a.id); kill('steps', s => areas.includes(s.area_id)); kill('areas', a => a.stage_id === id); }
     if (table === 'areas') kill('steps', s => s.area_id === id);
@@ -211,7 +213,7 @@ class LiveStore extends BaseStore {
 /* ------------------------------------------------------------------ */
 /*  Demo: sample data kept in this browser                             */
 /* ------------------------------------------------------------------ */
-const DEMO_KEY = 'fwp-demo-v2';
+const DEMO_KEY = 'fwp-demo-v3';
 const GATES = ['Fix the wedding date and church', 'Book the reception venue for the date', 'Pay the advance', 'Finalise the menu', 'Finalise the guest list', 'Print the invitation cards', 'Buy the gifts'];
 const TEMPLATE = [
   ['Before', [
@@ -269,6 +271,26 @@ function demoSeed() {
     { id: uid(), wedding_id: 'elow', kind: 'compare', x: 420, y: 60, w: 480, z: 2, deleted_at: null, data: { title: 'Custard cups', options: [{ title: 'Option A', rate: '', contact: '', chosen: false }, { title: 'Option B', rate: '', contact: '', chosen: false }] } },
     { id: uid(), wedding_id: 'elow', kind: 'link', x: 960, y: 60, w: 260, z: 1, deleted_at: null, data: { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', title: 'Example video link' } }
   );
+  // Example budgets (made-up numbers, just to show how it works)
+  const B = (id, wid, title, total, contingency, pos) => c.budgets.push({ id, wedding_id: wid, title, total, contingency, position: pos, created_at: nowIso(), deleted_at: null });
+  const A = (bid, wid, title, planned, pos) => { const a = { id: uid(), budget_id: bid, wedding_id: wid, title, planned, position: pos, created_at: nowIso(), deleted_at: null }; c.budget_areas.push(a); return a.id; };
+  const I = (bid, wid, area, title, amount, due, paid, payee = '') => c.budget_items.push({ id: uid(), budget_id: bid, area_id: area, wedding_id: wid, step_id: null, title, payee, amount, due, paid_at: paid ? nowIso() : null, refund_expected: false, notes: '', position: 0, created_at: nowIso(), deleted_at: null });
+  B('elow', 'elow', 'Elow & Maniziia', 1500000, 100000, 2);
+  const cat = A('elow', 'elow', 'Example: Catering', 450000, 1000), ven = A('elow', 'elow', 'Example: Venue', 300000, 2000), dec = A('elow', 'elow', 'Example: Décor & flowers', 150000, 3000), inv = A('elow', 'elow', 'Example: Invitations', 50000, 4000);
+  I('elow', 'elow', ven, 'Example: Venue advance', 100000, '2026-10-05', true, 'Example hall');
+  I('elow', 'elow', ven, 'Example: Venue balance', 200000, '2027-01-20', false, 'Example hall');
+  I('elow', 'elow', cat, 'Example: Caterer advance', 90000, '2026-11-10', false, 'Example caterer');
+  I('elow', 'elow', inv, 'Example: Invitation printing', 62000, '2026-12-01', false);
+  I('elow', 'elow', null, 'Example: Extra chairs (unplanned)', 15000, '2026-12-15', false);
+  void dec;
+  B('charani', 'charani', 'Charani & Adahrii', 400000, 30000, 1);
+  const gif = A('charani', 'charani', 'Example: Gifts for Charani', 150000, 1000), drs = A('charani', 'charani', 'Example: Dress stitching', 80000, 2000);
+  I('charani', 'charani', drs, 'Example: Tailor advance', 20000, '2026-10-12', true, 'Example tailor');
+  I('charani', 'charani', gif, 'Example: Gold set', 120000, '2026-11-20', false);
+  B('shared', null, 'Shared home costs', 300000, 0, 3);
+  const pnt = A('shared', null, 'Example: House painting', 120000, 1000), cur = A('shared', null, 'Example: Curtains & mattresses', 60000, 2000);
+  I('shared', null, pnt, 'Example: Painter', 110000, '2026-11-05', false, 'Example painter');
+  I('shared', null, cur, 'Example: Mattresses', 45000, '2026-11-25', false);
   return c;
 }
 

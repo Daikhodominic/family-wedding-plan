@@ -1,6 +1,6 @@
-import { store } from './store.js?v=6';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=6';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=6';
+import { store } from './store.js?v=7';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=7';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=7';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection' };

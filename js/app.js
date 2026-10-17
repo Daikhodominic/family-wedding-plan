@@ -1,13 +1,13 @@
-import { store } from './store.js?v=6';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=6';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=6';
-import { renderBoard } from './board.js?v=6';
-import { renderTodo } from './todo.js?v=6';
-import { renderFiles } from './files.js?v=6';
-import { renderDecide, renderBudget } from './decide.js?v=6';
-import { planOf } from './map.js?v=6';
-import { openStep } from './panel.js?v=6';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=6';
+import { store } from './store.js?v=7';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=7';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=7';
+import { renderBoard } from './board.js?v=7';
+import { renderTodo } from './todo.js?v=7';
+import { renderFiles } from './files.js?v=7';
+import { renderDecide, renderBudget } from './decide.js?v=7';
+import { planOf } from './map.js?v=7';
+import { openStep } from './panel.js?v=7';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=7';
 
 const app = document.getElementById('app');
 
