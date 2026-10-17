@@ -126,7 +126,8 @@ function renderLanding() {
     h('img', { class: 'bq l', src: 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
     h('img', { class: 'bq r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
     h('div', { class: 'land-inner' },
-      h('h1', { class: 'foil' }, 'Our Family', h('br'), 'Wedding Plan'),
+      h('h1', { class: 'foil' }, 'The Wedding', h('br'), 'War Room'),
+      h('p', { class: 'land-sub' }, 'Because “we’ll figure it out” is not a plan'),
       h('a', { class: 'enter', href: '#/home' }, 'Step inside')));
 }
 
@@ -139,9 +140,8 @@ function emblem(w) {
   const t = themeOf(w);
   const days = daysUntil(w.wedding_date);
   const plan = planOf(w);
-  return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, style: { '--e-deep': t.deep, '--e-gold': t.gold } },
+  return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, 'aria-label': 'Open ' + w.couple, style: { '--e-deep': t.deep, '--e-gold': t.gold } },
     monogram(w, 'xl'),
-    h('span', { class: 'emb-name' }, w.couple),
     h('span', { class: 'emb-date' }, w.wedding_date ? fancyDate(w.wedding_date) : `${w.date_note || 'Date'} · date to be fixed`),
     h('span', { class: 'emb-meta' },
       w.wedding_date && days !== null ? h('span', {}, h('b', {}, String(Math.max(0, days))), days === 0 ? ' today' : days < 0 ? ' married' : days === 1 ? ' day to go' : ' days to go') : null,
@@ -215,7 +215,7 @@ function renderHome() {
       h('img', { class: 'hb l', src: 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
       h('img', { class: 'hb r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
       h('header', { class: 'home-top' },
-        h('a', { class: 'brand', href: '#/' }, 'Our Family Wedding Plan'),
+        h('a', { class: 'brand', href: '#/' }, 'The Wedding War Room'),
         h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), avatar())),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
         ws.length ? ws.flatMap((w, i) => i ? [h('span', { class: 'divider', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')), emblem(w)] : [emblem(w)])
@@ -281,7 +281,7 @@ function renderSpace(id, sub, params) {
 function pageBar() {
   return h('header', { class: 'pbar' },
     h('div', { class: 'wrap pbar-in' },
-      h('a', { class: 'brand', href: '#/home' }, h('span', { class: 'pbar-back', html: ICONS.back }), 'Our Family Wedding Plan'),
+      h('a', { class: 'brand', href: '#/home' }, h('span', { class: 'pbar-back', html: ICONS.back }), 'The Wedding War Room'),
       h('nav', { class: 'pnav', 'aria-label': 'Weddings' }, weddings().map(w => h('a', { href: '#/w/' + w.id, style: { color: themeOf(w).deep } }, w.couple))),
       avatar()));
 }
@@ -337,13 +337,13 @@ let pending = false;
 export function render() {
   const { parts, params } = parseRoute();
   const key = parts.join('/');
-  document.title = 'Our Family Wedding Plan';
+  document.title = 'The Wedding War Room';
   let view;
   document.documentElement.style.background = '';
   if (!parts.length) { applyTheme(null); view = renderLanding(); }
   else if (!booted) { view = h('div', { class: 'loading' }, 'Opening the plans…'); }
   else if (!store.me) view = renderGate();
-  else if (parts[0] === 'w') { view = renderSpace(parts[1], parts[2], params); const w = wedding(parts[1]); if (w) document.title = w.couple + ' · Family Wedding Plan'; }
+  else if (parts[0] === 'w') { view = renderSpace(parts[1], parts[2], params); const w = wedding(parts[1]); if (w) document.title = w.couple + ' · The Wedding War Room'; }
   else if (parts[0] === 'activity' || parts[0] === 'history') view = familyPage(renderActivity());
   else if (parts[0] === 'bin') view = familyPage(renderBin());
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
