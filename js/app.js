@@ -121,17 +121,12 @@ function frame() {
 
 /* ---------- Landing ---------- */
 function renderLanding() {
-  const ws = weddings();
-  const names = ws.length ? ws.map(w => w.couple).join(' · ') : 'Charani & Adahrii · Elow & Maniziia';
   return h('div', { class: 'landing' },
     frame(),
     h('img', { class: 'bq l', src: 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
     h('img', { class: 'bq r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
     h('div', { class: 'land-inner' },
-      h('div', { class: 'land-eyebrow' }, names),
       h('h1', { class: 'foil' }, 'Our Family', h('br'), 'Wedding Plan'),
-      h('div', { class: 'flourish', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')),
-      h('p', { class: 'land-sub' }, 'Two weddings, one family, every plan in one place'),
       h('a', { class: 'enter', href: '#/home' }, 'Step inside')));
 }
 
