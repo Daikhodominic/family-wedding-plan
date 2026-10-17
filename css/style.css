@@ -233,6 +233,13 @@ input[type=color] { padding: 2px; height: 42px; }
 .resize { position: absolute; right: 0; bottom: 0; width: 22px; height: 22px; cursor: nwse-resize; touch-action: none; background: linear-gradient(135deg, transparent 50%, var(--w-light) 50%, var(--w-light) 60%, transparent 60%, transparent 70%, var(--w-light) 70%, var(--w-light) 80%, transparent 80%); opacity: .8; }
 .empty-board { position: absolute; left: 40px; top: 40px; max-width: 360px; color: var(--w-muted); }
 
+/* To-do */
+.todo-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 20px; align-items: start; padding-bottom: 50px; }
+.todo-grid .panel { background: var(--w-surface); border-color: var(--w-line); }
+.todo-list { margin-top: 4px; }
+.todo-list .step { padding: 8px 0; }
+@media (max-width: 860px) { .todo-grid { grid-template-columns: 1fr; } }
+
 /* Bin & activity & settings */
 .page-title { font-family: var(--serif); font-weight: 400; font-size: clamp(36px, 5vw, 52px); margin: 18px 0 6px; }
 .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }

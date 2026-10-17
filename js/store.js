@@ -3,8 +3,8 @@
 //  - DemoStore keeps sample data in this browser only (for previews)
 import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js';
 
-export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'board_items', 'activity', 'members'];
-const SOFT = ['stages', 'areas', 'steps', 'board_items'];
+export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'activity', 'members'];
+
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
 const nowIso = () => new Date().toISOString();
@@ -25,6 +25,12 @@ class BaseStore {
     const key = table === 'members' ? 'user_id' : 'id';
     const i = list.findIndex(r => r[key] === row[key]);
     if (i >= 0) list[i] = { ...list[i], ...row }; else list.push(row);
+  }
+  dropChildren(table, id) {
+    const kill = (t, pred) => { this.cache[t] = this.cache[t].filter(r => !pred(r)); };
+    if (table === 'weddings') for (const t of ['stages', 'areas', 'steps', 'todos', 'board_items']) kill(t, r => r.wedding_id === id);
+    if (table === 'stages') { const areas = this.cache.areas.filter(a => a.stage_id === id).map(a => a.id); kill('steps', s => areas.includes(s.area_id)); kill('areas', a => a.stage_id === id); }
+    if (table === 'areas') kill('steps', s => s.area_id === id);
   }
   dropLocal(table, id) {
     const key = table === 'members' ? 'user_id' : 'id';
@@ -82,17 +88,18 @@ class LiveStore extends BaseStore {
 
   async loadAll() {
     const q = (t, f) => f(this.sb.from(t).select('*'));
-    const [w, s, a, st, b, act, m] = await Promise.all([
+    const [w, s, a, st, td, b, act, m] = await Promise.all([
       q('weddings', x => x.order('position')),
       q('stages', x => x),
       q('areas', x => x),
       q('steps', x => x),
+      q('todos', x => x),
       q('board_items', x => x),
-      q('activity', x => x.order('id', { ascending: false }).limit(400)),
+      q('activity', x => x.order('id', { ascending: false }).limit(500)),
       q('members', x => x)
     ]);
-    for (const [t, r] of [['weddings', w], ['stages', s], ['areas', a], ['steps', st], ['board_items', b], ['activity', act], ['members', m]]) {
-      if (r.error) throw new Error(r.error.message);
+    for (const [t, r] of [['weddings', w], ['stages', s], ['areas', a], ['steps', st], ['todos', td], ['board_items', b], ['activity', act], ['members', m]]) {
+      if (r.error) { if (t === 'todos') { this.cache.todos = []; this.todosMissing = true; continue; } throw new Error(r.error.message); }
       this.cache[t] = r.data || [];
     }
     this.subscribe();
@@ -113,7 +120,7 @@ class LiveStore extends BaseStore {
   }
 
   async insert(table, row) {
-    const full = { id: uid(), created_at: nowIso(), created_by: this.me && this.me.id, ...row };
+    const full = table === 'weddings' ? { ...row } : { id: uid(), created_at: nowIso(), created_by: this.me && this.me.id, ...row };
     this.upsertLocal(table, full); this.emit({ table });
     const { error } = await this.sb.from(table).insert(full);
     if (error) { this.dropLocal(table, full.id); this.emit({ table }); throw new Error(error.message); }
@@ -134,9 +141,23 @@ class LiveStore extends BaseStore {
     const row = this.find(table, id);
     const { error } = await this.sb.from(table).delete().eq('id', id);
     if (error) throw new Error(error.message);
-    this.dropLocal(table, id); this.emit({ table });
+    this.dropLocal(table, id); this.dropChildren(table, id); this.emit({ table });
     const paths = row && row.data ? [row.data.path, row.data.thumb].filter(Boolean) : [];
     if (paths.length) await this.sb.storage.from('media').remove(paths);
+  }
+
+  async addTemplate(weddingId) {
+    const { error } = await this.sb.rpc('add_template', { p_wedding: weddingId });
+    if (error) throw new Error(error.message.includes('add_template') ? 'Run database update 2 in Supabase first.' : error.message);
+    const [s, a, st] = await Promise.all(['stages', 'areas', 'steps'].map(t => this.sb.from(t).select('*').eq('wedding_id', weddingId)));
+    for (const [t, r] of [['stages', s], ['areas', a], ['steps', st]]) for (const row of (r.data || [])) this.upsertLocal(t, row);
+    this.emit({ table: 'stages' });
+  }
+
+  async removeMember(userId) {
+    const { error } = await this.sb.from('members').delete().eq('user_id', userId);
+    if (error) throw new Error(error.message);
+    this.dropLocal('members', userId); this.emit({ table: 'members' });
   }
 
   async setPasscode(p) {
@@ -202,7 +223,12 @@ function demoSeed() {
     { id: 'charani', couple: 'Charani & Adahrii', monogram: 'C&A', wedding_date: '2026-12-07', date_note: '', theme: 'blue', theme_custom: {}, position: 1 },
     { id: 'elow', couple: 'Elow & Maniziia', monogram: 'E&M', wedding_date: null, date_note: 'February – March 2027', theme: 'rose', theme_custom: {}, position: 2 }
   ];
-  c.members = [{ user_id: 'demo-admin', name: 'You', is_admin: true, last_seen_activity: 0 }];
+  c.members = [{ user_id: 'demo-admin', name: 'You', is_admin: true, last_seen_activity: 0 }, { user_id: 'demo-aunty', name: 'Example relative', is_admin: false, last_seen_activity: 0 }];
+  c.todos = [
+    { id: uid(), wedding_id: 'charani', title: 'Example: call the florist about boutonniere samples', owner: '', due: null, status: 'todo', notes: '', position: 1000, created_at: nowIso(), deleted_at: null },
+    { id: uid(), wedding_id: 'charani', title: 'Example: pick up the invitation proofs', owner: '', due: null, status: 'todo', notes: '', position: 2000, created_at: nowIso(), deleted_at: null },
+    { id: uid(), wedding_id: 'elow', title: 'Example: ask for a custard sample tray', owner: '', due: null, status: 'todo', notes: '', position: 1000, created_at: nowIso(), deleted_at: null }
+  ];
   for (const w of ['charani', 'elow']) {
     TEMPLATE.forEach(([stage, areas], si) => {
       const s = { id: uid(), wedding_id: w, title: stage, position: (si + 1) * 1000, created_at: nowIso(), deleted_at: null };
@@ -240,7 +266,7 @@ class DemoStore extends BaseStore {
   async init() {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(DEMO_KEY) || 'null'); } catch (e) { saved = null; }
-    if (saved && saved.cache) { this.cache = { ...this.cache, ...saved.cache }; this.nextAct = saved.nextAct || 1; }
+    if (saved && saved.cache) { this.cache = { ...this.cache, ...saved.cache }; for (const t of TABLES) if (!this.cache[t]) this.cache[t] = []; this.nextAct = saved.nextAct || 1; }
     else { this.cache = demoSeed(); this.save(); }
     const m = this.cache.members[0];
     this.me = { id: m.user_id, name: m.name, isAdmin: true, lastSeen: Number(m.last_seen_activity) || 0 };
@@ -291,13 +317,24 @@ class DemoStore extends BaseStore {
   restore(table, id) { return this.update(table, id, { deleted_at: null, deleted_by: null }); }
   async purge(table, id) {
     const row = this.find(table, id);
-    const kill = (t, pred) => { this.cache[t] = this.cache[t].filter(r => !pred(r)); };
-    if (table === 'stages') { const areas = this.cache.areas.filter(a => a.stage_id === id).map(a => a.id); kill('steps', s => areas.includes(s.area_id)); kill('areas', a => a.stage_id === id); }
-    if (table === 'areas') kill('steps', s => s.area_id === id);
+    this.dropChildren(table, id);
     this.dropLocal(table, id); this.log('purge', table, row, null);
     this.save(); this.emit({ table });
   }
   async setPasscode() { }
+  async addTemplate(weddingId) {
+    TEMPLATE.forEach(([stage, areas], si) => {
+      const s = { id: uid(), wedding_id: weddingId, title: stage, position: (si + 1) * 1000, created_at: nowIso(), deleted_at: null };
+      this.cache.stages.push(s);
+      areas.forEach(([area, steps], ai) => {
+        const a = { id: uid(), wedding_id: weddingId, stage_id: s.id, title: area, position: (ai + 1) * 1000, created_at: nowIso(), deleted_at: null };
+        this.cache.areas.push(a);
+        steps.forEach((t, ti) => this.cache.steps.push({ id: uid(), wedding_id: weddingId, area_id: a.id, title: t, notes: '', owner: '', due: null, status: 'todo', position: (ti + 1) * 1000, created_at: nowIso(), deleted_at: null }));
+      });
+    });
+    this.save(); this.emit({ table: 'stages' });
+  }
+  async removeMember(userId) { this.dropLocal('members', userId); this.save(); this.emit({ table: 'members' }); }
   async markSeen(activityId) {
     if (activityId <= this.me.lastSeen) return;
     this.me.lastSeen = activityId; this.cache.members[0].last_seen_activity = activityId; this.save();

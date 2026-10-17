@@ -42,25 +42,25 @@ function menu(items) {
   });
 }
 
-export function editStep(step) {
+export function editStep(step, table = 'steps') {
   const title = h('textarea', { rows: 2, style: { minHeight: '60px' } }); title.value = step.title;
   const owner = h('input', { value: step.owner || '', placeholder: 'Who is handling it', maxlength: 60 });
   const due = h('input', { type: 'date', value: step.due || '' });
   const status = h('select', {}, Object.entries(STATUS).map(([k, v]) => h('option', { value: k, selected: step.status === k ? true : null }, v)));
   const notes = h('textarea', { placeholder: 'Details, phone numbers, decisions…' }); notes.value = step.notes || '';
   modal({
-    title: 'Step',
+    title: table === 'todos' ? 'To-do' : 'Step',
     body: h('div', { class: 'form-grid' },
       h('div', { class: 'full' }, field('What needs doing', title)),
       field('Person in charge', owner), field('Due by', due), field('Status', status),
       h('div', { class: 'full' }, field('Notes', notes))),
     actions: [
-      { label: 'Move to Bin', kind: 'ghost', onClick: async () => { await store.remove('steps', step.id).then(() => toast('Moved to the Bin')).catch(fail); } },
+      { label: 'Move to Bin', kind: 'ghost', onClick: async () => { await store.remove(table, step.id).then(() => toast('Moved to the Bin')).catch(fail); } },
       {
         label: 'Save', onClick: async () => {
           const patch = { title: title.value.trim() || step.title, owner: owner.value.trim(), due: due.value || null, status: status.value, notes: notes.value };
           const changed = Object.keys(patch).some(k => (patch[k] || '') !== (step[k] || ''));
-          if (changed) await store.update('steps', step.id, patch).catch(fail);
+          if (changed) await store.update(table, step.id, patch).catch(fail);
         }
       }
     ]

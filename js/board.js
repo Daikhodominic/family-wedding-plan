@@ -73,7 +73,27 @@ function editItem(item, w) {
   if (k === 'image' || k === 'video' || k === 'file') {
     const title = h('input', { value: d.title || '', maxlength: 120, placeholder: k === 'file' ? d.name : 'Optional' });
     const cap = h('textarea', { rows: 3, placeholder: 'What is this? Price, where it is from…' }); cap.value = d.caption || '';
-    return modal({ title: KIND[k].label, body: [field('Title', title), field('Caption', cap)], actions: [{ label: 'Save', onClick: () => save({ ...d, title: title.value.trim(), caption: cap.value }) }] });
+    let fileData = null;
+    const replace = h('button', {
+      class: 'btn ghost small', type: 'button', onclick: async () => {
+        const [f] = await pickFiles(k === 'file' ? '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf' : 'image/*,video/*', false); if (!f) return;
+        replace.textContent = 'Uploading…'; replace.disabled = true;
+        try { const r = await uploadFile(f); fileData = r; replace.textContent = 'New file ready ✓ — press Save'; }
+        catch (e) { fail(e); replace.textContent = 'Replace the file'; replace.disabled = false; }
+      }
+    }, k === 'image' ? 'Replace the photo' : k === 'video' ? 'Replace the video' : 'Replace the file');
+    return modal({
+      title: KIND[k].label, body: [field('Title', title), field('Caption', cap), h('div', { class: 'field' }, h('label', {}, 'File'), h('div', { class: 'hint' }, d.name || ''), replace)],
+      actions: [{
+        label: 'Save', onClick: () => {
+          if (fileData) {
+            const { title: _t, caption: _c, ...fd } = fileData.data;
+            return store.update('board_items', item.id, { kind: fileData.kind, data: { ...d, path: null, thumb: null, pages: null, ...fd, title: title.value.trim(), caption: cap.value } }).catch(fail);
+          }
+          return save({ ...d, title: title.value.trim(), caption: cap.value });
+        }
+      }]
+    });
   }
   if (k === 'link') {
     const url = h('input', { type: 'url', value: d.url || '', placeholder: 'https://' });
@@ -87,9 +107,10 @@ function editItem(item, w) {
         try { const r = await uploadFile(f); thumb = r.data.path; thumbBtn.textContent = 'Picture added ✓'; } catch (e) { fail(e); thumbBtn.textContent = 'Add a picture'; }
       }
     }, thumb ? 'Change picture' : 'Add a picture');
+    const dropThumb = h('button', { class: 'link-btn', type: 'button', hidden: !thumb, style: { color: 'var(--warn)' }, onclick: () => { thumb = null; dropThumb.hidden = true; thumbBtn.textContent = 'Add a picture'; } }, 'Remove picture');
     return modal({
       title: 'Link', body: [field('Address', url), field('Title', title, 'What the link is, e.g. “Sky blue flower-girl dress”'), field('Notes', cap),
-        h('div', { class: 'field' }, h('label', {}, 'Preview picture'), h('div', { class: 'hint' }, youtubeId(url.value) ? 'YouTube links show their own picture.' : 'Optional: a screenshot or photo to show on the card.'), thumbBtn)],
+        h('div', { class: 'field' }, h('label', {}, 'Preview picture'), h('div', { class: 'hint' }, youtubeId(url.value) ? 'YouTube links show their own picture.' : 'Optional: a screenshot or photo to show on the card.'), h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center' } }, thumbBtn, dropThumb))],
       actions: [{ label: 'Save', onClick: () => { const u = safeUrl(url.value.trim()); if (!u) { toast('That address does not look right. It should start with https://', 'error'); return false; } return save({ ...d, url: u, title: title.value.trim(), caption: cap.value, thumb }); } }]
     });
   }
@@ -107,7 +128,9 @@ function editItem(item, w) {
     const draw = () => list.replaceChildren(...colors.map((c, i) => h('div', { style: { display: 'grid', gridTemplateColumns: '56px 1fr auto', gap: '8px', alignItems: 'center' } },
       h('input', { type: 'color', value: c.hex, 'aria-label': 'Colour', oninput: (e) => { c.hex = e.target.value; } }),
       h('input', { value: c.name, 'aria-label': 'Colour name', oninput: (e) => { c.name = e.target.value; } }),
-      h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Remove colour', html: ICONS.trash, onclick: () => { colors.splice(i, 1); draw(); } }))));
+      h('span', { style: { display: 'flex' } },
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Move colour up', disabled: i === 0 ? true : null, onclick: () => { [colors[i - 1], colors[i]] = [colors[i], colors[i - 1]]; draw(); } }, '↑'),
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Remove colour', html: ICONS.trash, onclick: () => { colors.splice(i, 1); draw(); } })))));
     draw();
     return modal({ title: 'Colours', body: [field('Title', title), list, h('button', { class: 'dashed', type: 'button', onclick: () => { colors.push({ name: 'New colour', hex: '#cccccc' }); draw(); } }, '+ Add a colour')], actions: [{ label: 'Save', onClick: () => save({ ...d, title: title.value.trim(), colors }) }] });
   }
@@ -131,11 +154,15 @@ function editCompare(item) {
           try { const r = await uploadFile(f); o.image = r.data.path; drawImg(); } catch (x) { fail(x); }
         }
       }, o.image ? 'Change photo' : 'Add a photo'));
+      if (o.image) imgBox.append(h('button', { class: 'link-btn', type: 'button', style: { color: 'var(--warn)' }, onclick: () => { o.image = null; drawImg(); } }, 'Remove photo'));
     };
     drawImg();
     return h('div', { class: 'opt-edit' },
       h('div', { class: 'full' }, h('strong', {}, 'Option ' + String.fromCharCode(65 + i)),
-        h('button', { class: 'link-btn', type: 'button', style: { color: 'var(--warn)' }, onclick: () => { opts.splice(i, 1); draw(); } }, 'Remove option')),
+        h('span', { style: { display: 'flex', gap: '4px', alignItems: 'center' } },
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Move option up', disabled: i === 0 ? true : null, onclick: () => { [opts[i - 1], opts[i]] = [opts[i], opts[i - 1]]; draw(); } }, '↑'),
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Move option down', disabled: i === opts.length - 1 ? true : null, onclick: () => { [opts[i + 1], opts[i]] = [opts[i], opts[i + 1]]; draw(); } }, '↓'),
+          h('button', { class: 'link-btn', type: 'button', style: { color: 'var(--warn)', marginLeft: '6px' }, onclick: () => { opts.splice(i, 1); draw(); } }, 'Remove option'))),
       field('Name', h('input', { value: o.title || '', oninput: (e) => { o.title = e.target.value; } })),
       field('Rate (₹)', h('input', { value: o.rate || '', placeholder: 'e.g. 45 per cup', oninput: (e) => { o.rate = e.target.value; } })),
       field('Contact', h('input', { value: o.contact || '', placeholder: 'Name / phone', oninput: (e) => { o.contact = e.target.value; } })),

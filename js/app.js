@@ -2,6 +2,7 @@ import { store } from './store.js';
 import { h, $, toast, modal, field, daysUntil, fancyDate, ago, ICONS, confirmBox } from './ui.js';
 import { renderPipeline } from './pipeline.js';
 import { renderBoard } from './board.js';
+import { renderTodo } from './todo.js';
 import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js';
 
 const app = document.getElementById('app');
@@ -30,7 +31,7 @@ export function parseRoute() {
 }
 export const go = (hash) => { if (location.hash === hash) render(); else location.hash = hash; };
 
-export const weddings = () => store.rows('weddings').slice().sort((a, b) => (a.position || 0) - (b.position || 0));
+export const weddings = () => store.rows('weddings').filter(w => !w.deleted_at).sort((a, b) => (a.position || 0) - (b.position || 0));
 export const wedding = (id) => store.rows('weddings').find(w => w.id === id);
 export const live = (rows) => rows.filter(r => !r.deleted_at);
 
@@ -158,7 +159,7 @@ export function stepVisible(s) {
 
 function renderSpace(id, tab, params) {
   const w = wedding(id);
-  if (!w) return h('div', {}, topbar(), h('div', { class: 'wrap' }, h('p', {}, 'That wedding was not found. ', h('a', { href: '#/' }, 'Go home'))));
+  if (!w || w.deleted_at) return h('div', {}, topbar(), h('div', { class: 'wrap' }, h('p', {}, 'That wedding was not found. ', h('a', { href: '#/' }, 'Go home'))));
   const t = themeOf(w);
   const root = h('div', { class: 'space' });
   applyTheme(root, t);
@@ -176,7 +177,7 @@ function renderSpace(id, tab, params) {
     h('div', { class: 'wrap topbar' },
       h('a', { href: '#/', class: 'brand', style: { letterSpacing: '.02em', textTransform: 'none', fontFamily: 'var(--sans)', fontSize: '15px' } }, '← Home'),
       h('div', { class: 'toggle', role: 'group', 'aria-label': 'Choose wedding' },
-        weddings().map(x => h('a', { href: '#/w/' + x.id + (tab === 'board' ? '/board' : ''), 'aria-current': x.id === id ? 'page' : null }, x.couple))),
+        weddings().map(x => h('a', { href: '#/w/' + x.id + (tab === 'board' || tab === 'todo' ? '/' + tab : ''), 'aria-current': x.id === id ? 'page' : null }, x.couple))),
       h('nav', { class: 'topnav' },
         h('a', { href: '#/activity' }, 'Activity', unreadCount() ? h('span', { class: 'badge' }, String(unreadCount())) : null),
         h('a', { href: '#/bin' }, 'Bin'))),
@@ -188,13 +189,16 @@ function renderSpace(id, tab, params) {
           w.wedding_date ? `${fancyDate(w.wedding_date)}${days !== null && days >= 0 ? ` · ${days} ${days === 1 ? 'day' : 'days'} to go` : ''}` : `${w.date_note || 'Date'} · date to be fixed`,
           store.me.isAdmin ? h('a', { href: '#/settings', class: 'pill', style: { letterSpacing: 0, textTransform: 'none', fontFamily: 'var(--sans)', textDecoration: 'none' } }, w.wedding_date ? 'Edit' : 'Set the date') : null)),
       h('nav', { class: 'tabs', 'aria-label': 'Sections' },
-        h('a', { href: '#/w/' + id, 'aria-current': tab !== 'board' ? 'page' : null }, 'Pipeline'),
+        h('a', { href: '#/w/' + id, 'aria-current': tab !== 'board' && tab !== 'todo' ? 'page' : null }, 'Pipeline'),
+        h('a', { href: '#/w/' + id + '/todo', 'aria-current': tab === 'todo' ? 'page' : null }, 'To-do'),
         h('a', { href: '#/w/' + id + '/board', 'aria-current': tab === 'board' ? 'page' : null }, 'Mood board'))),
     h('div', { class: 'wrap', style: { color: t.light }, html: ribbon }));
 
   const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap' });
   root.append(body);
-  if (tab === 'board') renderBoard(body, w, params); else renderPipeline(body, w, params);
+  if (tab === 'board') renderBoard(body, w, params);
+  else if (tab === 'todo') renderTodo(body, w, params);
+  else renderPipeline(body, w, params);
   return root;
 }
 
