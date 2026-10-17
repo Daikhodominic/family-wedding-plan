@@ -3,7 +3,9 @@
 //  - DemoStore keeps sample data in this browser only (for previews)
 import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js';
 
-export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'activity', 'members'];
+export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'activity', 'members'];
+const OPTIONAL = ['todos', 'files', 'lists', 'list_rows'];  // tables added by later database updates
+const UNLOGGED = ['list_rows'];
 
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -14,6 +16,7 @@ class BaseStore {
     this.cache = Object.fromEntries(TABLES.map(t => [t, []]));
     this.listeners = new Set();
     this.me = null;
+    this.missing = {};
   }
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   emit(info) { for (const fn of this.listeners) { try { fn(info); } catch (e) { console.error(e); } } }
@@ -28,7 +31,8 @@ class BaseStore {
   }
   dropChildren(table, id) {
     const kill = (t, pred) => { this.cache[t] = this.cache[t].filter(r => !pred(r)); };
-    if (table === 'weddings') for (const t of ['stages', 'areas', 'steps', 'todos', 'board_items']) kill(t, r => r.wedding_id === id);
+    if (table === 'weddings') for (const t of ['stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows']) kill(t, r => r.wedding_id === id);
+    if (table === 'lists') kill('list_rows', r => r.list_id === id);
     if (table === 'stages') { const areas = this.cache.areas.filter(a => a.stage_id === id).map(a => a.id); kill('steps', s => areas.includes(s.area_id)); kill('areas', a => a.stage_id === id); }
     if (table === 'areas') kill('steps', s => s.area_id === id);
   }
@@ -88,20 +92,17 @@ class LiveStore extends BaseStore {
 
   async loadAll() {
     const q = (t, f) => f(this.sb.from(t).select('*'));
-    const [w, s, a, st, td, b, act, m] = await Promise.all([
-      q('weddings', x => x.order('position')),
-      q('stages', x => x),
-      q('areas', x => x),
-      q('steps', x => x),
-      q('todos', x => x),
-      q('board_items', x => x),
-      q('activity', x => x.order('id', { ascending: false }).limit(500)),
-      q('members', x => x)
-    ]);
-    for (const [t, r] of [['weddings', w], ['stages', s], ['areas', a], ['steps', st], ['todos', td], ['board_items', b], ['activity', act], ['members', m]]) {
-      if (r.error) { if (t === 'todos') { this.cache.todos = []; this.todosMissing = true; continue; } throw new Error(r.error.message); }
+    const order = { weddings: x => x.order('position'), activity: x => x.order('id', { ascending: false }).limit(500) };
+    const tables = TABLES;
+    const results = await Promise.all(tables.map(t => q(t, order[t] || (x => x))));
+    tables.forEach((t, i) => {
+      const r = results[i];
+      if (r.error) {
+        if (OPTIONAL.includes(t)) { this.cache[t] = []; this.missing[t] = true; if (t === 'todos') this.todosMissing = true; return; }
+        throw new Error(r.error.message);
+      }
       this.cache[t] = r.data || [];
-    }
+    });
     this.subscribe();
   }
 
@@ -142,7 +143,7 @@ class LiveStore extends BaseStore {
     const { error } = await this.sb.from(table).delete().eq('id', id);
     if (error) throw new Error(error.message);
     this.dropLocal(table, id); this.dropChildren(table, id); this.emit({ table });
-    const paths = row && row.data ? [row.data.path, row.data.thumb].filter(Boolean) : [];
+    const paths = row ? [row.path, row.thumb, row.data && row.data.path, row.data && row.data.thumb].filter(Boolean) : [];
     if (paths.length) await this.sb.storage.from('media').remove(paths);
   }
 
@@ -158,6 +159,19 @@ class LiveStore extends BaseStore {
     const { error } = await this.sb.from('members').delete().eq('user_id', userId);
     if (error) throw new Error(error.message);
     this.dropLocal('members', userId); this.emit({ table: 'members' });
+  }
+
+  async del(table, id) {
+    const before = this.find(table, id);
+    this.dropLocal(table, id); this.emit({ table });
+    const { error } = await this.sb.from(table).delete().eq('id', id);
+    if (error) { if (before) this.upsertLocal(table, before); this.emit({ table }); throw new Error(error.message); }
+  }
+
+  async downloadUrl(path, name) {
+    const { data, error } = await this.sb.storage.from('media').createSignedUrl(path, 60 * 10, { download: name || true });
+    if (error) throw new Error('Could not prepare the download. Try again.');
+    return data.signedUrl;
   }
 
   async setPasscode(p) {
@@ -197,7 +211,8 @@ class LiveStore extends BaseStore {
 /* ------------------------------------------------------------------ */
 /*  Demo: sample data kept in this browser                             */
 /* ------------------------------------------------------------------ */
-const DEMO_KEY = 'fwp-demo-v1';
+const DEMO_KEY = 'fwp-demo-v2';
+const GATES = ['Fix the wedding date and church', 'Book the reception venue for the date', 'Pay the advance', 'Finalise the menu', 'Finalise the guest list', 'Print the invitation cards', 'Buy the gifts'];
 const TEMPLATE = [
   ['Before', [
     ['Dates & booking', ['Fix the wedding date and church', 'Book the reception venue for the date']],
@@ -236,10 +251,14 @@ function demoSeed() {
       areas.forEach(([area, steps], ai) => {
         const a = { id: uid(), wedding_id: w, stage_id: s.id, title: area, position: (ai + 1) * 1000, created_at: nowIso(), deleted_at: null };
         c.areas.push(a);
-        steps.forEach((t, ti) => c.steps.push({ id: uid(), wedding_id: w, area_id: a.id, title: t, notes: '', owner: '', due: null, status: 'todo', position: (ti + 1) * 1000, created_at: nowIso(), deleted_at: null }));
+        steps.forEach((t, ti) => c.steps.push({ id: uid(), wedding_id: w, area_id: a.id, title: t, notes: '', owner: '', due: null, status: 'todo', position: (ti + 1) * 1000, created_at: nowIso(), deleted_at: null, gate: GATES.includes(t), locked_at: null, lock_note: {} }));
       });
     });
   }
+  const guestStep = c.steps.find(s => s.wedding_id === 'charani' && s.title === 'Finalise the guest list');
+  const gl = { id: uid(), wedding_id: 'charani', step_id: guestStep && guestStep.id, title: 'Example guest list', columns: ['Name', 'Side', 'Phone', 'Count', 'Notes'], created_at: nowIso(), deleted_at: null };
+  c.lists.push(gl);
+  [['Example: Uncle and family', 'Bride', '', '4', ''], ['Example: Church choir', 'Both', '', '12', 'Confirm with pastor']].forEach((cells, i) => c.list_rows.push({ id: uid(), list_id: gl.id, wedding_id: 'charani', cells, position: (i + 1) * 1000 }));
   c.board_items.push(
     { id: uid(), wedding_id: 'charani', kind: 'palette', x: 40, y: 60, w: 280, z: 1, deleted_at: null, data: { title: 'Colour palette', colors: [{ name: 'Cream White', hex: '#F9F7F2' }, { name: 'Dusty Blue', hex: '#AFBEC8' }, { name: 'French Blue', hex: '#637F99' }, { name: 'Warm Beige', hex: '#DCC9B6' }] } },
     { id: uid(), wedding_id: 'charani', kind: 'label', x: 380, y: 40, w: 300, z: 1, deleted_at: null, data: { text: 'Boutonnieres' } },
@@ -301,16 +320,18 @@ class DemoStore extends BaseStore {
 
   async insert(table, row) {
     const full = { id: uid(), created_at: nowIso(), created_by: this.me.id, deleted_at: null, ...row };
-    this.cache[table].push(full); this.log('create', table, null, full);
+    this.cache[table].push(full); if (!UNLOGGED.includes(table)) this.log('create', table, null, full);
     this.save(); this.emit({ table }); return full;
   }
   async update(table, id, patch) {
     const before = { ...this.find(table, id) };
     const after = { ...before, ...patch };
+    if (table === 'steps' && before.locked_at && !after.locked_at && !this.me.isAdmin) throw new Error('Only the admin can unlock this');
+    if (table === 'steps' && !before.locked_at && after.locked_at) after.locked_by = this.me.id;
     let action = 'update';
     if (!before.deleted_at && after.deleted_at) action = 'remove';
     else if (before.deleted_at && !after.deleted_at) action = 'restore';
-    this.upsertLocal(table, after); this.log(action, table, before, after);
+    this.upsertLocal(table, after); if (!UNLOGGED.includes(table)) this.log(action, table, before, after);
     this.save(); this.emit({ table });
   }
   remove(table, id) { return this.update(table, id, { deleted_at: nowIso(), deleted_by: this.me.id }); }
@@ -335,6 +356,8 @@ class DemoStore extends BaseStore {
     this.save(); this.emit({ table: 'stages' });
   }
   async removeMember(userId) { this.dropLocal('members', userId); this.save(); this.emit({ table: 'members' }); }
+  async del(table, id) { this.dropLocal(table, id); this.save(); this.emit({ table }); }
+  async downloadUrl(path) { return this.blobs.get(path) || ''; }
   async markSeen(activityId) {
     if (activityId <= this.me.lastSeen) return;
     this.me.lastSeen = activityId; this.cache.members[0].last_seen_activity = activityId; this.save();

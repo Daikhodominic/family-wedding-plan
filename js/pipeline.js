@@ -1,6 +1,8 @@
 import { store } from './store.js';
 import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js';
-import { live, ui } from './app.js';
+import { live, ui, render } from './app.js';
+import { openStep, lockIcon } from './panel.js';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -73,14 +75,29 @@ export function renderPipeline(root, w, params) {
   const stepsAll = live(store.rows('steps')).filter(s => s.wedding_id === w.id);
   const visibleAreaIds = new Set(areasAll.filter(a => stages.some(s => s.id === a.stage_id)).map(a => a.id));
   const visSteps = stepsAll.filter(s => visibleAreaIds.has(s.area_id));
-  const done = visSteps.filter(s => s.status === 'done').length;
+  void visSteps;
+  let view = 'columns';
+  try { view = localStorage.getItem('fwp-view-' + w.id) || 'columns'; } catch (e) { }
+  const setView = (v) => { try { localStorage.setItem('fwp-view-' + w.id, v); } catch (e) { } render(); };
+  const plan = planOf(w);
 
   root.append(h('div', { class: 'pipeline-head' },
     h('h2', {}, 'The plan, start to finish'),
-    h('div', { class: 'progress' },
-      h('span', { class: 'bar', role: 'img', 'aria-label': `${done} of ${visSteps.length} steps done` }, h('i', { style: { width: (visSteps.length ? done / visSteps.length * 100 : 0) + '%' } })),
-      `${done} of ${visSteps.length} done`)));
-  root.append(h('p', { class: 'muted', style: { margin: '-6px 0 14px', fontSize: '14px' } }, 'Tap a step to edit it. Drag by the dots to reorder; on a phone, press and hold a step to move it.'));
+    h('div', { class: 'viewtoggle', role: 'group', 'aria-label': 'View' },
+      h('button', { type: 'button', 'aria-pressed': String(view !== 'map'), onclick: () => setView('columns') }, 'Columns'),
+      h('button', { type: 'button', 'aria-pressed': String(view === 'map'), onclick: () => setView('map') }, 'Map'))));
+  root.append(journeyBar(w, plan, {
+    onPick: (areaId) => {
+      const el = root.querySelector(`[data-area="${CSS.escape(areaId)}"]`) || root.querySelector(`.area[data-id="${CSS.escape(areaId)}"]`);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
+    }
+  }));
+  if (view === 'map') {
+    root.append(h('p', { class: 'muted', style: { margin: '0 0 12px', fontSize: '14px' } }, 'Tap any step to open its details, lock it, or add files and lists. Gold ◆ marks a lock point; switch to Columns to add or rearrange steps.'));
+    renderMap(root, w, plan, params);
+    return;
+  }
+  root.append(h('p', { class: 'muted', style: { margin: '0 0 14px', fontSize: '14px' } }, 'Tap a step to open its details, files and lists. Drag by the dots to reorder; on a phone, press and hold a step to move it.'));
 
   const stagesEl = h('div', { class: 'stages' });
   for (const st of stages) {
@@ -163,7 +180,7 @@ export function renderPipeline(root, w, params) {
       }
     }));
     stagesEl.querySelectorAll('.steps').forEach(list => S.create(list, {
-      ...common, group: 'steps-' + w.id, draggable: '.step', delay: 220, delayOnTouchOnly: true, filter: '.tick', preventOnFilter: false,
+      ...common, group: 'steps-' + w.id, draggable: '.step:not(.locked)', delay: 220, delayOnTouchOnly: true, filter: '.tick', preventOnFilter: false,
       onEnd: (e) => {
         ui.busy = false; const id = e.item.dataset.id;
         if (e.from === e.to && e.oldIndex === e.newIndex) return;
@@ -181,7 +198,7 @@ export function renderPipeline(root, w, params) {
 }
 
 function areaEl(a, steps, w) {
-  const done = steps.filter(s => s.status === 'done').length;
+  const done = steps.filter(isComplete).length;
   const list = h('ul', { class: 'steps', dataset: { area: a.id } }, steps.map(stepEl));
   const input = h('input', { placeholder: 'Add a step…', maxlength: 200, 'aria-label': `Add a step to ${a.title}` });
   const add = async () => {
@@ -193,7 +210,9 @@ function areaEl(a, steps, w) {
   };
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
   input.addEventListener('blur', () => { if (input.value.trim()) add(); });
-  return h('div', { class: 'area', dataset: { id: a.id } },
+  const cpl = steps.filter(isComplete).length, lk = steps.filter(x => x.locked_at).length;
+  const st = steps.length && cpl === steps.length ? (lk ? 'locked' : 'done') : (cpl || steps.some(x => x.status === 'doing')) ? 'doing' : 'todo';
+  return h('div', { class: 'area st-' + st, dataset: { id: a.id } },
     h('div', { class: 'area-h' },
       h('button', { class: 'icon-btn grip area-grip', type: 'button', 'aria-label': 'Drag to move area', html: ICONS.grip }),
       h('h4', { onclick: () => renameBox('Rename area', a.title, v => store.update('areas', a.id, { title: v })) }, a.title),
@@ -209,17 +228,20 @@ function areaEl(a, steps, w) {
 }
 
 function stepEl(s) {
-  const late = s.due && s.status !== 'done' && daysUntil(s.due) < 0;
-  const sub = [s.owner, s.due ? (late ? null : 'due ' + shortDate(s.due)) : null].filter(Boolean).join(' · ');
-  return h('li', { class: 'step' + (s.status === 'done' ? ' done' : ''), dataset: { id: s.id } },
-    h('button', {
+  const locked = !!s.locked_at;
+  const late = s.due && s.status !== 'done' && !locked && daysUntil(s.due) < 0;
+  const nFiles = (store.rows('files') || []).filter(f => f.step_id === s.id && !f.deleted_at).length + (store.rows('lists') || []).filter(l => l.step_id === s.id && !l.deleted_at).length;
+  const sub = locked ? ['Locked' + (s.lock_note && s.lock_note.with ? ' · ' + s.lock_note.with : ''), nFiles ? nFiles + ' attached' : null].filter(Boolean).join(' · ')
+    : [s.owner, s.due ? (late ? null : 'due ' + shortDate(s.due)) : null, nFiles ? nFiles + ' attached' : null].filter(Boolean).join(' · ');
+  return h('li', { class: 'step' + (s.status === 'done' && !locked ? ' done' : '') + (locked ? ' locked' : '') + (s.gate && !locked ? ' is-gate' : ''), dataset: { id: s.id } },
+    locked ? h('span', { class: 'tick lockd', title: 'Locked', html: lockIcon(14) }) : h('button', {
       class: 'tick ' + s.status, type: 'button',
       'aria-label': s.status === 'done' ? `Mark “${s.title}” as not done` : `Mark “${s.title}” as done`,
       html: s.status === 'done' ? ICONS.check : '',
       onclick: () => store.update('steps', s.id, { status: s.status === 'done' ? 'todo' : 'done' }).catch(fail)
     }),
-    h('button', { class: 'txt', type: 'button', onclick: () => editStep(s) },
+    h('button', { class: 'txt', type: 'button', onclick: () => openStep(s.id) },
       h('span', { class: 't' }, s.title),
       (sub || late) ? h('span', { class: 'sub' }, sub, late ? h('span', { class: 'late' }, (sub ? ' · ' : '') + 'overdue since ' + shortDate(s.due)) : null) : null),
-    s.status !== 'todo' ? h('span', { class: 'chip ' + s.status }, STATUS[s.status]) : h('span'));
+    locked ? h('span', { class: 'chip lockchip' }, 'Locked') : s.gate ? h('span', { class: 'gate-ic', title: 'Lock point' }, '◆') : s.status !== 'todo' ? h('span', { class: 'chip ' + s.status }, STATUS[s.status]) : h('span'));
 }

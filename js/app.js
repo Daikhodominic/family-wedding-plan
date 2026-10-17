@@ -3,6 +3,8 @@ import { h, $, toast, modal, field, daysUntil, fancyDate, ago, ICONS, confirmBox
 import { renderPipeline } from './pipeline.js';
 import { renderBoard } from './board.js';
 import { renderTodo } from './todo.js';
+import { renderFiles } from './files.js';
+import { planOf } from './map.js';
 import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js';
 
 const app = document.getElementById('app');
@@ -74,8 +76,7 @@ function archFor(w) {
   const t = themeOf(w);
   const isRose = t.deco === 'rose';
   const days = daysUntil(w.wedding_date);
-  const steps = live(store.rows('steps')).filter(s => s.wedding_id === w.id && stepVisible(s));
-  const done = steps.filter(s => s.status === 'done').length;
+  const plan = planOf(w);
   const sprig = isRose ? 'assets/sprig_rose.svg' : 'assets/sprig_blue.svg';
   const [a, b] = (w.monogram || '').split('&');
   return h('a', { class: 'arch ' + (isRose ? 'rose' : 'blue'), href: '#/w/' + w.id, style: isRose ? null : null },
@@ -90,7 +91,9 @@ function archFor(w) {
     w.wedding_date && days !== null
       ? h('div', { class: 'count' }, h('b', { style: { color: t.ink } }, String(Math.max(0, days))), h('span', { style: { color: t.muted } }, days === 0 ? 'today!' : days < 0 ? 'married!' : days === 1 ? 'day to go' : 'days to go'))
       : h('div', {}, h('div', { class: 'tbd', style: { color: t.ink } }, 'Date to be fixed'), h('div', { class: 'muted', style: { fontSize: '14px' } }, 'The countdown starts once the date is set')),
-    h('div', { class: 'muted', style: { fontSize: '14px' } }, steps.length ? `${done} of ${steps.length} steps done` : ''),
+    plan.total ? h('div', { style: { width: '78%', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' } },
+      h('div', { style: { width: '100%', height: '6px', borderRadius: '6px', background: 'rgba(0,0,0,.07)', overflow: 'hidden' } }, h('div', { style: { width: plan.pct + '%', height: '100%', background: t.accent } })),
+      h('div', { class: 'muted', style: { fontSize: '14px' } }, `${plan.pct}% there`, plan.locked ? ` · ${plan.locked} locked` : '')) : null,
     h('span', { class: 'btn', style: { background: t.accent, color: t.accentInk } }, `Open ${w.couple.split('&')[0].trim()}'s plan`, h('span', { 'aria-hidden': 'true' }, '→'))
   );
 }
@@ -177,7 +180,7 @@ function renderSpace(id, tab, params) {
     h('div', { class: 'wrap topbar' },
       h('a', { href: '#/', class: 'brand', style: { letterSpacing: '.02em', textTransform: 'none', fontFamily: 'var(--sans)', fontSize: '15px' } }, '← Home'),
       h('div', { class: 'toggle', role: 'group', 'aria-label': 'Choose wedding' },
-        weddings().map(x => h('a', { href: '#/w/' + x.id + (tab === 'board' || tab === 'todo' ? '/' + tab : ''), 'aria-current': x.id === id ? 'page' : null }, x.couple))),
+        weddings().map(x => h('a', { href: '#/w/' + x.id + (['board', 'todo', 'files'].includes(tab) ? '/' + tab : ''), 'aria-current': x.id === id ? 'page' : null }, x.couple))),
       h('nav', { class: 'topnav' },
         h('a', { href: '#/activity' }, 'Activity', unreadCount() ? h('span', { class: 'badge' }, String(unreadCount())) : null),
         h('a', { href: '#/bin' }, 'Bin'))),
@@ -189,15 +192,17 @@ function renderSpace(id, tab, params) {
           w.wedding_date ? `${fancyDate(w.wedding_date)}${days !== null && days >= 0 ? ` · ${days} ${days === 1 ? 'day' : 'days'} to go` : ''}` : `${w.date_note || 'Date'} · date to be fixed`,
           store.me.isAdmin ? h('a', { href: '#/settings', class: 'pill', style: { letterSpacing: 0, textTransform: 'none', fontFamily: 'var(--sans)', textDecoration: 'none' } }, w.wedding_date ? 'Edit' : 'Set the date') : null)),
       h('nav', { class: 'tabs', 'aria-label': 'Sections' },
-        h('a', { href: '#/w/' + id, 'aria-current': tab !== 'board' && tab !== 'todo' ? 'page' : null }, 'Pipeline'),
+        h('a', { href: '#/w/' + id, 'aria-current': !['board', 'todo', 'files'].includes(tab) ? 'page' : null }, 'Pipeline'),
         h('a', { href: '#/w/' + id + '/todo', 'aria-current': tab === 'todo' ? 'page' : null }, 'To-do'),
-        h('a', { href: '#/w/' + id + '/board', 'aria-current': tab === 'board' ? 'page' : null }, 'Mood board'))),
+        h('a', { href: '#/w/' + id + '/board', 'aria-current': tab === 'board' ? 'page' : null }, 'Mood board'),
+        h('a', { href: '#/w/' + id + '/files', 'aria-current': tab === 'files' ? 'page' : null }, 'Files'))),
     h('div', { class: 'wrap', style: { color: t.light }, html: ribbon }));
 
   const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap' });
   root.append(body);
   if (tab === 'board') renderBoard(body, w, params);
   else if (tab === 'todo') renderTodo(body, w, params);
+  else if (tab === 'files') renderFiles(body, w, params);
   else renderPipeline(body, w, params);
   return root;
 }

@@ -2,7 +2,7 @@ import { store } from './store.js';
 import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js';
 import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js';
 
-const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card' };
+const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection' };
 const FIELD = {
   title: 'name', owner: 'person in charge', due: 'due date', status: 'status', notes: 'notes', area_id: 'area', stage_id: 'stage',
@@ -43,7 +43,15 @@ export function describe(a) {
     default: {
       const ch = a.changes || {};
       const keys = Object.keys(ch);
-      if (keys.length === 1 && keys[0] === 'status') {
+      if (ch.locked_at && ch.locked_at.new && !ch.locked_at.old) {
+        const ln = (ch.lock_note && ch.lock_note.new) || {};
+        text = `locked ${name}` + (ln.with ? ` with ${ln.with}` : '') + (ln.amount ? ` for ₹${ln.amount}` : '');
+        return { text: text.replace(/\s+/g, ' ').trim(), changes };
+      } else if (ch.locked_at && !ch.locked_at.new && ch.locked_at.old) {
+        return { text: `unlocked ${name}`, changes };
+      } else if (keys.length === 1 && keys[0] === 'gate') {
+        return { text: ch.gate.new ? `marked ${name} as a lock point` : `removed the lock point from ${name}`, changes };
+      } else if (keys.length === 1 && keys[0] === 'status') {
         text = ch.status.new === 'done' ? `marked ${name} as done` : `set ${name} to ${STATUS[ch.status.new] || ch.status.new}`;
       } else if (keys.length === 1 && keys[0] === 'area_id') {
         text = `moved ${name} to ${show(ch.area_id.new, 'area_id')}`;
@@ -71,6 +79,7 @@ export function linkFor(a) {
   if (row.wedding_id && (store.find('weddings', row.wedding_id) || {}).deleted_at) return '#/bin';
   if (a.entity === 'board_items') return `#/w/${w}/board?focus=${a.entity_id}`;
   if (a.entity === 'todos') return `#/w/${w}/todo?focus=${a.entity_id}`;
+  if (a.entity === 'files' || a.entity === 'lists') return row.step_id && store.find('steps', row.step_id) ? `#/w/${w}?focus=${row.step_id}` : `#/w/${w}/files`;
   if (a.entity === 'steps') {
     const area = store.find('areas', row.area_id);
     if (!area || area.deleted_at || (store.find('stages', area.stage_id) || {}).deleted_at) return '#/bin';
@@ -105,7 +114,7 @@ export function renderActivity() {
 /* ---------- Bin ---------- */
 export function renderBin() {
   const rows = [];
-  for (const t of ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items']) for (const r of store.rows(t)) if (r.deleted_at) rows.push({ t, r });
+  for (const t of ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists']) for (const r of (store.rows(t) || [])) if (r.deleted_at) rows.push({ t, r });
   rows.sort((a, b) => new Date(b.r.deleted_at) - new Date(a.r.deleted_at));
   const label = ({ t, r }) => {
     if (t === 'board_items') { const d = r.data || {}; return `${(CARD[r.kind] || 'card').replace(/^./, c => c.toUpperCase())}${d.title || d.text ? ': ' + (d.title || d.text).slice(0, 80) : ''}`; }
@@ -139,7 +148,7 @@ export function renderBin() {
   const emptyAll = store.me.isAdmin && rows.length ? h('button', {
     class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
       if (!(await confirmBox('Empty the Bin?', `All ${rows.length} items will be deleted for everyone and can't be restored.`, 'Delete everything in the Bin'))) return;
-      const order = ['board_items', 'todos', 'steps', 'areas', 'stages', 'weddings'];
+      const order = ['files', 'lists', 'board_items', 'todos', 'steps', 'areas', 'stages', 'weddings'];
       for (const t of order) for (const it of rows.filter(x => x.t === t)) { if (store.find(t, it.r.id)) await store.purge(t, it.r.id).catch(e => toast(e.message, 'error')); }
       toast('The Bin is empty');
     }

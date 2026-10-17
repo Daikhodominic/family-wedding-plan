@@ -24,7 +24,7 @@ async function setImg(img, path, fallback) {
 }
 
 /* ---------- Uploading ---------- */
-async function uploadFile(file) {
+export async function uploadFile(file) {
   const isImg = /^image\//.test(file.type);
   const isVid = /^video\//.test(file.type);
   const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
@@ -45,7 +45,7 @@ async function uploadFile(file) {
   return { kind: 'file', data: { path, thumb, pages, name: file.name, title: file.name.replace(/\.[^.]+$/, ''), size: file.size, mime: file.type, caption: '' } };
 }
 
-function pickFiles(accept, multiple = true) {
+export function pickFiles(accept, multiple = true) {
   return new Promise((resolve) => {
     const inp = h('input', { type: 'file', accept, multiple: multiple ? true : null, style: { display: 'none' } });
     inp.addEventListener('change', () => { resolve([...inp.files]); inp.remove(); });
