@@ -227,7 +227,7 @@ input[type=color] { padding: 2px; height: 42px; }
 .sbody { padding-top: 28px; padding-bottom: 70px; }
 
 /* Family-wide pages (edit history, bin, settings) */
-.page { min-height: 100vh; background: var(--ground); }
+.page { min-height: 100vh; background: transparent; position: relative; isolation: isolate; }
 .pbar-in { display: flex; align-items: center; gap: 18px; min-height: 62px; padding-top: 10px; padding-bottom: 10px; }
 .pbar .brand { margin-right: auto; }
 .pbar-back { display: inline-flex; }
@@ -1288,3 +1288,14 @@ body[data-page=partner] { background: var(--w-bg); }
 .board-view { background-color: rgba(255, 255, 255, .42); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .on-board .space-flora { display: block; }
 .on-board .space-flora.three { display: none; }
+
+body[data-page=page] .page > * { position: relative; z-index: 1; }
+/* ---------- Family-wide pages: the same soft blue-and-rose glass as the choose page ---------- */
+body[data-page=page] { background:
+  radial-gradient(900px 700px at 0% 0%, rgba(150, 175, 205, .40), transparent 62%),
+  radial-gradient(900px 700px at 100% 100%, rgba(214, 160, 150, .34), transparent 62%),
+  linear-gradient(110deg, #EAEFF5 0%, #F3EEE8 50%, #F5E9E4 100%); background-attachment: fixed; }
+body[data-page=page]::before, body[data-page=page]::after { content: ''; position: fixed; bottom: -8vh; height: 56vh; width: 30vw; pointer-events: none; z-index: 0; opacity: .24; background: no-repeat bottom / contain; }
+body[data-page=page]::before { left: -4vh; background-image: url('../assets/lush_blue.svg'); background-position: left bottom; }
+body[data-page=page]::after { right: -4vh; width: 42vw; background-image: url('../assets/lush_rose.svg'); background-position: right bottom; }
+@media (max-width: 760px) { body[data-page=page]::before, body[data-page=page]::after { width: 55vw; height: 36vh; opacity: .16; } }
