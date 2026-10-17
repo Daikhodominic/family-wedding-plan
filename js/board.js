@@ -1,10 +1,10 @@
-import { store } from './store.js?v=14';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=14';
-import { live, ui, render } from './app.js?v=14';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=14';
-import { together } from './history.js?v=14';
-import { isDecider } from './tools.js?v=14';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=14';
+import { store } from './store.js?v=15';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=15';
+import { live, ui, render } from './app.js?v=15';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=15';
+import { together } from './history.js?v=15';
+import { isDecider } from './tools.js?v=15';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=15';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },

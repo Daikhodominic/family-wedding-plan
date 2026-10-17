@@ -1,10 +1,11 @@
-import { store } from './store.js?v=14';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=14';
-import { live, ui, render } from './app.js?v=14';
-import { openStep, lockIcon } from './panel.js?v=14';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=14';
-import { personInput } from './tools.js?v=14';
-import { openIdeas, sectionFor } from './decisions.js?v=14';
+import { store } from './store.js?v=15';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=15';
+import { live, ui, render } from './app.js?v=15';
+import { openStep, lockIcon } from './panel.js?v=15';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=15';
+import { personInput } from './tools.js?v=15';
+import { openIdeas, sectionFor } from './decisions.js?v=15';
+import { renderGlimpse } from './glimpse.js?v=15';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -80,10 +81,10 @@ export function renderPlanHead(root, w, current, plan = planOf(w), onPick) {
   };
   root.append(h('div', { class: 'plan-head' },
     h('div', { class: 'ph-title' },
-      h('div', { class: 'eyebrow' }, current === 'todo' ? 'Little jobs' : 'Start to finish'),
-      h('h1', {}, current === 'todo' ? 'To-do list' : 'The plan')),
+      h('div', { class: 'eyebrow' }, current === 'todo' ? 'Little jobs' : current === 'glimpse' ? 'Glimpse' : 'Start to finish'),
+      h('h1', {}, current === 'todo' ? 'To-do list' : current === 'glimpse' ? 'The wedding at a glance' : 'The plan')),
     h('div', { class: 'viewtoggle', role: 'group', 'aria-label': 'View' },
-      [['list', 'List'], ['map', 'Map'], ['todo', 'To-do']].map(([k, l]) =>
+      [['list', 'List'], ['map', 'Map'], ['glimpse', 'Glimpse'], ['todo', 'To-do']].map(([k, l]) =>
         h('button', { type: 'button', 'aria-pressed': String(current === k), onclick: () => setView(k) }, l)))));
   root.append(journeyBar(w, plan, {
     onPick: onPick || ((areaId) => { try { localStorage.setItem('fwp-view-' + w.id, 'list'); } catch (e) { } location.hash = '#/w/' + w.id + '/plan?focus=' + areaId; })
@@ -97,13 +98,15 @@ export function renderPipeline(root, w, params) {
   const visibleAreaIds = new Set(areasAll.filter(a => stages.some(s => s.id === a.stage_id)).map(a => a.id));
   const visSteps = stepsAll.filter(s => visibleAreaIds.has(s.area_id));
   let view = 'list';
-  try { view = localStorage.getItem('fwp-view-' + w.id) === 'map' ? 'map' : 'list'; } catch (e) { }
+  try { const v = localStorage.getItem('fwp-view-' + w.id); view = ['map', 'glimpse'].includes(v) ? v : 'list'; } catch (e) { }
+  if (params.view && ['list', 'map', 'glimpse'].includes(params.view)) view = params.view;
   const plan = planOf(w);
 
   renderPlanHead(root, w, view, plan, (areaId) => {
     const el = root.querySelector(`[data-area="${CSS.escape(areaId)}"]`) || root.querySelector(`.area[data-id="${CSS.escape(areaId)}"]`);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
   });
+  if (view === 'glimpse') { renderGlimpse(root, w, plan); return; }
   if (view === 'map') {
     root.append(h('p', { class: 'hint' }, 'Tap any step to open its details, make it final, or add files and lists. ◆ marks a big decision. Switch to List to add or rearrange.'));
     renderMap(root, w, plan, params);

@@ -1,13 +1,14 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=14';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=14';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=14';
-import { openStep, lockIcon } from './panel.js?v=14';
-import { planOf, journeyBar } from './map.js?v=14';
-import { listSummary } from './lists.js?v=14';
-import { budgetMath, inr } from './budget.js?v=14';
-import { editStep } from './pipeline.js?v=14';
-import { canonical } from './myjobs.js?v=14';
+import { store } from './store.js?v=15';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=15';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=15';
+import { openStep, lockIcon } from './panel.js?v=15';
+import { planOf, journeyBar } from './map.js?v=15';
+import { listSummary } from './lists.js?v=15';
+import { budgetMath, inr } from './budget.js?v=15';
+import { editStep } from './pipeline.js?v=15';
+import { canonical } from './myjobs.js?v=15';
+import { pictureEl } from './map.js?v=15';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -80,6 +81,13 @@ export function renderOverview(root, w) {
       h('div', { class: 'ost' + (overdue.length ? ' warn' : '') }, h('b', {}, String(overdue.length)), h('span', {}, 'overdue')),
       h('div', { class: 'ost gold' }, h('b', {}, String(plan.locked)), h('span', {}, 'final')))));
   root.append(journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } }));
+  const finals = all.filter(x => x.kind === 'step' && x.locked_at).sort((a, b) => String(b.locked_at).localeCompare(String(a.locked_at)));
+  if (finals.length) root.append(h('section', { class: 'decided-strip' },
+    h('div', { class: 'ob-h' }, h('h2', {}, 'Decided so far'), h('span', { class: 'count gold' }, String(finals.length)), h('a', { class: 'ob-link', href: `#/w/${w.id}/plan?view=glimpse` }, 'See the wedding at a glance →')),
+    h('div', { class: 'ds-row' }, finals.slice(0, 8).map(s => h('button', { type: 'button', class: 'ds-item', onclick: () => openStep(s.id) },
+      pictureEl(s, 'ds-pic') || h('span', { class: 'ds-pic ph' }, '✓'),
+      h('b', {}, (s.lock_note && s.lock_note.choice && s.lock_note.choice.title) || s.title),
+      h('span', {}, (s.lock_note && (s.lock_note.vendor || s.lock_note.with)) || s.title))))));
 
   // Who is doing what
   const people = new Map();

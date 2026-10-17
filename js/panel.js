@@ -1,10 +1,10 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=14';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=14';
-import { uploadFile, pickFiles } from './board.js?v=14';
-import { isDecider, deciderNames, personInput } from './tools.js?v=14';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal } from './decisions.js?v=14';
-import { voteCounts, optionKey } from './feedback.js?v=14';
+import { store } from './store.js?v=15';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=15';
+import { uploadFile, pickFiles } from './board.js?v=15';
+import { isDecider, deciderNames, personInput } from './tools.js?v=15';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=15';
+import { voteCounts, optionKey } from './feedback.js?v=15';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -141,7 +141,9 @@ export function openStep(stepId) {
     if (missing.files && s.locked_at === undefined) {
       lockBlock = h('div', { class: 'd-card muted' }, 'Final decisions need database update 4. Ask the admin to run it in Supabase.');
     } else if (locked) {
+      const finalPic = stepPictureEl(s);
       lockBlock = h('div', { class: 'd-lock on' },
+        finalPic,
         h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(22) }), h('b', {}, 'Final'), h('span', { class: 'ft-sub' }, `by ${store.memberName(s.locked_by) || 'someone'} · ${longDate(String(s.locked_at).slice(0, 10))}`)),
         h('dl', { class: 'd-dl' },
           note.with ? [h('dt', {}, 'With'), h('dd', {}, note.with)] : null,
@@ -157,12 +159,14 @@ export function openStep(stepId) {
       const wAmt = h('input', { placeholder: 'e.g. 85000', inputmode: 'decimal', value: note.amount || '' });
       const wAdv = h('input', { placeholder: 'e.g. 20000', inputmode: 'decimal', value: note.advance || '' });
       const wPhone = h('input', { type: 'tel', placeholder: 'Their phone number', value: note.phone || '' });
+      let wImage = note.image || null;
+      const wPic = h('button', { type: 'button', class: 'btn ghost small', onclick: async () => { const [f] = await pickFiles('image/*', false); if (!f) return; wPic.textContent = 'Uploading…'; try { const r = await uploadFile(f); wImage = r.data.path; wPic.textContent = 'Photo added ✓'; } catch (e) { fail(e); wPic.textContent = 'Add a photo'; } } }, wImage ? 'Change the photo' : 'Add a photo of the choice');
       const wNotes = h('textarea', { rows: 2, placeholder: 'Anything to remember about this deal' }); wNotes.value = note.notes || '';
       lockBlock = h('div', { class: 'd-lock' },
         h('div', { class: 'd-lock-h' }, h('span', { html: lockIcon(20) }), h('b', {}, 'Make this decision final')),
-        h('div', { class: 'form-grid' }, field('Who or what it’s with', wWith), field('Phone', wPhone), field('Amount (₹)', wAmt), field('Advance paid (₹)', wAdv), h('div', { class: 'full' }, field('Notes', wNotes))),
+        h('div', { class: 'form-grid' }, field('Who or what it’s with', wWith), field('Phone', wPhone), field('Amount (₹)', wAmt), field('Advance paid (₹)', wAdv), h('div', { class: 'full' }, field('Notes', wNotes)), h('div', { class: 'full' }, h('span', { class: 'ft-sub', style: { display: 'block', marginBottom: '6px' } }, 'A photo shows on the map and in Glimpse.'), wPic)),
         h('div', { style: { display: 'flex', gap: '8px', marginTop: '10px' } },
-          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: async () => { lockForm = false; const ln = { ...note, with: wWith.value.trim(), vendor: wWith.value.trim(), phone: wPhone.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value }; await store.update('steps', s.id, { locked_at: new Date().toISOString(), status: 'done', lock_note: ln }).then(() => afterFinal(s, ln)).then(() => toast('Final ✓ — vendor saved, balance reminder added if anything is owed')).catch(fail); } }, 'Make it final'),
+          h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: async () => { lockForm = false; const ln = { ...note, image: wImage, with: wWith.value.trim(), vendor: wWith.value.trim(), phone: wPhone.value.trim(), amount: wAmt.value.trim(), advance: wAdv.value.trim(), notes: wNotes.value }; await store.update('steps', s.id, { locked_at: new Date().toISOString(), status: 'done', lock_note: ln }).then(() => afterFinal(s, ln)).then(() => toast('Final ✓ — vendor saved, balance reminder added if anything is owed')).catch(fail); } }, 'Make it final'),
           h('button', { type: 'button', class: 'btn ghost', onclick: () => { lockForm = false; draw(); } }, 'Cancel')));
     } else {
       lockBlock = h('div', { class: 'd-lock' },
@@ -222,6 +226,7 @@ export function openStep(stepId) {
 }
 
 // Ideas pinned from the mood board, and the comparison that decides this step.
+function stepPictureEl(s) { const p = stepPicture(s), ext = p ? null : previewUrl(s); if (!p && !ext) return null; const im = h('img', { class: 'd-final-pic', alt: '', referrerpolicy: 'no-referrer' }); if (ext) im.src = ext; else store.url(p).then(u => { if (u) im.src = u; }); return im; }
 function thumb(path) { const im = h('img', { alt: '', loading: 'lazy' }); if (path) store.url(path).then(u => { if (u) im.src = u; }); return im; }
 function boardSection(s, area) {
   const cards = cardsForStep(s.id);

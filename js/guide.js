@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=14';
-import { h, modal } from './ui.js?v=14';
-import { once, markOnce } from './tools.js?v=14';
+import { store } from './store.js?v=15';
+import { h, modal } from './ui.js?v=15';
+import { once, markOnce } from './tools.js?v=15';
 
 const SLIDES = [
   ['Welcome to the War Room', 'Both weddings live here. Everyone in the family can add ideas, tick off jobs and see what’s been decided — from any phone or laptop.'],

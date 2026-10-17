@@ -1,7 +1,8 @@
 // Progress tracking and the Map view of a wedding's pipeline.
-import { store } from './store.js?v=14';
-import { h, shortDate, daysUntil, ICONS } from './ui.js?v=14';
-import { openStep, lockIcon } from './panel.js?v=14';
+import { store } from './store.js?v=15';
+import { h, shortDate, daysUntil, ICONS } from './ui.js?v=15';
+import { openStep, lockIcon } from './panel.js?v=15';
+import { stepPicture, previewUrl } from './decisions.js?v=15';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -107,8 +108,31 @@ function nodeEl(s) {
   const late = s.due && !isComplete(s) && daysUntil(s.due) < 0;
   const cls = ['mnode', s.locked_at ? 'locked' : s.status, isComplete(s) ? 'complete' : '', s.gate && !s.locked_at ? 'is-gate' : ''].filter(Boolean).join(' ');
   const sub = s.locked_at ? ((s.lock_note && s.lock_note.with) || 'Final') : [s.owner, s.due ? (late ? 'overdue' : 'due ' + shortDate(s.due)) : null].filter(Boolean).join(' · ');
-  return h('button', { type: 'button', class: cls, dataset: { id: s.id }, onclick: () => openStep(s.id), 'aria-label': `${s.n}. ${s.title}${s.locked_at ? ', locked' : isComplete(s) ? ', done' : ''}` },
+  if (s.locked_at) return decidedNode(s, cls);
+  return h('button', { type: 'button', class: cls, dataset: { id: s.id }, onclick: () => openStep(s.id), 'aria-label': `${s.n}. ${s.title}${s.locked_at ? ', final' : isComplete(s) ? ', done' : ''}` },
     h('span', { class: 'mnum' }, String(s.n)),
     h('span', { class: 'mtxt' }, h('span', { class: 'mt' }, s.title), sub ? h('span', { class: 'ms' + (late ? ' late' : '') }, sub) : null),
     s.locked_at ? h('span', { class: 'mic', html: lockIcon(16) }) : isComplete(s) ? h('span', { class: 'mic', html: ICONS.check }) : s.gate ? h('span', { class: 'mic gate-ic', title: 'Big decision' }, '◆') : s.status === 'doing' ? h('span', { class: 'pulse' }) : null);
 }
+
+// A final step on the map shows what was chosen: its picture, who it's with, and a number to call.
+export function pictureEl(step, cls = 'dn-pic') {
+  const path = stepPicture(step), ext = path ? null : previewUrl(step);
+  if (!path && !ext) return null;
+  const im = h('img', { class: cls, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+  if (ext) im.src = ext; else store.url(path).then(u => { if (u) im.src = u; else im.remove(); });
+  return im;
+}
+function decidedNode(s, cls) {
+  const n = s.lock_note || {};
+  const pic = pictureEl(s);
+  const el = h('div', { class: cls + ' decided' + (pic ? ' with-pic' : ''), dataset: { id: s.id }, role: 'button', tabindex: '0', onclick: (e) => { if (!e.target.closest('a')) openStep(s.id); }, onkeydown: (e) => { if (e.key === 'Enter') openStep(s.id); } },
+    pic,
+    h('span', { class: 'mnum' }, String(s.n)),
+    h('span', { class: 'mtxt' }, h('span', { class: 'mt' }, s.title),
+      n.with ? h('span', { class: 'ms gold' }, n.with) : h('span', { class: 'ms' }, 'Final'),
+      n.phone ? h('a', { class: 'ms tel', href: 'tel:' + n.phone.replace(/[^\d+]/g, '') }, '☏ ' + n.phone) : null),
+    h('span', { class: 'mic', html: lockIcon(16) }));
+  return el;
+}
+

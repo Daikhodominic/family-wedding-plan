@@ -1,10 +1,10 @@
 // Joins the mood board to the plan: pin cards to steps, card status, card → job,
 // comparisons that become final decisions, and the follow-ups a decision brings.
-import { store } from './store.js?v=14';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=14';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=14';
-import { together } from './history.js?v=14';
-import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=14';
+import { store } from './store.js?v=15';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=15';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=15';
+import { together } from './history.js?v=15';
+import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=15';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -168,3 +168,24 @@ export async function openIdeas(w, area) {
   if (sec) location.hash = `#/w/${w.id}/board?focus=${sec.id}`;
 }
 
+
+/* ---------- What a decided step looks like ---------- */
+// The picture for a step: the chosen option's photo, a photo added when it was made final,
+// or a photo pinned to it from the board (chosen ones first).
+export function stepPicture(step) {
+  const n = step.lock_note || {};
+  if (n.choice && n.choice.image) return n.choice.image;
+  if (n.image) return n.image;
+  const cards = cardsForStep(step.id);
+  const img = (c) => { const d = c.data || {}; return c.kind === 'image' ? d.path : c.kind === 'gallery' && d.images && d.images[0] ? d.images[0].path : d.thumb || null; };
+  const chosen = cards.filter(c => c.data && c.data.status === 'chosen').map(img).find(Boolean);
+  if (chosen) return chosen;
+  const cmp = cards.find(c => c.kind === 'compare');
+  if (cmp) { const o = (cmp.data.options || []).find(x => x.chosen && x.image); if (o) return o.image; }
+  return cards.map(img).find(Boolean) || null;
+}
+export function previewUrl(step) {
+  const cards = cardsForStep(step.id);
+  for (const c of cards) if (c.kind === 'link' && c.data && c.data.preview && c.data.preview.image) return c.data.preview.image;
+  return null;
+}

@@ -1131,3 +1131,40 @@ body.easy input, body.easy textarea, body.easy select { font-size: 17px; }
 .dc-votes { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; color: var(--gold); }
 .d-body > * { flex-shrink: 0; }
 .d-title { min-height: 2.4em; field-sizing: content; }
+
+/* ---------- Glimpse & decided ---------- */
+.mnode.decided { cursor: pointer; grid-template-columns: 26px minmax(0, 1fr) auto; background: var(--gold-fill); border: 1.5px solid var(--gold-line); }
+.mnode.decided.with-pic { grid-template-areas: 'pic pic pic' 'num txt ic'; padding-top: 8px; }
+.mnode.decided .dn-pic { grid-area: pic; width: 100%; height: 110px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; background: var(--w-soft); }
+.mnode.decided.with-pic .mnum { grid-area: num; } .mnode.decided.with-pic .mtxt { grid-area: txt; } .mnode.decided.with-pic .mic { grid-area: ic; }
+.ms.gold { color: var(--gold); font-weight: 500; }
+.ms.tel { color: var(--w-accent); text-decoration: none; font-weight: 500; }
+.gl-intro p { margin: 0 0 20px; color: var(--w-muted); max-width: 760px; }
+.glimpse { display: flex; flex-direction: column; gap: 34px; padding-bottom: 30px; }
+.gl-stage .stage-h { margin-bottom: 14px; }
+.gl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+.gl-tile { display: flex; flex-direction: column; background: var(--w-surface); border: 1px solid var(--w-line); border-top: 2px solid var(--gold); border-radius: 8px; overflow: hidden; cursor: pointer; text-decoration: none; color: inherit; transition: transform .25s, box-shadow .25s; box-shadow: 0 16px 34px -30px rgba(40, 30, 20, .7); animation: rise .45s ease-out both; }
+.deco-rose .gl-tile { border-radius: 18px; }
+.gl-tile:hover { transform: translateY(-3px); box-shadow: 0 24px 40px -28px rgba(40, 30, 20, .75); }
+.gl-pic { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--w-soft); }
+.gl-pic.ph { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--w-soft), color-mix(in srgb, var(--gold-fill) 60%, var(--w-surface))); }
+.gl-pic.ph span { font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--w-muted); }
+.gl-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 3px; }
+.gl-area { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+.gl-body h3 { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 23px; line-height: 1.15; color: var(--w-deep); }
+.gl-step { font-size: 12.5px; color: var(--w-muted); }
+.gl-with { font-size: 14px; }
+.gl-tel { font-size: 14px; font-weight: 500; color: var(--w-accent); text-decoration: none; }
+.gl-notes { font-size: 13px; color: var(--w-muted); }
+.gl-when { font-size: 12px; color: var(--gold); margin-top: 4px; }
+.gl-tile.pending { border-top: 2px dashed var(--gold-line); border-style: dashed; background: transparent; box-shadow: none; opacity: .85; }
+.gl-tile.pending .gl-pic.ph { background: transparent; border-bottom: 1px dashed var(--gold-line); aspect-ratio: 16 / 7; }
+.d-final-pic { width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; display: block; }
+.decided-strip { margin: 0 0 22px; padding: 16px 18px; background: var(--w-surface); border: 1px solid var(--gold-line); border-radius: 8px; }
+.deco-rose .decided-strip { border-radius: 18px; }
+.ds-row { display: flex; gap: 14px; overflow-x: auto; padding: 6px 2px 4px; }
+.ds-item { flex: 0 0 150px; display: flex; flex-direction: column; gap: 4px; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.ds-pic { width: 150px; height: 112px; object-fit: cover; border-radius: 10px; background: var(--w-soft); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 26px; }
+.ds-item b { font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-item span:last-child { font-size: 12px; color: var(--w-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 760px) { .gl-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .gl-body h3 { font-size: 18px; } .viewtoggle button { padding: 7px 11px; } }
