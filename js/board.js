@@ -1,6 +1,7 @@
-import { store } from './store.js?v=8';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=8';
-import { live, ui, render } from './app.js?v=8';
+import { store } from './store.js?v=9';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=9';
+import { live, ui, render } from './app.js?v=9';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount } from './feedback.js?v=9';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -137,7 +138,7 @@ function editItem(item, w) {
 function editCompare(item) {
   const d = item.data || {};
   const title = h('input', { value: d.title || '', maxlength: 120, placeholder: 'e.g. Custard cups' });
-  const opts = (d.options || []).map(o => ({ ...o }));
+  const opts = (d.options || []).map((o, i) => ({ ...o, oid: optionKey(o, i) }));  // keep each option's votes with it when reordering
   const list = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '12px' } });
   const draw = () => list.replaceChildren(...opts.map((o, i) => {
     const imgBox = h('div', { class: 'thumb-row' });
@@ -169,7 +170,7 @@ function editCompare(item) {
   draw();
   modal({
     title: 'Comparison', wide: true,
-    body: [field('What are you comparing?', title), list, h('button', { class: 'dashed', type: 'button', onclick: () => { opts.push({ title: '', rate: '', contact: '', notes: '', chosen: false }); draw(); } }, '+ Add an option')],
+    body: [field('What are you comparing?', title), list, h('button', { class: 'dashed', type: 'button', onclick: () => { opts.push({ oid: 'o' + Math.random().toString(36).slice(2, 10), title: '', rate: '', contact: '', notes: '', chosen: false }); draw(); } }, '+ Add an option')],
     actions: [{ label: 'Save', onClick: () => store.update('board_items', item.id, { data: { ...d, title: title.value.trim(), options: opts } }).catch(fail) }]
   });
 }
@@ -236,6 +237,9 @@ function cardBody(item) {
         h('div', { class: 'pal' }, (d.colors || []).map(c => h('div', {}, h('span', { class: 'sw', style: { background: c.hex } }), c.name))));
     case 'compare': {
       const opts = d.options || [];
+      const scores = opts.map((o, i) => { const v = voteCounts(item, optionKey(o, i)); return v.up.length - v.down.length; });
+      const top = Math.max(0, ...scores);
+      const leader = top > 0 && scores.filter(x => x === top).length === 1 ? scores.indexOf(top) : -1;
       const choose = (i) => {
         const next = opts.map((o, j) => ({ ...o, chosen: j === i ? !o.chosen : false }));
         store.update('board_items', item.id, { data: { ...d, options: next } }).catch(fail);
@@ -252,7 +256,12 @@ function cardBody(item) {
               o.rate ? h('span', {}, '₹ ' + o.rate) : h('span', { class: 'by' }, 'No rate yet'),
               o.contact ? h('span', { class: 'by' }, o.contact) : null,
               o.notes ? h('span', {}, o.notes) : null,
-              h('button', { class: 'pill' + (o.chosen ? ' on' : ''), type: 'button', onclick: () => choose(i) }, o.chosen ? '✓ Chosen' : 'Choose')));
+              h('div', { class: 'opt-acts' },
+                voteBar(item, optionKey(o, i)),
+                store.me.isAdmin
+                  ? h('button', { class: 'pill' + (o.chosen ? ' on' : ''), type: 'button', title: 'Only the admin can choose', onclick: () => choose(i) }, o.chosen ? '✓ Chosen' : 'Choose')
+                  : o.chosen ? h('span', { class: 'pill on', style: { cursor: 'default' } }, '✓ Chosen') : null),
+              !o.chosen && leader === i ? h('span', { class: 'lead-tag' }, 'Most votes') : null));
         })) : h('div', { class: 'by' }, 'No options yet — tap the pencil to add them.'), byline);
     }
   }
@@ -273,6 +282,7 @@ function cardEl(item, w, onMove) {
       }
     }));
   card.append(handle, ...[].concat(cardBody(item)).filter(Boolean));
+  if (item.kind !== 'label') { card.append(cardFooter(item)); if (newCount(item.id)) card.classList.add('has-new'); }
   const rz = h('span', { class: 'resize', 'aria-hidden': 'true' });
   card.append(rz);
   dragify(card, handle, item, w, 'move', onMove);
@@ -547,7 +557,7 @@ export function renderBoard(root, w, params) {
       }
       return;
     }
-    if (onCard && board.tool === 'select' && e.target.closest('.handle, .resize, button, a, input, video')) return; // card controls and drag bars
+    if (onCard && board.tool === 'select' && e.target.closest('.handle, .resize, .cfoot, button, a, input, video')) return; // card controls and drag bars
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     try { view.setPointerCapture(e.pointerId); } catch (x) { }

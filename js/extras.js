@@ -1,9 +1,10 @@
-import { store } from './store.js?v=8';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=8';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=8';
-import { confirmAreaRestore, inr } from './budget.js?v=8';
+import { store } from './store.js?v=9';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=9';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=9';
+import { confirmAreaRestore, inr } from './budget.js?v=9';
+import { clearAll } from './clear.js?v=9';
 
-const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment' };
+const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection' };
 const FIELD = {
   title: 'name', owner: 'person in charge', due: 'due date', status: 'status', notes: 'notes', area_id: 'area', stage_id: 'stage',
@@ -41,7 +42,7 @@ export function describe(a) {
   const changes = [];
   let text;
   switch (a.action) {
-    case 'create': text = `added ${noun === 'wedding details' ? '' : 'a ' + noun} ${name}`; break;
+    case 'create': text = a.entity === 'comments' ? `left a comment ${name}` : `added ${noun === 'wedding details' ? '' : 'a ' + noun} ${name}`; break;
     case 'remove': text = `moved ${noun === 'card' ? 'a card' : 'the ' + noun} ${name} to the Bin`; break;
     case 'restore': text = `restored ${noun === 'card' ? 'a card' : 'the ' + noun} ${name}`; break;
     case 'purge': text = `deleted ${noun === 'card' ? 'a card' : 'the ' + noun} ${name} for good`; break;
@@ -86,6 +87,7 @@ export function linkFor(a) {
   if (a.entity === 'budgets' || a.entity === 'budget_areas' || a.entity === 'budget_items') return row.wedding_id ? `#/w/${row.wedding_id}/budget` : '#/budget?to=shared';
   if (row.wedding_id && (store.find('weddings', row.wedding_id) || {}).deleted_at) return '#/bin';
   if (a.entity === 'board_items') return `#/w/${w}/board?focus=${a.entity_id}`;
+  if (a.entity === 'comments') return `#/w/${row.wedding_id}/board?focus=${row.item_id}`;
   if (a.entity === 'todos') return `#/w/${w}/todo?focus=${a.entity_id}`;
   if (a.entity === 'files' || a.entity === 'lists') return row.step_id && store.find('steps', row.step_id) ? `#/w/${w}?focus=${row.step_id}` : `#/w/${w}/files`;
   if (a.entity === 'steps') {
@@ -122,10 +124,11 @@ export function renderActivity() {
 /* ---------- Bin ---------- */
 export function renderBin() {
   const rows = [];
-  for (const t of ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'budget_areas', 'budget_items']) for (const r of (store.rows(t) || [])) if (r.deleted_at) rows.push({ t, r });
+  for (const t of ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'budget_areas', 'budget_items', 'comments']) for (const r of (store.rows(t) || [])) if (r.deleted_at) rows.push({ t, r });
   rows.sort((a, b) => new Date(b.r.deleted_at) - new Date(a.r.deleted_at));
   const label = ({ t, r }) => {
     if (t === 'board_items') { const d = r.data || {}; return `${(CARD[r.kind] || 'card').replace(/^./, c => c.toUpperCase())}${d.title || d.text ? ': ' + (d.title || d.text).slice(0, 80) : ''}`; }
+    if (t === 'comments') return `${r.kind === 'suggestion' ? 'Suggestion' : 'Comment'}: ${(r.body || '').slice(0, 80)}`;
     const n = NOUN[t]; return `${n[0].toUpperCase() + n.slice(1)}: ${r.title || r.couple}`;
   };
   const context = ({ t, r }) => {
@@ -142,7 +145,33 @@ export function renderBin() {
   };
   const list = h('div', { class: 'panel' });
   if (!rows.length) list.append(h('p', { class: 'muted' }, 'The Bin is empty.'));
+  // Things cleared together share one timestamp: show them as one group with Restore all.
+  const byTime = new Map();
+  for (const it of rows) { const k = it.r.deleted_at; if (!byTime.has(k)) byTime.set(k, []); byTime.get(k).push(it); }
+  const groups = [...byTime.values()].filter(g => g.length >= 3);
+  const grouped = new Set(groups.flat());
+  const groupsEl = groups.map(g => {
+    const who = store.memberName(g[0].r.deleted_by);
+    const ws = [...new Set(g.map(it => (store.find('weddings', it.r.wedding_id) || {}).couple).filter(Boolean))];
+    const tables = [...new Set(g.map(it => it.t))];
+    return h('div', { class: 'bin-group' },
+      h('div', { class: 'bin-row' },
+        h('div', {}, h('div', { style: { fontWeight: 600 } }, `Cleared together · ${g.length} things`),
+          h('div', { class: 'muted', style: { fontSize: '14px' } }, [ws.join(' & ') || 'Shared home costs', tables.map(t => NOUN[t] + 's').join(', '), `removed ${who ? 'by ' + who + ' ' : ''}${ago(g[0].r.deleted_at)}`].join(' · '))),
+        h('div', { class: 'acts' },
+          h('button', { class: 'btn small', type: 'button', onclick: async () => {
+            try { for (const t of tables) await store.restoreMany(t, g.filter(it => it.t === t).map(it => it.r.id)); toast(`Restored ${g.length}`); } catch (e) { toast(e.message, 'error'); }
+          } }, 'Restore all'),
+          store.me.isAdmin ? h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
+            if (!(await confirmBox('Delete all of these for good?', `${g.length} things will be gone for everyone and can't be restored.`, 'Delete for good'))) return;
+            for (const it of g) if (store.find(it.t, it.r.id)) await store.purge(it.t, it.r.id).catch(e => toast(e.message, 'error'));
+            toast('Deleted');
+          } }, 'Delete all for good') : null)),
+      h('details', {}, h('summary', {}, 'See what’s inside'), h('ul', { class: 'bin-inside' }, g.slice(0, 200).map(it => h('li', {}, label(it))))));
+  });
+  if (groupsEl.length) list.append(...groupsEl);
   for (const it of rows) {
+    if (grouped.has(it)) continue;
     list.append(h('div', { class: 'bin-row' },
       h('div', {}, h('div', { style: { fontWeight: 500 } }, label(it)), h('div', { class: 'muted', style: { fontSize: '14px' } }, context(it))),
       h('div', { class: 'acts' },
@@ -292,6 +321,7 @@ export function renderSettings() {
 
   return h('main', { class: 'wrap', style: { paddingBottom: '60px' } },
     h('div', { class: 'eyebrow' }, 'Admin only'), h('h1', { class: 'page-title' }, 'Settings'),
+    h('div', { style: { margin: '6px 0 14px' } }, h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: () => clearAll() }, 'Clear all and start over…')),
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Only you can see this page.'),
     h('div', { class: 'settings-grid' }, cards),
     h('div', { class: 'settings-grid' }, pass, people));

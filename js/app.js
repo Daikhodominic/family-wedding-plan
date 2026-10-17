@@ -1,14 +1,15 @@
-import { store } from './store.js?v=8';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=8';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=8';
-import { renderBoard } from './board.js?v=8';
-import { renderTodo } from './todo.js?v=8';
-import { renderFiles } from './files.js?v=8';
-import { renderDecide } from './decide.js?v=8';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=8';
-import { planOf } from './map.js?v=8';
-import { openStep } from './panel.js?v=8';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=8';
+import { store } from './store.js?v=9';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=9';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=9';
+import { renderBoard } from './board.js?v=9';
+import { renderTodo } from './todo.js?v=9';
+import { renderFiles } from './files.js?v=9';
+import { renderDecide } from './decide.js?v=9';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=9';
+import { clearPage, clearAll } from './clear.js?v=9';
+import { planOf } from './map.js?v=9';
+import { openStep } from './panel.js?v=9';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=9';
 
 const app = document.getElementById('app');
 
@@ -85,6 +86,8 @@ function avatarMenu(btn) {
     item('budget', 'Family budget', () => go('#/budget')),
     item('trash', 'Bin', () => go('#/bin')),
     store.me.isAdmin ? item('settings', 'Settings', () => go('#/settings')) : null,
+    ...pageClearItems(item),
+    store.me.isAdmin ? item('broom', 'Clear all and start over…', () => { const { parts } = parseRoute(); clearAll(parts[0] === 'w' ? { weddingId: parts[1] } : {}); }) : null,
     item('user', 'Change your name', profileMenu),
     store.mode === 'demo' ? item('restore', 'Reset the sample', () => store.resetDemo()) : null,
     store.mode === 'live' ? item('logout', 'Sign out of this device', async () => { if (await confirmBox('Sign out?', 'You will need the family passcode to come back in on this device.', 'Sign out')) { await store.signOut(); location.hash = '#/'; location.reload(); } }) : null);
@@ -93,6 +96,17 @@ function avatarMenu(btn) {
   pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
   pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
   setTimeout(() => document.addEventListener('pointerdown', outside, true));
+}
+
+// "Clear this page" for whoever is looking at a wedding's section.
+function pageClearItems(item) {
+  const { parts } = parseRoute();
+  if (parts[0] !== 'w' || !wedding(parts[1])) return [];
+  const sub = parts[2] || 'plan';
+  const section = sub === 'plan' || !sub ? 'plan' : sub;
+  const names = { plan: 'the plan', todo: 'the to-do list', board: 'the mood board', files: 'files and lists', budget: 'the budget' };
+  if (!names[section]) return [];
+  return [item('broom', 'Clear ' + names[section] + '…', () => clearPage(parts[1], section === 'budget' ? 'budget' : section))];
 }
 
 function avatar() {

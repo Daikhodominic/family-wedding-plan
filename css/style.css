@@ -480,6 +480,60 @@ svg.ink .knob { fill: #fff; stroke: var(--w-accent); stroke-width: 2.5; pointer-
 .resize { position: absolute; right: 0; bottom: 0; width: 22px; height: 22px; cursor: nwse-resize; touch-action: none; background: linear-gradient(135deg, transparent 50%, var(--w-light) 50%, var(--w-light) 60%, transparent 60%, transparent 70%, var(--w-light) 70%, var(--w-light) 80%, transparent 80%); opacity: .8; }
 .empty-board { position: absolute; left: 120px; top: 40px; max-width: 360px; color: var(--w-muted); }
 
+/* reactions, comments, votes */
+.cfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 10px 8px; border-top: 1px solid var(--line-soft); margin-top: auto; position: relative; }
+.card.note .cfoot { border-top-color: rgba(0, 0, 0, .06); }
+.rx { display: inline-flex; align-items: center; gap: 3px; height: 26px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--w-line); background: var(--w-surface); font-size: 13px; cursor: pointer; line-height: 1; }
+.rx span { font-size: 11.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+.rx:hover { border-color: var(--gold-line); }
+.rx.mine { background: var(--gold-fill); border-color: var(--gold-line); }
+.rx.mine span { color: var(--gold); font-weight: 600; }
+.rx.add { color: var(--w-muted); font-size: 14px; }
+.rx-wrap { position: relative; display: inline-flex; }
+.rx-pick { position: absolute; bottom: 32px; left: 0; z-index: 30; display: flex; gap: 2px; padding: 4px; background: var(--w-surface); border: 1px solid var(--gold-line); border-radius: 999px; box-shadow: 0 12px 24px -14px rgba(0, 0, 0, .5); }
+.rx-pick button { width: 32px; height: 32px; border: 0; background: none; border-radius: 50%; cursor: pointer; font-size: 17px; transition: transform .12s; }
+.rx-pick button:hover { transform: scale(1.25); background: var(--w-soft); }
+.cbtn { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--w-line); background: var(--w-surface); font-size: 12.5px; color: var(--w-muted); cursor: pointer; }
+.cbtn svg { width: 14px; height: 14px; }
+.cbtn:hover { color: var(--w-ink); border-color: var(--gold-line); }
+.cbtn.fresh { color: var(--gold); border-color: var(--gold-line); background: var(--gold-fill); font-weight: 600; }
+.newdot { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); border: 2px solid var(--w-surface); }
+.card.has-new { box-shadow: 0 0 0 2px var(--gold-line), 0 12px 26px -20px rgba(30, 30, 30, .6); }
+.opt-acts { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.votes { display: inline-flex; gap: 4px; }
+.vote { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--w-line); background: var(--w-surface); font-size: 10px; color: var(--w-muted); cursor: pointer; }
+.vote span { font-size: 12px; font-variant-numeric: tabular-nums; }
+.vote.up.mine { background: var(--ok-bg); border-color: color-mix(in srgb, var(--ok-ink) 35%, transparent); color: var(--ok-ink); }
+.vote.down.mine { background: color-mix(in srgb, var(--warn) 10%, #fff); border-color: color-mix(in srgb, var(--warn) 35%, transparent); color: var(--warn); }
+.vote:hover { border-color: var(--gold-line); }
+.lead-tag { align-self: flex-start; font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: .04em; }
+.thread .d-body { gap: 14px; }
+.th-h { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 28px; color: var(--w-deep); }
+.th-list { display: flex; flex-direction: column; gap: 10px; }
+.cm { position: relative; padding: 12px 14px; border: 1px solid var(--w-line); border-radius: 12px; background: #fff; }
+.cm.suggestion { border-left: 3px solid var(--w-accent); }
+.cm.fresh { background: color-mix(in srgb, var(--gold-fill) 55%, #fff); border-color: var(--gold-line); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold-fill) 60%, transparent); }
+.cm.latest { border-color: var(--gold-line); }
+.cm-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 13.5px; }
+.cm-h b { font-weight: 600; }
+.cm-tag { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--w-soft); color: var(--w-accent); font-weight: 500; }
+.cm-new { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--gold); color: #fff; font-weight: 600; letter-spacing: .04em; }
+.cm-latest { font-size: 11px; color: var(--gold); font-weight: 500; }
+.cm-t { margin-left: auto; font-size: 12px; color: var(--w-muted); }
+.cm-b { margin-top: 4px; font-size: 14.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cm-del { font-size: 12px; color: var(--w-muted); padding: 2px 0 0; }
+.composer { position: sticky; bottom: -30px; display: flex; flex-direction: column; gap: 8px; padding: 12px 0 4px; background: var(--paper); border-top: 1px solid var(--line-soft); }
+.composer-f { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+/* clearing */
+.clear-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.clear-grid fieldset { border: 1px solid var(--w-line); border-radius: 12px; padding: 10px 14px 12px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.clear-grid legend { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); padding: 0 6px; }
+.danger-check { color: var(--warn); }
+.bin-group { border: 1px solid var(--gold-line); border-radius: 12px; padding: 4px 14px 10px; margin-bottom: 12px; background: color-mix(in srgb, var(--gold-fill) 20%, var(--w-surface)); }
+.bin-group details { font-size: 13.5px; color: var(--w-muted); }
+.bin-group summary { cursor: pointer; padding: 2px 4px; }
+.bin-inside { margin: 6px 0 0; padding-left: 20px; max-height: 220px; overflow: auto; }
+
 /* ---------- To-do ---------- */
 .todo-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 22px; align-items: start; padding-bottom: 40px; }
 .todo-list { margin-top: 4px; }

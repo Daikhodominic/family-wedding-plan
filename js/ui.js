@@ -215,5 +215,7 @@ export const ICONS = {
   history: sv('<path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5"/><path d="M4 4v4.5h4.5M12 8v4.5l3 2"/>'),
   user: sv('<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/>'),
   logout: sv('<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>'),
-  lock: sv('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>')
+  lock: sv('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+  comment: sv('<path d="M4 5h16v11H9l-5 4z"/>'),
+  broom: sv('<path d="M14 4l6 6M12 6l6 6-7 7H5v-6z"/><path d="M9 13l2 2"/>')
 };

@@ -1,11 +1,11 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=8';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=9';
 
-export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'activity', 'members'];
-const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items'];  // tables added by later database updates
-const UNLOGGED = ['list_rows'];
+export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'activity', 'members'];
+const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions'];  // tables added by later database updates
+const UNLOGGED = ['list_rows', 'reactions'];
 
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -31,7 +31,8 @@ class BaseStore {
   }
   dropChildren(table, id) {
     const kill = (t, pred) => { this.cache[t] = this.cache[t].filter(r => !pred(r)); };
-    if (table === 'weddings') for (const t of ['stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items']) kill(t, r => r.wedding_id === id);
+    if (table === 'weddings') for (const t of ['stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions']) kill(t, r => r.wedding_id === id);
+    if (table === 'board_items') { kill('comments', r => r.item_id === id); kill('reactions', r => r.item_id === id); }
     if (table === 'budgets') { kill('budget_areas', r => r.budget_id === id); kill('budget_items', r => r.budget_id === id); }
     if (table === 'budget_areas') this.cache.budget_items.forEach(r => { if (r.area_id === id) r.area_id = null; });
     if (table === 'lists') kill('list_rows', r => r.list_id === id);
@@ -140,6 +141,19 @@ class LiveStore extends BaseStore {
   remove(table, id) { return this.update(table, id, { deleted_at: nowIso(), deleted_by: this.me && this.me.id }); }
   restore(table, id) { return this.update(table, id, { deleted_at: null, deleted_by: null }); }
 
+  // Many rows at once (Clear all, Restore all). One timestamp keeps them grouped in the Bin.
+  async patchMany(table, ids, patch) {
+    if (!ids.length) return;
+    for (const id of ids) this.upsertLocal(table, { id, ...patch });
+    this.emit({ table });
+    for (let i = 0; i < ids.length; i += 150) {
+      const { error } = await this.sb.from(table).update(patch).in('id', ids.slice(i, i + 150));
+      if (error) throw new Error(error.message);
+    }
+  }
+  removeMany(table, ids, ts = nowIso()) { return this.patchMany(table, ids, { deleted_at: ts, deleted_by: this.me && this.me.id }); }
+  restoreMany(table, ids) { return this.patchMany(table, ids, { deleted_at: null, deleted_by: null }); }
+
   async purge(table, id) {
     const row = this.find(table, id);
     const { error } = await this.sb.from(table).delete().eq('id', id);
@@ -213,7 +227,7 @@ class LiveStore extends BaseStore {
 /* ------------------------------------------------------------------ */
 /*  Demo: sample data kept in this browser                             */
 /* ------------------------------------------------------------------ */
-const DEMO_KEY = 'fwp-demo-v3';
+const DEMO_KEY = 'fwp-demo-v4';
 const GATES = ['Fix the wedding date and church', 'Book the reception venue for the date', 'Pay the advance', 'Finalise the menu', 'Finalise the guest list', 'Print the invitation cards', 'Buy the gifts'];
 const TEMPLATE = [
   ['Before', [
@@ -264,13 +278,22 @@ function demoSeed() {
   c.board_items.push(
     { id: uid(), wedding_id: 'charani', kind: 'palette', x: 40, y: 60, w: 280, z: 1, deleted_at: null, data: { title: 'Colour palette', colors: [{ name: 'Cream White', hex: '#F9F7F2' }, { name: 'Dusty Blue', hex: '#AFBEC8' }, { name: 'French Blue', hex: '#637F99' }, { name: 'Warm Beige', hex: '#DCC9B6' }] } },
     { id: uid(), wedding_id: 'charani', kind: 'label', x: 380, y: 40, w: 300, z: 1, deleted_at: null, data: { text: 'Boutonnieres' } },
-    { id: uid(), wedding_id: 'charani', kind: 'compare', x: 380, y: 90, w: 520, z: 2, deleted_at: null, data: { title: 'Boutonnieres for the groom’s side', options: [{ title: 'Dried hydrangea', rate: '', contact: '', chosen: true }, { title: 'Foam roses with tags', rate: '', contact: '', chosen: false }] } },
+    { id: 'demo-compare', wedding_id: 'charani', kind: 'compare', x: 380, y: 90, w: 520, z: 2, deleted_at: null, data: { title: 'Boutonnieres for the groom’s side', options: [{ oid: 'o-a', title: 'Dried hydrangea', rate: '', contact: '', chosen: true }, { oid: 'o-b', title: 'Foam roses with tags', rate: '', contact: '', chosen: false }] } },
     { id: uid(), wedding_id: 'charani', kind: 'note', x: 960, y: 70, w: 220, z: 3, deleted_at: null, data: { text: 'Example note: pick one flower-girl style so all the girls match?', tint: 'blue' } },
     { id: uid(), wedding_id: 'charani', kind: 'contact', x: 40, y: 330, w: 260, z: 1, deleted_at: null, data: { title: 'Example florist', phone: '', role: 'Dried and foam boutonnieres', notes: '' } },
     { id: uid(), wedding_id: 'elow', kind: 'palette', x: 40, y: 60, w: 340, z: 1, deleted_at: null, data: { title: 'Chateau Rose palette', colors: [{ name: 'Dusty Rose', hex: '#D9A9A0' }, { name: 'Vintage Mauve', hex: '#9E7280' }, { name: 'English Rose', hex: '#E3B7AE' }, { name: 'Champagne', hex: '#EFE3D3' }, { name: 'Rose Gold', hex: '#C9967F' }] } },
     { id: uid(), wedding_id: 'elow', kind: 'compare', x: 420, y: 60, w: 480, z: 2, deleted_at: null, data: { title: 'Custard cups', options: [{ title: 'Option A', rate: '', contact: '', chosen: false }, { title: 'Option B', rate: '', contact: '', chosen: false }] } },
     { id: uid(), wedding_id: 'elow', kind: 'link', x: 960, y: 60, w: 260, z: 1, deleted_at: null, data: { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', title: 'Example video link' } }
   );
+  // Example comments, reactions and votes
+  const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
+  c.comments.push(
+    { id: uid(), wedding_id: 'charani', item_id: 'demo-compare', kind: 'comment', body: 'Example: the dried hydrangea matches the invitation colours really well.', title: 'Example comment', author_name: 'Example relative', created_by: 'demo-aunty', created_at: ago(300), deleted_at: null },
+    { id: uid(), wedding_id: 'charani', item_id: 'demo-compare', kind: 'suggestion', body: 'Example: could we ask the florist for one sample of each before deciding?', title: 'Example suggestion', author_name: 'Example relative', created_by: 'demo-aunty', created_at: ago(20), deleted_at: null });
+  c.reactions.push(
+    { id: uid(), wedding_id: 'charani', item_id: 'demo-compare', target: 'card', value: '❤️', user_name: 'Example relative', created_by: 'demo-aunty', created_at: ago(30) },
+    { id: uid(), wedding_id: 'charani', item_id: 'demo-compare', target: 'o-a', value: 'up', user_name: 'Example relative', created_by: 'demo-aunty', created_at: ago(30) });
+
   // Example budgets (made-up numbers, just to show how it works)
   const B = (id, wid, title, total, contingency, pos) => c.budgets.push({ id, wedding_id: wid, title, total, contingency, position: pos, created_at: nowIso(), deleted_at: null });
   const A = (bid, wid, title, planned, pos) => { const a = { id: uid(), budget_id: bid, wedding_id: wid, title, planned, position: pos, created_at: nowIso(), deleted_at: null }; c.budget_areas.push(a); return a.id; };
@@ -358,6 +381,16 @@ class DemoStore extends BaseStore {
   }
   remove(table, id) { return this.update(table, id, { deleted_at: nowIso(), deleted_by: this.me.id }); }
   restore(table, id) { return this.update(table, id, { deleted_at: null, deleted_by: null }); }
+  async patchMany(table, ids, patch) {
+    for (const id of ids) {
+      const before = { ...this.find(table, id) }; const after = { ...before, ...patch };
+      this.upsertLocal(table, after);
+      this.log(!before.deleted_at && after.deleted_at ? 'remove' : before.deleted_at && !after.deleted_at ? 'restore' : 'update', table, before, after);
+    }
+    this.save(); this.emit({ table });
+  }
+  removeMany(table, ids, ts = nowIso()) { return this.patchMany(table, ids, { deleted_at: ts, deleted_by: this.me.id }); }
+  restoreMany(table, ids) { return this.patchMany(table, ids, { deleted_at: null, deleted_by: null }); }
   async purge(table, id) {
     const row = this.find(table, id);
     this.dropChildren(table, id);

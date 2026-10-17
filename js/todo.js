@@ -1,7 +1,7 @@
-import { store } from './store.js?v=8';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=8';
-import { live, ui, render, stepVisible } from './app.js?v=8';
-import { editStep } from './pipeline.js?v=8';
+import { store } from './store.js?v=9';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=9';
+import { live, ui, render, stepVisible } from './app.js?v=9';
+import { editStep } from './pipeline.js?v=9';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 let show = 'open';      // open | all | done
