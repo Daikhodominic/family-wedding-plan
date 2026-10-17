@@ -1,4 +1,4 @@
-# Our Family Wedding Plan
+# The Wedding War Room
 
 The family's shared planning site for Charani & Adahrii and Elow & Maniziia.
 
