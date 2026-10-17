@@ -1,8 +1,9 @@
-import { store } from './store.js?v=11';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=11';
-import { live, ui, render } from './app.js?v=11';
-import { openStep, lockIcon } from './panel.js?v=11';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=11';
+import { store } from './store.js?v=12';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=12';
+import { live, ui, render } from './app.js?v=12';
+import { openStep, lockIcon } from './panel.js?v=12';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=12';
+import { personInput } from './tools.js?v=12';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -46,7 +47,7 @@ function menu(items) {
 
 export function editStep(step, table = 'steps') {
   const title = h('textarea', { rows: 2, style: { minHeight: '60px' } }); title.value = step.title;
-  const owner = h('input', { value: step.owner || '', placeholder: 'Who is handling it', maxlength: 60 });
+  const owner = personInput(step.owner || '');
   const due = h('input', { type: 'date', value: step.due || '' });
   const status = h('select', {}, Object.entries(STATUS).map(([k, v]) => h('option', { value: k, selected: step.status === k ? true : null }, v)));
   const notes = h('textarea', { placeholder: 'Details, phone numbers, decisions…' }); notes.value = step.notes || '';

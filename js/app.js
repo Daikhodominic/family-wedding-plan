@@ -1,19 +1,20 @@
-import { store } from './store.js?v=11';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=11';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=11';
-import { renderBoard } from './board.js?v=11';
-import { renderTodo } from './todo.js?v=11';
-import { renderFiles } from './files.js?v=11';
-import { renderDecide } from './decide.js?v=11';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=11';
-import { clearPage, clearAll } from './clear.js?v=11';
-import { undoButtons } from './history.js?v=11';
-import { downloadBackup } from './tools.js?v=11';
-import { renderOverview, editDate } from './overview.js?v=11';
-import { renderLists } from './lists.js?v=11';
-import { planOf } from './map.js?v=11';
-import { openStep } from './panel.js?v=11';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=11';
+import { store } from './store.js?v=12';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=12';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=12';
+import { renderBoard } from './board.js?v=12';
+import { renderTodo } from './todo.js?v=12';
+import { renderFiles } from './files.js?v=12';
+import { renderDecide } from './decide.js?v=12';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=12';
+import { clearPage, clearAll } from './clear.js?v=12';
+import { undoButtons } from './history.js?v=12';
+import { downloadBackup } from './tools.js?v=12';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=12';
+import { renderOverview, editDate } from './overview.js?v=12';
+import { renderLists } from './lists.js?v=12';
+import { planOf } from './map.js?v=12';
+import { openStep } from './panel.js?v=12';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=12';
 
 const app = document.getElementById('app');
 
@@ -86,6 +87,7 @@ function avatarMenu(btn) {
   const item = (icon, label, onClick, extra) => h('button', { type: 'button', class: 'mi', onclick: () => { close(); onClick(); } }, h('span', { class: 'mi-ic', html: ICONS[icon] }), h('span', {}, label), extra || null);
   const pop = h('div', { class: 'menu-pop', role: 'menu' },
     h('div', { class: 'mp-head' }, h('b', {}, store.me.name), h('span', {}, store.me.isAdmin ? 'Admin' : 'Family')),
+    item('check', 'My jobs', () => go('#/me'), myOpenJobs().length ? h('span', { class: 'badge' }, String(myOpenJobs().length)) : null),
     item('history', 'Edit history', () => go('#/history'), n ? h('span', { class: 'badge' }, String(n)) : null),
     item('budget', 'Family budget', () => go('#/budget')),
     item('trash', 'Bin', () => go('#/bin')),
@@ -196,6 +198,18 @@ function comingUp() {
 }
 const stepLink = (s) => s.kind === 'todo' ? `#/w/${s.wedding_id}/todo?focus=${s.id}` : `#/w/${s.wedding_id}/plan?open=${s.id}`;
 
+function greeting() {
+  const jobs = myOpenJobs();
+  const late = jobs.filter(t => t.due && daysUntil(t.due) < 0).length;
+  const week = jobs.filter(t => t.due && daysUntil(t.due) >= 0 && daysUntil(t.due) <= 7).length;
+  const first = (store.me.name || '').split(/\s+/)[0];
+  return h('a', { class: 'greet', href: '#/me' },
+    h('span', {}, `Hi ${first}`),
+    jobs.length ? h('b', {}, ` · ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} for you`) : h('span', { class: 'muted' }, ' · nothing on your list'),
+    late ? h('span', { class: 'neg' }, ` · ${late} overdue`) : week ? h('span', {}, ` · ${week} this week`) : null,
+    jobs.length ? h('span', { class: 'greet-go' }, ' →') : null);
+}
+
 function renderHome() {
   applyTheme(null);
   const ws = weddings();
@@ -238,7 +252,8 @@ function renderHome() {
       h('img', { class: 'hb r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
       h('header', { class: 'home-top' },
         h('a', { class: 'brand', href: '#/' }, 'The Wedding War Room'),
-        h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), avatar())),
+        greeting(),
+        h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), undoButtons(), avatar())),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
         ws.length ? ws.flatMap((w, i) => i ? [h('span', { class: 'divider', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')), emblem(w)] : [emblem(w)])
           : h('p', { class: 'muted' }, store.me.isAdmin ? h('span', {}, 'No weddings yet. ', h('a', { href: '#/settings' }, 'Add one in Settings')) : 'No weddings yet.')),
@@ -373,9 +388,10 @@ export function render() {
   else if (parts[0] === 'activity' || parts[0] === 'history') view = familyPage(renderActivity());
   else if (parts[0] === 'bin') view = familyPage(renderBin());
   else if (parts[0] === 'budget') view = familyPage(renderFamilyBudget(params));
+  else if (parts[0] === 'me') view = familyPage(renderMyJobs());
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
   else view = renderHome();
-  document.body.dataset.page = !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget'].includes(parts[0]) ? 'home' : 'page';
+  document.body.dataset.page = !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   app.dataset.view = key;
   const boardView = $('.board-view');

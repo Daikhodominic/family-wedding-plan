@@ -1,7 +1,8 @@
-import { store } from './store.js?v=11';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=11';
-import { live, ui, render, stepVisible } from './app.js?v=11';
-import { editStep } from './pipeline.js?v=11';
+import { store } from './store.js?v=12';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=12';
+import { live, ui, render, stepVisible } from './app.js?v=12';
+import { editStep } from './pipeline.js?v=12';
+import { personInput } from './tools.js?v=12';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 let showDone = false;   // the Done section starts folded
@@ -24,7 +25,7 @@ export function renderTodo(root, w, params) {
 
   // Quick add
   const input = h('input', { placeholder: 'Add a to-do and press Enter…', maxlength: 200, 'aria-label': 'New to-do' });
-  const who = h('input', { placeholder: 'Who (optional)', maxlength: 60, 'aria-label': 'Person in charge', style: { maxWidth: '200px' }, value: person || '' });
+  const who = personInput(person || '', { placeholder: 'Who (optional)', 'aria-label': 'Person in charge', style: { maxWidth: '200px' } });
   const due = h('input', { type: 'date', 'aria-label': 'Due date', style: { maxWidth: '170px' } });
   const add = async () => {
     const v = input.value.trim(); if (!v) return;

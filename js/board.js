@@ -1,9 +1,9 @@
-import { store } from './store.js?v=11';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=11';
-import { live, ui, render } from './app.js?v=11';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=11';
-import { together } from './history.js?v=11';
-import { isDecider } from './tools.js?v=11';
+import { store } from './store.js?v=12';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText } from './ui.js?v=12';
+import { live, ui, render } from './app.js?v=12';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=12';
+import { together } from './history.js?v=12';
+import { isDecider } from './tools.js?v=12';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },

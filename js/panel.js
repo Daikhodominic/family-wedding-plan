@@ -1,8 +1,8 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=11';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=11';
-import { uploadFile, pickFiles } from './board.js?v=11';
-import { isDecider, deciderNames } from './tools.js?v=11';
+import { store } from './store.js?v=12';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=12';
+import { uploadFile, pickFiles } from './board.js?v=12';
+import { isDecider, deciderNames, personInput } from './tools.js?v=12';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -166,7 +166,7 @@ export function openStep(stepId) {
         h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Lock it once it’s confirmed, like a vendor booked or a menu agreed. A lock point is a key decision, shown as a gold gate on the map.'));
     }
 
-    const owner = h('input', { value: s.owner || '', maxlength: 60, disabled: !canEdit ? true : null, placeholder: 'Who is handling it', onchange: (e) => set({ owner: e.target.value.trim() }) });
+    const owner = personInput(s.owner || '', { disabled: !canEdit ? true : null, onchange: (e) => set({ owner: e.target.value.trim() }) });
     const due = h('input', { type: 'date', value: s.due || '', disabled: !canEdit ? true : null, onchange: (e) => set({ due: e.target.value || null }) });
     const notes = h('textarea', { rows: 3, placeholder: 'Details, decisions, phone numbers…', onchange: (e) => set({ notes: e.target.value }) }); notes.value = s.notes || '';
 

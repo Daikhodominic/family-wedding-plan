@@ -1,12 +1,13 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=11';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=11';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=11';
-import { openStep, lockIcon } from './panel.js?v=11';
-import { planOf, journeyBar } from './map.js?v=11';
-import { listSummary } from './lists.js?v=11';
-import { budgetMath, inr } from './budget.js?v=11';
-import { editStep } from './pipeline.js?v=11';
+import { store } from './store.js?v=12';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=12';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=12';
+import { openStep, lockIcon } from './panel.js?v=12';
+import { planOf, journeyBar } from './map.js?v=12';
+import { listSummary } from './lists.js?v=12';
+import { budgetMath, inr } from './budget.js?v=12';
+import { editStep } from './pipeline.js?v=12';
+import { canonical } from './myjobs.js?v=12';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -83,7 +84,7 @@ export function renderOverview(root, w) {
   // Who is doing what
   const people = new Map();
   for (const x of open) {
-    const key = (x.owner || '').trim();
+    const key = canonical(x.owner);
     const k = key.toLowerCase() || '~';
     if (!people.has(k)) people.set(k, { name: key || 'Not assigned yet', list: [] });
     people.get(k).list.push(x);
