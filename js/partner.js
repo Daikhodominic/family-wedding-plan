@@ -2,10 +2,10 @@
 // (no prices, rates or phone numbers), what's been decided (no amounts) and how far along
 // it is — and can react, vote and send suggestions, which the family sees.
 // Security lives in the database (update 9): partners only ever receive partner_data().
-import { store } from './store.js?v=19';
-import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=19';
-import { live, themeOf, monogram, applyTheme, render } from './app.js?v=19';
-import { EMOJI } from './feedback.js?v=19';
+import { store } from './store.js?v=20';
+import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=20';
+import { live, themeOf, monogram, applyTheme, render } from './app.js?v=20';
+import { EMOJI } from './feedback.js?v=20';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That didn’t work. Check your connection.', 'error'); };
 let state = { token: null, data: null, mode: null, loading: false, error: null };

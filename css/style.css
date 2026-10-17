@@ -197,10 +197,16 @@ input[type=color] { padding: 2px; height: 42px; }
 
 /* ---------- Wedding space header ---------- */
 .space { position: relative; min-height: 100vh; background: var(--w-bg); color: var(--w-ink); isolation: isolate; }
-.space-flora { position: fixed; bottom: -8vh; height: 62vh; max-width: 34vw; object-fit: contain; opacity: .1; pointer-events: none; z-index: -1; }
+.space-flora { position: fixed; bottom: -8vh; height: 62vh; max-width: 34vw; object-fit: contain; opacity: .3; pointer-events: none; z-index: -1; }
 .deco-blue .space-flora { left: -6vh; object-position: left bottom; }
 .deco-rose .space-flora { right: -6vh; object-position: right bottom; transform: scaleX(-1); }
-.on-board .space-flora { display: none; }
+.space-flora.two { top: 70px; bottom: auto; height: 34vh; max-width: 26vw; opacity: .24; }
+.deco-blue .space-flora.two { left: auto; right: -5vh; object-position: right top; transform: rotate(160deg); }
+.deco-rose .space-flora.two { right: auto; left: -5vh; object-position: left top; transform: rotate(200deg) scaleX(-1); }
+.space-flora.three { bottom: -4vh; height: 26vh; max-width: 20vw; opacity: .2; }
+.deco-blue .space-flora.three { left: auto; right: -3vh; transform: rotate(-24deg); }
+.deco-rose .space-flora.three { right: auto; left: -3vh; transform: rotate(24deg) scaleX(-1); }
+@media (max-width: 760px) { .space-flora { opacity: .22; max-width: 60vw; height: 40vh; } .space-flora.two { height: 22vh; max-width: 40vw; opacity: .18; } .space-flora.three { display: none; } }
 .shead, .pbar { position: sticky; top: 0; z-index: 60; background: color-mix(in srgb, var(--w-surface) 92%, transparent); backdrop-filter: saturate(1.2) blur(10px); -webkit-backdrop-filter: saturate(1.2) blur(10px); border-bottom: 1px solid var(--gold-line); }
 .shead::after, .pbar::after { content: ''; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: color-mix(in srgb, var(--gold-line) 45%, transparent); pointer-events: none; }
 .shead-rule { display: none; }
@@ -1261,3 +1267,24 @@ body[data-page=partner] { background: var(--w-bg); }
 .btn.ghost { background: #fff; border-color: color-mix(in srgb, var(--gold) 55%, var(--w-line)); box-shadow: 0 1px 2px rgba(20, 18, 24, .08); }
 .oblock h2, .oblock h3, .panel h2, .panel h3 { color: var(--w-deep); }
 .hint, .muted { color: var(--w-muted); }
+
+/* ---------- Translucent, glassy wedding pages ---------- */
+.space.deco-blue { background:
+  radial-gradient(1100px 700px at 8% -10%, rgba(150, 175, 205, .45), transparent 60%),
+  radial-gradient(900px 640px at 100% 30%, rgba(214, 196, 160, .22), transparent 62%),
+  radial-gradient(1000px 700px at 30% 110%, rgba(175, 196, 220, .40), transparent 60%),
+  linear-gradient(160deg, #EEF2F7 0%, #E2E9F1 55%, #EAEEF3 100%); background-attachment: fixed; }
+.space.deco-rose { background:
+  radial-gradient(1100px 700px at 92% -10%, rgba(214, 160, 150, .38), transparent 60%),
+  radial-gradient(900px 640px at 0% 35%, rgba(224, 196, 168, .26), transparent 62%),
+  radial-gradient(1000px 700px at 70% 110%, rgba(205, 150, 160, .30), transparent 60%),
+  linear-gradient(200deg, #F8EFEB 0%, #F1E2DC 55%, #F5ECE8 100%); background-attachment: fixed; }
+.area, .panel, .oblock, .lcard, .dcard, .locked-list, .stat, .money-table, .bcard, .barea, .gl-tile, .ohero {
+  background-color: rgba(255, 255, 255, .7);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3);
+  border-color: color-mix(in srgb, var(--w-line) 80%, #fff);
+}
+.lcard:hover, .dcard:hover, .gl-tile:hover { background-color: rgba(255, 255, 255, .85); }
+.board-view { background-color: rgba(255, 255, 255, .42); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.on-board .space-flora { display: block; }
+.on-board .space-flora.three { display: none; }

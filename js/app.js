@@ -1,23 +1,23 @@
-import { store, onStatus, syncState } from './store.js?v=19';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=19';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=19';
-import { renderBoard } from './board.js?v=19';
-import { renderTodo } from './todo.js?v=19';
-import { renderFiles } from './files.js?v=19';
-import { renderDecide } from './decide.js?v=19';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=19';
-import { clearPage, clearAll } from './clear.js?v=19';
-import { undoButtons } from './history.js?v=19';
-import { downloadBackup } from './tools.js?v=19';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=19';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=19';
-import { announcementBars } from './planauto.js?v=19';
-import { renderPartner } from './partner.js?v=19';
-import { renderOverview, editDate } from './overview.js?v=19';
-import { renderLists } from './lists.js?v=19';
-import { planOf } from './map.js?v=19';
-import { openStep } from './panel.js?v=19';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=19';
+import { store, onStatus, syncState } from './store.js?v=20';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=20';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=20';
+import { renderBoard } from './board.js?v=20';
+import { renderTodo } from './todo.js?v=20';
+import { renderFiles } from './files.js?v=20';
+import { renderDecide } from './decide.js?v=20';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=20';
+import { clearPage, clearAll } from './clear.js?v=20';
+import { undoButtons } from './history.js?v=20';
+import { downloadBackup } from './tools.js?v=20';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=20';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=20';
+import { announcementBars } from './planauto.js?v=20';
+import { renderPartner } from './partner.js?v=20';
+import { renderOverview, editDate } from './overview.js?v=20';
+import { renderLists } from './lists.js?v=20';
+import { planOf } from './map.js?v=20';
+import { openStep } from './panel.js?v=20';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=20';
 
 const app = document.getElementById('app');
 
@@ -25,8 +25,8 @@ const app = document.getElementById('app');
    Each wedding re-points the --w-* tokens. "gold" is the accent metal:
    antique gold for Charani's dusty blue, rose gold for Elow's Chateau Rose. */
 export const THEMES = {
-  blue: { bg: '#DCE3EC', surface: '#FFFFFF', ink: '#16202B', muted: '#4A5663', line: '#BFCAD6', soft: '#D3DDE8', accent: '#2C4562', accentInk: '#FFFFFF', light: '#AFBEC8', deep: '#223650', gold: '#A87C22', goldLine: '#D9C597', goldFill: '#F6EBCF', deco: 'blue' },
-  rose: { bg: '#EDDCD5', surface: '#FFFFFF', ink: '#2A1A20', muted: '#5F4A53', line: '#D8BFB5', soft: '#F1DDD7', accent: '#6B3247', accentInk: '#FFFFFF', light: '#D9AFA6', deep: '#5A2536', gold: '#A46E55', goldLine: '#DFBCA9', goldFill: '#F7E5DA', deco: 'rose' }
+  blue: { bg: '#E4EAF1', surface: '#FFFFFF', ink: '#16202B', muted: '#4A5663', line: '#BFCAD6', soft: '#D3DDE8', accent: '#2C4562', accentInk: '#FFFFFF', light: '#AFBEC8', deep: '#223650', gold: '#A87C22', goldLine: '#D9C597', goldFill: '#F6EBCF', deco: 'blue' },
+  rose: { bg: '#F1E3DD', surface: '#FFFFFF', ink: '#2A1A20', muted: '#5F4A53', line: '#D8BFB5', soft: '#F1DDD7', accent: '#6B3247', accentInk: '#FFFFFF', light: '#D9AFA6', deep: '#5A2536', gold: '#A46E55', goldLine: '#DFBCA9', goldFill: '#F7E5DA', deco: 'rose' }
 };
 export function themeOf(w) {
   const base = THEMES[w && w.theme] || THEMES.blue;
@@ -313,7 +313,9 @@ function renderSpace(id, sub, params) {
         undoButtons(),
         avatar())),
     h('div', { class: 'shead-rule', 'aria-hidden': 'true' }),
-    h('img', { class: 'space-flora', src: t.deco === 'rose' ? 'assets/lush_rose.svg' : 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }));
+    h('img', { class: 'space-flora', src: t.deco === 'rose' ? 'assets/lush_rose.svg' : 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
+    h('img', { class: 'space-flora two', src: t.deco === 'rose' ? 'assets/sprig_rose.svg' : 'assets/sprig_blue.svg', alt: '', 'aria-hidden': 'true' }),
+    h('img', { class: 'space-flora three', src: t.deco === 'rose' ? 'assets/sprig_rose.svg' : 'assets/sprig_blue.svg', alt: '', 'aria-hidden': 'true' }));
 
   const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap sbody' });
   root.append(body);
