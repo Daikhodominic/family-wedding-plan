@@ -344,7 +344,9 @@ export function render() {
   const key = parts.join('/');
   document.title = 'Our Family Wedding Plan';
   let view;
+  document.documentElement.style.background = '';
   if (!parts.length) { applyTheme(null); view = renderLanding(); }
+  else if (!booted) { view = h('div', { class: 'loading' }, 'Opening the plans…'); }
   else if (!store.me) view = renderGate();
   else if (parts[0] === 'w') { view = renderSpace(parts[1], parts[2], params); const w = wedding(parts[1]); if (w) document.title = w.couple + ' · Family Wedding Plan'; }
   else if (parts[0] === 'activity' || parts[0] === 'history') view = familyPage(renderActivity());
@@ -377,19 +379,24 @@ function scheduleRender() {
   requestAnimationFrame(tryRender);
 }
 
+// The landing page needs no data, so it shows instantly while the plans load behind it.
+let booted = false;
+const onLandingNow = () => !parseRoute().parts.length;
 async function boot() {
-  const onLanding = !parseRoute().parts.length;
-  if (!onLanding) app.replaceChildren(h('div', { class: 'loading' }, 'Opening the plans…'));
+  booted = false;
+  render();
   try {
     const state = await store.init();
-    if (state !== 'ready') { render(); return; }
+    booted = true;
+    if (state !== 'ready') { if (!onLandingNow()) render(); return; }
     await store.loadAll();
   } catch (e) {
     console.error(e);
     app.replaceChildren(h('div', { class: 'landing' }, h('div', { class: 'gate-card' }, h('h1', { class: 'foil' }, 'Could not open the plans'), h('p', { class: 'land-sub' }, e.message || 'Check your internet connection and reload the page.'), h('button', { class: 'enter solid', onclick: () => location.reload() }, 'Try again'))));
     return;
   }
-  render();
+  booted = true;
+  if (!onLandingNow()) render();
 }
 
 store.onChange(() => scheduleRender());
