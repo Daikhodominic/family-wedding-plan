@@ -228,3 +228,21 @@ export const ICONS = {
   select: sv('<rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="3 3"/>'),
   broom: sv('<path d="M14 4l6 6M12 6l6 6-7 7H5v-6z"/><path d="M9 13l2 2"/>')
 };
+
+// A small pop-up menu under a button. items: [{ icon, label, onClick }] (nulls are skipped).
+export function popMenu(btn, items, head) {
+  const old = document.querySelector('.menu-pop');
+  if (old) { old.remove(); if (old._owner === btn) return; }
+  const close = () => { pop.remove(); document.removeEventListener('pointerdown', outside, true); };
+  const outside = (e) => { if (!pop.contains(e.target) && !btn.contains(e.target)) close(); };
+  const pop = h('div', { class: 'menu-pop', role: 'menu' },
+    head ? h('div', { class: 'mp-head' }, h('b', {}, head)) : null,
+    items.filter(Boolean).map(it => h(it.href ? 'a' : 'button', { type: it.href ? null : 'button', href: it.href || null, class: 'mi', onclick: () => { close(); if (it.onClick) it.onClick(); } },
+      h('span', { class: 'mi-ic', html: ICONS[it.icon] || '' }), h('span', {}, it.label))));
+  pop._owner = btn;
+  document.body.append(pop);
+  const r = btn.getBoundingClientRect();
+  pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+  pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', outside, true));
+}

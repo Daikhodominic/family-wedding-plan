@@ -4,11 +4,11 @@
 //   contingency  — set by hand (starts at ₹0); unplanned payments and overspends draw from it
 //   areas        — the total split up; removing one frees its unspent money
 //   payments     — what is owed or paid; no area = unplanned (comes out of contingency)
-import { store } from './store.js?v=21';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS } from './ui.js?v=21';
-import { live, weddings, themeOf, stepVisible } from './app.js?v=21';
-import { openStep } from './panel.js?v=21';
-import { deciderOnly, isDecider, deciderNames } from './tools.js?v=21';
+import { store } from './store.js?v=22';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS, popMenu } from './ui.js?v=22';
+import { live, weddings, themeOf, stepVisible } from './app.js?v=22';
+import { openStep } from './panel.js?v=22';
+import { deciderOnly, isDecider, deciderNames } from './tools.js?v=22';
 
 /* ---------- Money helpers ---------- */
 // Accepts "1,20,000", "120000", "1.2 lakh", "1.2L", "50k", "₹ 45,000".
@@ -304,19 +304,20 @@ export function renderBudgetView(root, opts) {
   }
 
   const can = isDecider();
+  const moreBtn = h('button', { class: 'btn ghost', type: 'button', 'aria-haspopup': 'menu', onclick: () => popMenu(moreBtn, [
+    can ? { icon: 'plus', label: 'Add an area', onClick: () => editArea(id, null, m) } : null,
+    can ? { icon: 'budget', label: 'Move money between areas', onClick: () => moveMoney(id, m) } : null,
+    can ? { icon: 'edit', label: 'Change the total or contingency', onClick: () => editBudget(id, opts, m) } : null,
+    opts.family !== false ? { icon: 'overview', label: 'Family total', href: '#/budget' } : null]) }, 'More ▾');
   root.append(secHead('Money', opts.heading || 'Budget',
     can ? h('button', { class: 'btn', type: 'button', onclick: () => editItem(id, null, m) }, '+ Payment') : null,
-    can ? h('button', { class: 'btn ghost', type: 'button', onclick: () => editArea(id, null, m) }, '+ Area') : null,
-    can ? h('button', { class: 'btn ghost', type: 'button', onclick: () => moveMoney(id, m) }, 'Move money') : null,
-    opts.family !== false ? famLink : null));
+    can || opts.family !== false ? moreBtn : null));
   if (!can) root.append(h('p', { class: 'hint ro-note' }, `You can see everything here. Only the Deciders (${deciderNames()}) can change money.`));
 
-  root.append(h('div', { class: 'stats five' },
-    h('button', { type: 'button', class: 'stat as-btn', onclick: () => editBudget(id, opts, m), title: 'Change the total' }, h('span', {}, 'Total budget'), h('b', {}, inr(m.T)), h('small', {}, 'Tap to change')),
+  root.append(h('div', { class: 'stats three' },
+    h('button', { type: 'button', class: 'stat as-btn', onclick: () => editBudget(id, opts, m), title: 'Change the total' }, h('span', {}, 'Total budget'), h('b', {}, inr(m.T)), h('small', {}, `${inr(m.contLeft)} spare for surprises`)),
     stat('Overall cost', inr(m.committed), `${inr(m.paid)} paid`),
-    stat('Still to pay', inr(m.toPay), m.owing.length ? `${m.owing.length} ${m.owing.length === 1 ? 'payment' : 'payments'}` : 'All settled', 'accent'),
-    h('button', { type: 'button', class: 'stat as-btn' + (m.contLeft < 0 ? ' warn' : ''), onclick: () => editBudget(id, opts, m), title: 'Change the contingency' }, h('span', {}, 'Contingency left'), h('b', {}, inr(m.contLeft)), h('small', {}, m.C ? `of ${inr(m.C)} · ${inr(m.contUsed)} used` : 'Starts at ₹0 · tap to set')),
-    stat('Free to reassign', inr(m.free), m.free < 0 ? 'Over-planned' : 'Not in any area yet', m.free < 0 ? 'warn' : '')));
+    stat('Still to pay', inr(m.toPay), m.owing.length ? `${m.owing.length} ${m.owing.length === 1 ? 'payment' : 'payments'}` : 'All settled', 'accent')));
 
   const warns = warnings(m);
   if (warns.length) root.append(h('div', { class: 'bwarn', role: 'alert' }, h('b', {}, 'Over budget'), warns.map(t => h('span', {}, t))));

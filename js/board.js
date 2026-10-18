@@ -1,11 +1,11 @@
-import { store } from './store.js?v=21';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=21';
-import { live, ui, render } from './app.js?v=21';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=21';
-import { together } from './history.js?v=21';
-import { isDecider } from './tools.js?v=21';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=21';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=21';
+import { store } from './store.js?v=22';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=22';
+import { live, ui, render } from './app.js?v=22';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=22';
+import { together } from './history.js?v=22';
+import { isDecider } from './tools.js?v=22';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=22';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=22';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -763,7 +763,7 @@ export function renderBoard(root, w, params) {
     onclick: () => { addMenu.hidden = !addMenu.hidden; fab.setAttribute('aria-expanded', String(!addMenu.hidden)); } });
 
   const hint = {
-    select: 'Drag empty space to move around · pinch or Ctrl + scroll to zoom · tap a drawing to select it',
+    select: '',
     pen: 'Draw freely with your finger or mouse', line: 'Drag to draw a line', arrow: 'Drag to draw an arrow — e.g. pointing at a photo',
     ellipse: 'Drag to circle something', rect: 'Drag to draw a box around something', dot: 'Tap to place a dot',
     connect: board.connectFrom ? 'Now tap the second card' : 'Tap a card, then another card, to connect them with an arrow that follows them when moved',

@@ -2,8 +2,8 @@
 // Every write goes through the store, so we wrap its write methods and keep
 // a list of what to reverse. Several writes made together (moving a group,
 // clearing a page) are undone as one step.
-import { store, nowIso } from './store.js?v=21';
-import { h, toast, ICONS } from './ui.js?v=21';
+import { store, nowIso } from './store.js?v=22';
+import { h, toast, ICONS } from './ui.js?v=22';
 
 const MAX = 80;
 const SKIP = new Set(['activity', 'members', 'reactions']); // reactions and votes toggle on their own

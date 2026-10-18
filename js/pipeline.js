@@ -1,12 +1,12 @@
-import { store } from './store.js?v=21';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=21';
-import { live, ui, render } from './app.js?v=21';
-import { openStep, lockIcon } from './panel.js?v=21';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=21';
-import { personInput } from './tools.js?v=21';
-import { openIdeas, sectionFor } from './decisions.js?v=21';
-import { renderGlimpse } from './glimpse.js?v=21';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=21';
+import { store } from './store.js?v=22';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=22';
+import { live, ui, render } from './app.js?v=22';
+import { openStep, lockIcon } from './panel.js?v=22';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=22';
+import { personInput } from './tools.js?v=22';
+import { openIdeas, sectionFor } from './decisions.js?v=22';
+import { renderGlimpse } from './glimpse.js?v=22';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=22';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -109,12 +109,9 @@ export function renderPipeline(root, w, params) {
   });
   if (view === 'glimpse') { renderGlimpse(root, w, plan); return; }
   if (view === 'map') {
-    root.append(h('p', { class: 'hint' }, 'Tap any step to open its details, make it final, or add files and lists. ◆ marks a big decision. Switch to List to add or rearrange.'));
     renderMap(root, w, plan, params);
     return;
   }
-  root.append(h('p', { class: 'hint' }, 'Tap a step to open its details, files and lists. Drag by the dots to reorder; on a phone, press and hold a step to move it.'));
-  { const db = datesBanner(w); if (db) root.append(db); }
 
   const stagesEl = h('div', { class: 'stages' });
   for (const st of stages) {

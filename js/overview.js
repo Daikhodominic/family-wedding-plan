@@ -1,19 +1,19 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=21';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS } from './ui.js?v=21';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=21';
-import { openStep, lockIcon } from './panel.js?v=21';
-import { planOf, journeyBar } from './map.js?v=21';
-import { listSummary } from './lists.js?v=21';
-import { budgetMath, inr } from './budget.js?v=21';
-import { editStep } from './pipeline.js?v=21';
-import { canonical } from './myjobs.js?v=21';
-import { pictureEl } from './map.js?v=21';
-import { readyToDecide, favScore } from './boardauto.js?v=21';
-import { isDecider } from './tools.js?v=21';
-import { cardTitle } from './decisions.js?v=21';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=21';
-import { share, siteLink, copyLink } from './tools.js?v=21';
+import { store } from './store.js?v=22';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=22';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=22';
+import { openStep, lockIcon } from './panel.js?v=22';
+import { planOf, journeyBar } from './map.js?v=22';
+import { listSummary } from './lists.js?v=22';
+import { budgetMath, inr } from './budget.js?v=22';
+import { editStep } from './pipeline.js?v=22';
+import { canonical } from './myjobs.js?v=22';
+import { pictureEl } from './map.js?v=22';
+import { readyToDecide, favScore } from './boardauto.js?v=22';
+import { isDecider } from './tools.js?v=22';
+import { cardTitle } from './decisions.js?v=22';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=22';
+import { share, siteLink, copyLink } from './tools.js?v=22';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -105,34 +105,36 @@ export function renderOverview(root, w, params = {}) {
   root.append(...announcementBars(w.id));
   const fw = finalWeek(w, params.finalweek === '1' && store.me.isAdmin);
   if (fw) root.append(fw);
-  // Header: date, countdown, progress
-  root.append(h('section', { class: 'ohero' },
-    h('div', { class: 'oh-when' },
-      h('div', { class: 'eyebrow' }, 'The big day'),
-      store.me.isAdmin
-        ? h('button', { type: 'button', class: 'oh-date', onclick: () => editDate(w), title: 'Change the date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date not fixed yet'), h('span', { class: 'oh-edit', html: ICONS.edit }))
-        : h('div', { class: 'oh-date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date not fixed yet')),
-      w.wedding_date && days !== null
-        ? h('div', { class: 'oh-count' }, h('b', {}, String(Math.max(0, days))), h('span', {}, days === 0 ? 'Today!' : days < 0 ? 'Married!' : days === 1 ? 'day to go' : 'days to go'))
-        : h('div', { class: 'oh-count tbd' }, store.me.isAdmin ? h('button', { type: 'button', class: 'btn small', onclick: () => editDate(w) }, 'Set the date') : h('span', {}, 'The countdown starts once the date is fixed'))),
-    h('div', { class: 'oh-stats' },
-      h('div', { class: 'ost' }, h('b', {}, String(finished)), h('span', {}, 'done')),
-      h('div', { class: 'ost' }, h('b', {}, String(doing.length)), h('span', {}, 'in progress')),
-      h('div', { class: 'ost' }, h('b', {}, String(open.length - doing.length)), h('span', {}, 'still to do')),
-      h('div', { class: 'ost' + (overdue.length ? ' warn' : '') }, h('b', {}, String(overdue.length)), h('span', {}, 'overdue')),
-      h('div', { class: 'ost gold' }, h('b', {}, String(plan.locked)), h('span', {}, 'final')))));
-  root.append(journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } }));
-  root.append(h('div', { class: 'o-actions' },
-    h('button', { type: 'button', class: 'btn ghost small', onclick: () => shareWeek(w) }, 'Share this week on WhatsApp'),
-    h('button', { type: 'button', class: 'btn ghost small', onclick: () => calendarFor(w) }, 'Add dates to my calendar'),
-    isDecider() ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => newAnnouncement(w) }, '+ Announcement') : null,
-    isDecider() ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => partnerLinks(w) }, 'Share with the partner family') : h('a', { class: 'btn ghost small', href: `#/p/preview-${w.id}` }, 'What the partner family sees'),
-    store.me.isAdmin && !fw ? h('a', { class: 'btn ghost small', href: `#/w/${w.id}?finalweek=1` }, 'Preview final-week mode') : null));
-  const db = datesBanner(w); if (db) root.append(db);
+  // Header: date, countdown, a one-line tally, the journey bar and one "More" menu.
+  const tally = [
+    [finished, 'done'], [open.length, 'to do'],
+    overdue.length ? [overdue.length, 'overdue', 'warn'] : null,
+    plan.locked ? [plan.locked, 'final', 'gold'] : null].filter(Boolean);
+  const moreBtn = h('button', { type: 'button', class: 'btn ghost small oh-more', 'aria-haspopup': 'menu', onclick: () => popMenu(moreBtn, [
+    { icon: 'comment', label: 'Share this week on WhatsApp', onClick: () => shareWeek(w) },
+    { icon: 'plan', label: 'Add dates to my calendar', onClick: () => calendarFor(w) },
+    isDecider() ? { icon: 'note', label: 'Post an announcement', onClick: () => newAnnouncement(w) } : null,
+    isDecider() ? { icon: 'user', label: 'Share with the partner family', onClick: () => partnerLinks(w) } : { icon: 'user', label: 'What the partner family sees', href: `#/p/preview-${w.id}` },
+    store.me.isAdmin && !fw ? { icon: 'lock', label: 'Preview final-week mode', href: `#/w/${w.id}?finalweek=1` } : null]) }, 'More ', h('span', { 'aria-hidden': 'true' }, '▾'));
+  root.append(h('section', { class: 'ohero calm' },
+    h('div', { class: 'oh-top' },
+      h('div', { class: 'oh-when' },
+        h('div', { class: 'eyebrow' }, 'The big day'),
+        store.me.isAdmin
+          ? h('button', { type: 'button', class: 'oh-date', onclick: () => editDate(w), title: 'Change the date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date not fixed yet'), h('span', { class: 'oh-edit', html: ICONS.edit }))
+          : h('div', { class: 'oh-date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date not fixed yet')),
+        w.wedding_date && days !== null
+          ? h('div', { class: 'oh-count' }, h('b', {}, String(Math.max(0, days))), h('span', {}, days === 0 ? 'Today!' : days < 0 ? 'Married!' : days === 1 ? 'day to go' : 'days to go'))
+          : store.me.isAdmin ? h('div', { class: 'oh-count tbd' }, h('button', { type: 'button', class: 'btn small', onclick: () => editDate(w) }, 'Set the date')) : null),
+      h('div', { class: 'oh-side' },
+        moreBtn,
+        h('div', { class: 'oh-tally' }, tally.map(([n, label, cls]) => h('span', { class: 'ot' + (cls ? ' ' + cls : '') }, h('b', {}, String(n)), ' ' + label))))),
+    journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } })));
+  const db = isDecider() ? datesBanner(w) : null; if (db) root.append(db);
   const lf = looksFinished(w);
   if (lf.length) root.append(h('section', { class: 'oblock looks' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Looks finished'), h('span', { class: 'count' }, String(lf.length)), h('span', { class: 'ob-sub' }, 'Tick these off?')),
-    h('div', { class: 'olist' }, lf.map(({ s, why }) => h('div', { class: 'orow lf' },
+    h('div', { class: 'olist' }, lf.slice(0, 3).map(({ s, why }) => h('div', { class: 'orow lf' },
       h('span', { class: 'o-dot doing' }), h('span', { class: 'o-main' }, h('b', {}, s.title), h('span', {}, 'Because ' + why)),
       h('button', { type: 'button', class: 'btn small', onclick: () => store.update('steps', s.id, { status: 'done' }).then(() => toast('Done ✓')).catch(fail) }, 'Mark done'))))));
   const boardItems = live(store.rows('board_items')).filter(i => i.wedding_id === w.id && !['shape', 'connector', 'label'].includes(i.kind));
@@ -144,7 +146,7 @@ export function renderOverview(root, w, params = {}) {
   const finals = all.filter(x => x.kind === 'step' && x.locked_at).sort((a, b) => String(b.locked_at).localeCompare(String(a.locked_at)));
   if (finals.length) root.append(h('section', { class: 'decided-strip' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Decided so far'), h('span', { class: 'count gold' }, String(finals.length)), h('a', { class: 'ob-link', href: `#/w/${w.id}/plan?view=glimpse` }, 'See the wedding at a glance →')),
-    h('div', { class: 'ds-row' }, finals.slice(0, 8).map(s => h('button', { type: 'button', class: 'ds-item', onclick: () => openStep(s.id) },
+    h('div', { class: 'ds-row' }, finals.slice(0, 6).map(s => h('button', { type: 'button', class: 'ds-item', onclick: () => openStep(s.id) },
       pictureEl(s, 'ds-pic') || h('span', { class: 'ds-pic ph' }, '✓'),
       h('b', {}, (s.lock_note && s.lock_note.choice && s.lock_note.choice.title) || s.title),
       h('span', {}, (s.lock_note && (s.lock_note.vendor || s.lock_note.with)) || s.title))))));
@@ -160,13 +162,13 @@ export function renderOverview(root, w, params = {}) {
   const ppl = [...people.entries()].sort((a, b) => (a[0] === '~') - (b[0] === '~') || b[1].list.length - a[1].list.length);
   const whoEl = h('section', { class: 'oblock who' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Who is doing what'), h('span', { class: 'ob-sub' }, 'Open jobs, by the person in charge')),
-    ppl.length ? h('div', { class: 'who-grid' }, ppl.map(([k, p]) => {
+    ppl.length ? h('div', { class: 'who-grid' }, ppl.filter(([k]) => k !== '~').map(([k, p]) => {
       const late = p.list.filter(x => x.due && daysUntil(x.due) < 0).length;
       const sorted = [...p.list].sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
       return h('div', { class: 'person' + (k === '~' ? ' nobody' : '') },
         h('div', { class: 'p-h' }, h('span', { class: 'p-av' }, k === '~' ? '?' : p.name.charAt(0).toUpperCase()), h('b', {}, p.name),
           h('span', { class: 'p-n' }, `${p.list.length} open`, late ? h('span', { class: 'neg' }, ` · ${late} overdue`) : null)),
-        h('div', { class: 'olist' }, sorted.slice(0, 4).map(x => taskRow(x, { showOwner: false })), sorted.length > 4 ? h('span', { class: 'o-more' }, `+ ${sorted.length - 4} more`) : null));
+        h('div', { class: 'olist' }, sorted.slice(0, 3).map(x => taskRow(x, { showOwner: false })), sorted.length > 3 ? h('span', { class: 'o-more' }, `+ ${sorted.length - 3} more`) : null));
     })) : h('p', { class: 'muted o-empty' }, 'Nothing open. Give steps and to-dos a “person in charge” and they appear here.'));
 
   // Recently done (from the edit history)
@@ -176,7 +178,7 @@ export function renderOverview(root, w, params = {}) {
   const lists = (store.missing && store.missing.lists) ? [] : live(store.rows('lists') || []).filter(l => l.wedding_id === w.id).sort((a, b) => a.title.localeCompare(b.title));
   const listsEl = h('section', { class: 'oblock' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Lists'), h('a', { class: 'ob-link', href: `#/w/${w.id}/lists` }, 'All lists →')),
-    lists.length ? h('div', { class: 'olist' }, lists.slice(0, 6).map(l => { const s = listSummary(l); return h('a', { class: 'orow', href: `#/w/${w.id}/lists?list=${l.id}` }, h('span', { class: 'o-dot list', html: '' }), h('span', { class: 'o-main' }, h('b', {}, l.title), h('span', {}, s.join(' · ')))); }))
+    lists.length ? h('div', { class: 'olist' }, lists.slice(0, 4).map(l => { const s = listSummary(l); return h('a', { class: 'orow', href: `#/w/${w.id}/lists?list=${l.id}` }, h('span', { class: 'o-dot list', html: '' }), h('span', { class: 'o-main' }, h('b', {}, l.title), h('span', {}, s.join(' · ')))); }))
       : h('p', { class: 'muted o-empty' }, 'No lists yet. Start a guest list, gifts, vehicles or songs in the Lists tab.'));
   let moneyEl = null;
   if (!(store.missing && store.missing.budgets)) {
@@ -191,20 +193,24 @@ export function renderOverview(root, w, params = {}) {
         : h('p', { class: 'muted o-empty' }, 'The budget isn’t set up yet.'));
   }
 
-  root.append(h('div', { class: 'ogrid' },
-    h('div', { class: 'ocol' },
-      overdue.length ? block('Overdue', overdue, '', { cls: 'warnblock', countCls: 'warn', more: `#/w/${w.id}/plan` }) : null,
-      block('Happening now', doing, 'Nothing marked “in progress”. Open a step and set it to In progress when someone starts on it.', { more: `#/w/${w.id}/plan` }),
-      block('Coming up · next 3 weeks', soon, 'Nothing due in the next three weeks.', { more: `#/w/${w.id}/plan` }),
-      whoEl),
-    h('div', { class: 'ocol' },
-      block('Waiting on a decision', waiting, 'No big decisions waiting.', { countCls: 'gold', more: `#/w/${w.id}/decide`, limit: 5, link: [`#/w/${w.id}/decide`, 'All decisions →'] }),
-      h('section', { class: 'oblock' },
-        h('div', { class: 'ob-h' }, h('h2', {}, 'Recently done'), h('a', { class: 'ob-link', href: '#/history' }, 'Edit history →')),
-        recent.length ? feedList(recent, { compact: true }) : h('p', { class: 'muted o-empty' }, 'Things ticked off or made final will show here.')),
-      partnerSugg(w),
-      favs.length ? h('section', { class: 'oblock' }, h('div', { class: 'ob-h' }, h('h2', {}, 'Family favourites'), h('a', { class: 'ob-link', href: `#/w/${w.id}/board` }, 'Board →')),
-        h('div', { class: 'olist' }, favs.map(({ i, s }) => h('a', { class: 'orow', href: `#/w/${w.id}/board?focus=${i.id}` }, h('span', { class: 'o-dot list' }), h('span', { class: 'o-main' }, h('b', {}, cardTitle(i)), h('span', {}, `${s} likes and votes`)))))) : null,
-      listsEl, moneyEl)));
+  const named = ppl.filter(([k]) => k !== '~');
+  const nothingUrgent = !overdue.length && !doing.length && !soon.length;
+  const left = [
+    overdue.length ? block('Overdue', overdue, '', { cls: 'warnblock', countCls: 'warn', more: `#/w/${w.id}/plan` }) : null,
+    doing.length ? block('Happening now', doing, '', { more: `#/w/${w.id}/plan` }) : null,
+    soon.length ? block('Coming up · next 3 weeks', soon, '', { more: `#/w/${w.id}/plan` }) : null,
+    block('Waiting on a decision', waiting, 'No big decisions waiting.', { countCls: 'gold', more: `#/w/${w.id}/decide`, limit: 4, link: [`#/w/${w.id}/decide`, 'All →'] })].filter(Boolean);
+  const right = [
+    named.length ? whoEl : null,
+    partnerSugg(w),
+    recent.length ? h('section', { class: 'oblock' },
+      h('div', { class: 'ob-h' }, h('h2', {}, 'Recently done'), h('a', { class: 'ob-link', href: '#/history' }, 'History →')),
+      feedList(recent.slice(0, 4), { compact: true })) : null,
+    favs.length ? h('section', { class: 'oblock' }, h('div', { class: 'ob-h' }, h('h2', {}, 'Family favourites'), h('a', { class: 'ob-link', href: `#/w/${w.id}/board` }, 'Board →')),
+      h('div', { class: 'olist' }, favs.slice(0, 4).map(({ i, s }) => h('a', { class: 'orow', href: `#/w/${w.id}/board?focus=${i.id}` }, h('span', { class: 'o-dot list' }), h('span', { class: 'o-main' }, h('b', {}, cardTitle(i)), h('span', {}, `${s} likes and votes`)))))) : null,
+    lists.length ? listsEl : null,
+    moneyEl && budgetMath(w.id).b ? moneyEl : null].filter(Boolean);
+  if (nothingUrgent) root.append(h('p', { class: 'o-calm' }, '✓ Nothing overdue or due in the next three weeks.'));
+  root.append(h('div', { class: 'ogrid' + (right.length ? '' : ' one') }, h('div', { class: 'ocol' }, left), right.length ? h('div', { class: 'ocol' }, right) : null));
   void t; void ago; void lockIcon;
 }

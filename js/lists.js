@@ -1,11 +1,11 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { store } from './store.js?v=21';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=21';
-import { live } from './app.js?v=21';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=21';
-import { renderFiles } from './files.js?v=21';
-import { copyList, otherWeddings } from './planauto.js?v=21';
+import { store } from './store.js?v=22';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=22';
+import { live } from './app.js?v=22';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=22';
+import { renderFiles } from './files.js?v=22';
+import { copyList, otherWeddings } from './planauto.js?v=22';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -34,7 +34,6 @@ export function renderLists(root, w, params) {
   if (params.list) { const l = store.find('lists', params.list); if (l && !l.deleted_at) { renderListPage(root, w, l); return; } }
   const lists = live(store.rows('lists') || []).filter(l => l.wedding_id === w.id).sort((a, b) => a.title.localeCompare(b.title));
   root.append(secHead('Lists and files', 'Lists & files', h('button', { class: 'btn', type: 'button', onclick: () => newList(w.id, null) }, '+ New list'), h('a', { class: 'btn ghost', href: '#files', onclick: (e) => { e.preventDefault(); const f = document.getElementById('files'); if (f) f.scrollIntoView({ behavior: 'smooth' }); } }, 'Files ↓')));
-  root.append(h('p', { class: 'hint' }, 'Everyone in the family can open, edit and tick off these lists. Tap one to open it; download any of them for Excel or to print.'));
   if (lists.length) root.append(h('div', { class: 'lgrid' }, lists.map(l => {
     const step = l.step_id ? store.find('steps', l.step_id) : null;
     const s = listSummary(l);
@@ -50,11 +49,11 @@ export function renderLists(root, w, params) {
   const missing = Object.entries(LIST_TEMPLATES).filter(([k, t]) => k !== 'blank' && !have.has(t.title.toLowerCase()));
   if (missing.length) root.append(h('section', { class: 'dsec' },
     h('div', { class: 'dsec-h' }, h('h2', {}, lists.length ? 'Start another list' : 'Start a list')),
-    h('div', { class: 'lgrid' }, missing.map(([k, t]) => h('button', {
-      type: 'button', class: 'lcard ghost', onclick: async () => {
+    h('div', { class: 'lchips' }, missing.map(([k, t]) => h('button', {
+      type: 'button', class: 'lchip', title: t.blurb, onclick: async () => {
         try { const l = await store.insert('lists', { wedding_id: w.id, step_id: null, title: t.title, columns: t.columns }); location.hash = `#/w/${w.id}/lists?list=${l.id}`; } catch (e) { fail(e); }
       }
-    }, h('span', { class: 'lc-ic', html: ICONS.plus }), h('span', { class: 'lc-t' }, t.title), h('span', { class: 'lc-s' }, t.blurb))))));
+    }, '+ ' + t.title)))));
   renderFiles(root, w, params, { embedded: true });
 }
 

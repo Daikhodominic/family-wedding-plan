@@ -1,9 +1,9 @@
 // The Files tab: every file and list for one wedding, in one place.
-import { store } from './store.js?v=21';
-import { h, secHead } from './ui.js?v=21';
-import { render } from './app.js?v=21';
-import { fileTile, listRow, uploadTo, newList } from './panel.js?v=21';
-import { pickFiles } from './board.js?v=21';
+import { store } from './store.js?v=22';
+import { h, secHead } from './ui.js?v=22';
+import { render } from './app.js?v=22';
+import { fileTile, listRow, uploadTo, newList } from './panel.js?v=22';
+import { pickFiles } from './board.js?v=22';
 
 let filter = 'all';
 const live = (rows) => rows.filter(r => !r.deleted_at);
@@ -29,7 +29,6 @@ export function renderFiles(root, w, params = {}, opts = {}) {
           h('div', { class: 'filters', style: { margin: 0 } }, [['all', `All (${files.length})`], ['photos', 'Photos and videos'], ['docs', 'Documents']].map(([k, l]) =>
             h('button', { class: 'filter', type: 'button', 'aria-pressed': String(filter === k), onclick: () => { filter = k; render(); } }, l))),
           h('button', { class: 'btn small', type: 'button', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(w.id, null, fs); } }, '+ Upload files'))),
-      h('p', { class: 'ft-sub', style: { margin: '0 0 10px' } }, 'Quotes, receipts, invitations, photos, spreadsheets — drag them here from your computer or tap Upload. Files added to a step show which step they belong to.'),
       drop);
   if (opts.embedded) { root.append(filesPanel); return; }
   root.append(h('div', { class: 'files-page' },
