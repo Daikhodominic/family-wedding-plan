@@ -1,10 +1,10 @@
 // Joins the mood board to the plan: pin cards to steps, card status, card → job,
 // comparisons that become final decisions, and the follow-ups a decision brings.
-import { store } from './store.js?v=32';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=32';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=32';
-import { together } from './history.js?v=32';
-import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=32';
+import { store } from './store.js?v=33';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=33';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=33';
+import { together } from './history.js?v=33';
+import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=33';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

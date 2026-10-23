@@ -1,14 +1,14 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=32';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=32';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=32';
-import { isDecider } from './tools.js?v=32';
-import { addVendor } from './decisions.js?v=32';
-import { pickFiles, fetchPreview } from './board.js?v=32';
-import { planOf } from './map.js?v=32';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=32';
+import { store } from './store.js?v=33';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=33';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=33';
+import { isDecider } from './tools.js?v=33';
+import { addVendor } from './decisions.js?v=33';
+import { pickFiles, fetchPreview } from './board.js?v=33';
+import { planOf } from './map.js?v=33';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=33';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
