@@ -1,20 +1,20 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=24';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=24';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=24';
-import { openStep, lockIcon } from './panel.js?v=24';
-import { planOf, journeyBar } from './map.js?v=24';
-import { listSummary } from './lists.js?v=24';
-import { budgetMath, inr } from './budget.js?v=24';
-import { editStep } from './pipeline.js?v=24';
-import { canonical } from './myjobs.js?v=24';
-import { pictureEl } from './map.js?v=24';
-import { readyToDecide, favScore } from './boardauto.js?v=24';
-import { isDecider } from './tools.js?v=24';
-import { cardTitle } from './decisions.js?v=24';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=24';
-import { share, siteLink, copyLink } from './tools.js?v=24';
-import { planOffer } from './plans.js?v=24';
+import { store } from './store.js?v=25';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=25';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=25';
+import { openStep, lockIcon } from './panel.js?v=25';
+import { planOf, journeyBar } from './map.js?v=25';
+import { listSummary } from './lists.js?v=25';
+import { budgetMath, inr } from './budget.js?v=25';
+import { editStep } from './pipeline.js?v=25';
+import { canonical } from './myjobs.js?v=25';
+import { pictureEl } from './map.js?v=25';
+import { readyToDecide, favScore } from './boardauto.js?v=25';
+import { isDecider } from './tools.js?v=25';
+import { cardTitle } from './decisions.js?v=25';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=25';
+import { share, siteLink, copyLink } from './tools.js?v=25';
+import { planOffer } from './plans.js?v=25';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;

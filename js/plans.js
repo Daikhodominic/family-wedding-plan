@@ -2,10 +2,11 @@
 // Each step: [title, note, big decision?, suggested?]. Suggested steps came from
 // Claude's review of Catholic weddings in Nagaland and Manipur; the rest are the family's own list.
 // Each to-do: [title, due date, where it belongs].
-import { store } from './store.js?v=24';
-import { h, toast, modal } from './ui.js?v=24';
-import { live } from './app.js?v=24';
-import { SECTIONS } from './clear.js?v=24';
+import { store } from './store.js?v=25';
+import { h, toast, modal } from './ui.js?v=25';
+import { live } from './app.js?v=25';
+import { SECTIONS } from './clear.js?v=25';
+import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=25';
 
 const S = (title, note = '', gate = false, sugg = false) => [title, note, gate, sugg];
 
@@ -242,8 +243,9 @@ const uid = () => crypto.randomUUID();
 const stepRow = (w, aid, [title, note, gate, sugg], ti) => ({ id: uid(), wedding_id: w.id, area_id: aid, title, notes: (sugg ? '✦ Suggested. ' : '') + (note || ''), owner: '', due: null, status: 'todo', position: (ti + 1) * 1000, gate: !!gate });
 const todoRows = (w, p, list) => list.map(([title, due, where], i) => ({ id: uid(), wedding_id: w.id, title, notes: where, owner: '', due, status: 'todo', position: (i + 1) * 1000 }));
 
-async function freshLoad(w, p, clear) {
+async function freshLoad(w, p, clear, keep) {
   const ts = new Date().toISOString();
+  const othersSteps = keep ? live(store.rows('steps')).filter(st => st.wedding_id === w.id && byOthers(st)) : [];
   // 1. The old plan goes to the Bin.
   const oldStages = live(store.rows('stages')).filter(s => s.wedding_id === w.id);
   const stageIds = oldStages.map(s => s.id);
@@ -253,7 +255,7 @@ async function freshLoad(w, p, clear) {
   await store.removeMany('areas', areaIds, ts);
   await store.removeMany('stages', stageIds, ts);
   // 2. Old sample content the admin ticked goes to the Bin too.
-  for (const key of clear) for (const [t, rows] of SECTIONS[key].rows(w.id)) if (rows.length && !(store.missing && store.missing[t])) await store.removeMany(t, rows.map(r => r.id), ts);
+  for (const key of clear) for (const [t, all] of SECTIONS[key].rows(w.id)) { const rows = keep ? all.filter(r => !byOthers(r)) : all; if (rows.length && !(store.missing && store.missing[t])) await store.removeMany(t, rows.map(r => r.id), ts); }
   // 3. The checklist and the to-dos go in.
   const stages = [], areas = [], steps = [];
   p.stages.forEach(([st, as], si) => {
@@ -267,6 +269,7 @@ async function freshLoad(w, p, clear) {
   await store.insertMany('areas', areas);
   await store.insertMany('steps', steps);
   if (hasTodos()) await store.insertMany('todos', todoRows(w, p, p.todos));
+  if (othersSteps.length) await keepOthersSteps(w.id, othersSteps);
   return { steps: steps.length, todos: hasTodos() ? p.todos.length : 0 };
 }
 
@@ -305,15 +308,18 @@ export function loadPlan(w) {
   }
   const counts = (key) => SECTIONS[key].rows(w.id).reduce((n, [t, rows]) => n + (store.missing && store.missing[t] ? 0 : rows.length), 0);
   const boxes = ['board', 'todo', 'files', 'budget'].map(key => ({ key, n: counts(key), box: h('input', { type: 'checkbox', checked: true }) })).filter(b => b.n);
+  const planRows = [['stages', live(store.rows('stages')).filter(x => x.wedding_id === w.id)], ['areas', live(store.rows('areas')).filter(x => x.wedding_id === w.id)], ['steps', live(store.rows('steps')).filter(x => x.wedding_id === w.id)]];
+  const gate = othersGate([...planRows, ...boxes.flatMap(b => SECTIONS[b.key].rows(w.id))], 'go to the Bin (their plan steps included)');
   modal({
     title: `Load the full checklist for ${w.couple}?`, wide: true,
     body: [
       h('p', { class: 'muted', style: { margin: 0 } }, `${stepCount(p)} steps in Before · The wedding day · After, each with its note${hasTodos() ? `, and ${p.todos.length} dated to-dos from now until after the wedding` : ''}. The current plan moves to the Bin.`),
       boxes.length ? h('fieldset', { class: 'load-clear' }, h('legend', {}, 'Also clear the old sample content for this wedding'),
         boxes.map(({ key, n, box }) => h('label', { class: 'd-check' }, box, `${SECTIONS[key].label} — ${n} ${SECTIONS[key].what}`))) : null,
-      h('p', { class: 'hint', style: { margin: 0 } }, 'Everything cleared goes to the Bin and can be brought back together. ' + p.dateNote)],
+      gate.el,
+      h('p', { class: 'hint', style: { margin: 0 } }, (gate.n ? 'Kept steps go into a “Kept from the old plan” area. ' : '') + 'Everything cleared goes to the Bin and can be brought back together. ' + p.dateNote)],
     actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, {
-      label: 'Load the checklist', onClick: () => freshLoad(w, p, boxes.filter(b => b.box.checked).map(b => b.key)).then(done).catch(fail)
+      label: 'Load the checklist', onClick: () => freshLoad(w, p, boxes.filter(b => b.box.checked).map(b => b.key), gate.keep()).then(done).catch(fail)
     }]
   });
 }

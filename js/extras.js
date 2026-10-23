@@ -1,9 +1,10 @@
-import { store } from './store.js?v=24';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=24';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=24';
-import { confirmAreaRestore, inr } from './budget.js?v=24';
-import { clearAll } from './clear.js?v=24';
-import { downloadBackup } from './tools.js?v=24';
+import { store } from './store.js?v=25';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=25';
+import { othersSummary, bringBackOthers } from './safety.js?v=25';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=25';
+import { confirmAreaRestore, inr } from './budget.js?v=25';
+import { clearAll } from './clear.js?v=25';
+import { downloadBackup } from './tools.js?v=25';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist' };
@@ -155,7 +156,8 @@ export function renderBin() {
     const who = store.memberName(g[0].r.deleted_by);
     const ws = [...new Set(g.map(it => (store.find('weddings', it.r.wedding_id) || {}).couple).filter(Boolean))];
     const tables = [...new Set(g.map(it => it.t))];
-    return h('div', { class: 'bin-group' },
+    const oth = othersSummary(tables.map(t => [t, g.filter(it => it.t === t).map(it => it.r)]));
+    return h('div', { class: 'bin-group' + (oth.n ? ' has-others' : '') },
       h('div', { class: 'bin-row' },
         h('div', {}, h('div', { style: { fontWeight: 600 } }, `Cleared together · ${g.length} things`),
           h('div', { class: 'muted', style: { fontSize: '14px' } }, [ws.join(' & ') || 'Shared home costs', tables.map(t => NOUN[t] + 's').join(', '), `removed ${who ? 'by ' + who + ' ' : ''}${ago(g[0].r.deleted_at)}`].join(' · '))),
@@ -163,11 +165,15 @@ export function renderBin() {
           h('button', { class: 'btn small', type: 'button', onclick: async () => {
             try { for (const t of tables) await store.restoreMany(t, g.filter(it => it.t === t).map(it => it.r.id)); toast(`Restored ${g.length}`); } catch (e) { toast(e.message, 'error'); }
           } }, 'Restore all'),
+          oth.n ? h('button', { class: 'btn small', type: 'button', style: { background: 'var(--gold)' }, title: oth.people.join(' · '), onclick: async () => {
+            try { const k = await bringBackOthers(g); toast(`Brought back ${k} — steps whose area was gone are in “Brought back from the old plan”`); } catch (e) { toast(e.message, 'error'); }
+          } }, `Bring back what others added (${oth.n})`) : null,
           store.me.isAdmin ? h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
-            if (!(await confirmBox('Delete all of these for good?', `${g.length} things will be gone for everyone and can't be restored.`, 'Delete for good'))) return;
+            if (!(await confirmBox('Delete all of these for good?', `${g.length} things will be gone for everyone and can't be restored.` + (oth.n ? ` ${oth.n} of them were added by other people (${oth.people.join('; ')}).` : ''), 'Delete for good'))) return;
             for (const it of g) if (store.find(it.t, it.r.id)) await store.purge(it.t, it.r.id).catch(e => toast(e.message, 'error'));
             toast('Deleted');
           } }, 'Delete all for good') : null)),
+      oth.n ? h('p', { class: 'others-note' }, 'Includes things added by other people — ' + oth.people.join(' · ')) : null,
       h('details', {}, h('summary', {}, 'See what’s inside'), h('ul', { class: 'bin-inside' }, g.slice(0, 200).map(it => h('li', {}, label(it))))));
   });
   if (groupsEl.length) list.append(...groupsEl);
