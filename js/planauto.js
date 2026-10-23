@@ -1,11 +1,11 @@
 // The plan helping itself: suggested due dates, "looks finished", the weekly summary,
 // calendar files, announcements, final-week mode and copying between weddings.
-import { store } from './store.js?v=22';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, fancyDate } from './ui.js?v=22';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=22';
-import { together } from './history.js?v=22';
-import { isDecider, deciderOnly, share, siteLink, icsFile } from './tools.js?v=22';
-import { openStep } from './panel.js?v=22';
+import { store } from './store.js?v=23';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, fancyDate } from './ui.js?v=23';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=23';
+import { together } from './history.js?v=23';
+import { isDecider, deciderOnly, share, siteLink, icsFile } from './tools.js?v=23';
+import { openStep } from './panel.js?v=23';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

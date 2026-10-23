@@ -1,7 +1,7 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=22';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=23';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates
@@ -130,6 +130,18 @@ class LiveStore extends BaseStore {
     this.upsertLocal(table, full); this.emit({ table });
     const { error } = await this.sb.from(table).insert(full);
     if (error) { this.dropLocal(table, full.id); this.emit({ table }); throw new Error(error.message); }
+    return full;
+  }
+
+  // Many new rows in one request (used when loading a ready-made checklist).
+  async insertMany(table, rows) {
+    const full = rows.map(row => ({ id: uid(), created_at: nowIso(), created_by: this.me && this.me.id, ...row }));
+    for (const r of full) this.upsertLocal(table, r);
+    this.emit({ table });
+    for (let i = 0; i < full.length; i += 200) {
+      const { error } = await this.sb.from(table).insert(full.slice(i, i + 200));
+      if (error) { for (const r of full) this.dropLocal(table, r.id); this.emit({ table }); throw new Error(error.message); }
+    }
     return full;
   }
 
@@ -407,6 +419,11 @@ class DemoStore extends BaseStore {
   async insert(table, row) {
     const full = { id: uid(), created_at: nowIso(), created_by: this.me.id, deleted_at: null, ...row };
     this.cache[table].push(full); if (!UNLOGGED.includes(table)) this.log('create', table, null, full);
+    this.save(); this.emit({ table }); return full;
+  }
+  async insertMany(table, rows) {
+    const full = rows.map(row => ({ id: uid(), created_at: nowIso(), created_by: this.me.id, deleted_at: null, ...row }));
+    this.cache[table].push(...full);
     this.save(); this.emit({ table }); return full;
   }
   async update(table, id, patch) {

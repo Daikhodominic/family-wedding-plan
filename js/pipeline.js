@@ -1,12 +1,13 @@
-import { store } from './store.js?v=22';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=22';
-import { live, ui, render } from './app.js?v=22';
-import { openStep, lockIcon } from './panel.js?v=22';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=22';
-import { personInput } from './tools.js?v=22';
-import { openIdeas, sectionFor } from './decisions.js?v=22';
-import { renderGlimpse } from './glimpse.js?v=22';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=22';
+import { store } from './store.js?v=23';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=23';
+import { live, ui, render } from './app.js?v=23';
+import { openStep, lockIcon } from './panel.js?v=23';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=23';
+import { personInput } from './tools.js?v=23';
+import { openIdeas, sectionFor } from './decisions.js?v=23';
+import { renderGlimpse } from './glimpse.js?v=23';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=23';
+import { planOffer } from './plans.js?v=23';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -107,6 +108,7 @@ export function renderPipeline(root, w, params) {
     const el = root.querySelector(`[data-area="${CSS.escape(areaId)}"]`) || root.querySelector(`.area[data-id="${CSS.escape(areaId)}"]`);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
   });
+  { const po = planOffer(w); if (po) root.append(po); }
   if (view === 'glimpse') { renderGlimpse(root, w, plan); return; }
   if (view === 'map') {
     renderMap(root, w, plan, params);

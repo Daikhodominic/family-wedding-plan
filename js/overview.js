@@ -1,19 +1,20 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=22';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=22';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=22';
-import { openStep, lockIcon } from './panel.js?v=22';
-import { planOf, journeyBar } from './map.js?v=22';
-import { listSummary } from './lists.js?v=22';
-import { budgetMath, inr } from './budget.js?v=22';
-import { editStep } from './pipeline.js?v=22';
-import { canonical } from './myjobs.js?v=22';
-import { pictureEl } from './map.js?v=22';
-import { readyToDecide, favScore } from './boardauto.js?v=22';
-import { isDecider } from './tools.js?v=22';
-import { cardTitle } from './decisions.js?v=22';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=22';
-import { share, siteLink, copyLink } from './tools.js?v=22';
+import { store } from './store.js?v=23';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=23';
+import { live, stepVisible, feedList, themeOf } from './app.js?v=23';
+import { openStep, lockIcon } from './panel.js?v=23';
+import { planOf, journeyBar } from './map.js?v=23';
+import { listSummary } from './lists.js?v=23';
+import { budgetMath, inr } from './budget.js?v=23';
+import { editStep } from './pipeline.js?v=23';
+import { canonical } from './myjobs.js?v=23';
+import { pictureEl } from './map.js?v=23';
+import { readyToDecide, favScore } from './boardauto.js?v=23';
+import { isDecider } from './tools.js?v=23';
+import { cardTitle } from './decisions.js?v=23';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=23';
+import { share, siteLink, copyLink } from './tools.js?v=23';
+import { planOffer } from './plans.js?v=23';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -130,6 +131,7 @@ export function renderOverview(root, w, params = {}) {
         moreBtn,
         h('div', { class: 'oh-tally' }, tally.map(([n, label, cls]) => h('span', { class: 'ot' + (cls ? ' ' + cls : '') }, h('b', {}, String(n)), ' ' + label))))),
     journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } })));
+  { const po = planOffer(w); if (po) root.append(po); }
   const db = isDecider() ? datesBanner(w) : null; if (db) root.append(db);
   const lf = looksFinished(w);
   if (lf.length) root.append(h('section', { class: 'oblock looks' },
