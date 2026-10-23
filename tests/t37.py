@@ -37,7 +37,7 @@ async def main():
         print('after new round url', pg.url.split('#')[1], '| deck count', await pg.locator('.sw-count').inner_text() if await pg.locator('.sw-count').count() else None)
         # sample for ideas -> mood board
         await pg.goto(B+'#/w/elow/choose'); await pg.wait_for_timeout(800)
-        await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(300)
+        await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(300); await pg.evaluate("()=>document.querySelectorAll('.oe-more').forEach(d=>d.open=true)")
         m=pg.locator('.modal'); await m.locator('.oe-mode button:has-text("A sample for ideas")').click()
         await m.locator('.cf input').first.fill('Bouquet'); await m.locator('input[placeholder^="e.g. Lens"]').fill('Peony idea')
         for _ in range(2):

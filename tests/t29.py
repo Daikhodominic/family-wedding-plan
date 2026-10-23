@@ -35,7 +35,7 @@ async def main():
                 for _ in range(3):
                     if await pg.locator('.modal-wrap').count(): await pg.locator('.modal-wrap .modal-x, .modal-wrap [aria-label="Close"]').first.click(); await pg.wait_for_timeout(200)
                 # add an option
-                await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400)
+                await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400); await pg.evaluate("()=>document.querySelectorAll('.oe-more').forEach(d=>d.open=true)")
                 await pg.locator('.oe-form input[placeholder^="e.g. Lens"]').fill('Test Studio'); await pg.locator('.oe-form input[placeholder^="e.g. ₹"]').fill('₹70,000')
                 await pg.locator('.oe-form textarea[placeholder^="One link"]').fill('https://www.instagram.com/test\nhttps://example.org')
                 await pg.click('.modal-actions .btn:has-text("Save option")'); await pg.wait_for_timeout(700)

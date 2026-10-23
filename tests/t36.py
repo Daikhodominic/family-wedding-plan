@@ -12,7 +12,7 @@ async def main():
         await pg.goto(B+'#/w/charani/choose'); await pg.wait_for_timeout(900)
         m=pg.locator('.modal')
         async def add(cat, name, nphotos=0, phone='', split=False, change=False):
-            await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(300)
+            await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(300); await pg.evaluate("()=>document.querySelectorAll('.oe-more').forEach(d=>d.open=true)")
             await m.locator('.cf input').first.fill(cat); await pg.wait_for_timeout(100)
             nm=m.locator('input[placeholder^="e.g. Lens"]'); await nm.fill(name)
             if change: await nm.dispatch_event('change'); await pg.wait_for_timeout(100)

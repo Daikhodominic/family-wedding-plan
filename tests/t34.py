@@ -11,7 +11,7 @@ async def main():
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(400)
         await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}"); await pg.reload(); await pg.wait_for_timeout(400)
         await pg.goto(B+'#/w/charani/choose'); await pg.wait_for_timeout(1000)
-        await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400)
+        await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400); await pg.evaluate("()=>document.querySelectorAll('.oe-more').forEach(d=>d.open=true)")
         m=pg.locator('.modal')
         await m.locator('.cf input').first.fill('Make-up artist'); await pg.wait_for_timeout(150)
         print('note', await m.locator('.cf-note').inner_text())
@@ -24,7 +24,7 @@ async def main():
         r=await pg.evaluate(J,'Make-up artist'); print('new step', r)
         assert r and r['owner']=='Aunty Ela' and r['stage']=='Before' and r['gate'] and r['opts']==1 and r['due']=='2026-11-01'
         # a second option typed into the same category reuses it
-        await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400)
+        await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400); await pg.evaluate("()=>document.querySelectorAll('.oe-more').forEach(d=>d.open=true)")
         await m.locator('.cf input').first.fill('make-up artist'); await pg.wait_for_timeout(150)
         print('note2', await m.locator('.cf-note').inner_text(), '| who prefilled:', await m.locator('.cf-row .ppl-chip').all_inner_texts())
         await m.locator('input[placeholder^="e.g. Lens"]').fill('Studio Kohima'); await m.locator('.modal-actions button:has-text("Save option")').click(); await pg.wait_for_timeout(900)
