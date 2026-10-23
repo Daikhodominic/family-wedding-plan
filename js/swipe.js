@@ -1,13 +1,14 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=29';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=29';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=29';
-import { isDecider } from './tools.js?v=29';
-import { addVendor } from './decisions.js?v=29';
-import { pickFiles, fetchPreview } from './board.js?v=29';
-import { planOf } from './map.js?v=29';
+import { store } from './store.js?v=30';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=30';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=30';
+import { isDecider } from './tools.js?v=30';
+import { addVendor } from './decisions.js?v=30';
+import { pickFiles, fetchPreview } from './board.js?v=30';
+import { planOf } from './map.js?v=30';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=30';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -105,7 +106,7 @@ export function openOption(o) {
         h('div', { class: 'od-cat' }, [s ? s.title : 'Option', w ? w.couple : ''].filter(Boolean).join(' · ')),
         dd.rate ? h('div', { class: 'od-rate' }, dd.rate) : null,
         dd.notes ? h('p', { class: 'od-notes' }, dd.notes) : null,
-        dd.phone ? h('div', { class: 'od-phone' }, h('a', { class: 'btn small ghost', href: 'tel:' + dd.phone.replace(/[^\d+]/g, '') }, '☏ ' + dd.phone), waLink(dd.phone) ? h('a', { class: 'btn small ghost', href: waLink(dd.phone), target: '_blank', rel: 'noopener' }, 'WhatsApp') : null) : null,
+        dd.phone ? h('div', { class: 'od-phone' }, h('a', { class: 'btn small ghost', href: 'tel:' + dd.phone.replace(/[^\d+]/g, '') }, '☏ ' + dd.phone), waLink(dd.phone) ? waButton({ label: 'Ask them on WhatsApp', phone: dd.phone, cls: 'ghost', text: () => vendorMessage(cur, s && s.title) }) : null) : null,
         (dd.links || []).length ? h('div', { class: 'od-links' }, (dd.links || []).map(linkTile)) : null,
         h('div', { class: 'od-votes' },
           VOTES.map(k => h('button', { type: 'button', class: 'vote-btn ' + k + (mine === k ? ' on' : ''), onclick: () => vote(cur, k).catch(fail) }, h('span', { class: 'vb-ic', html: { love: ICONS.heart, maybe: ICONS.maybe, no: ICONS.nope }[k] }), { love: 'Love it', maybe: 'Maybe', no: 'Not this' }[k], h('b', {}, String(v[k].length))))),
@@ -113,6 +114,7 @@ export function openOption(o) {
         h('p', { class: 'od-by' }, 'Added by ' + (store.memberName(cur.created_by) || 'someone') + (dd.status === 'chosen' ? ' · ✓ Chosen' : dd.status === 'not' ? ' · Not chosen' : '')),
         h('div', { class: 'od-acts' },
           can ? h('button', { type: 'button', class: 'btn', onclick: () => { closeAll(); chooseOption(cur); } }, 'Choose this — make it final') : null,
+          isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
           h('button', { type: 'button', class: 'btn ghost small', onclick: () => { closeAll(); editOption(w, dd.step_id, cur); } }, 'Edit'),
           (cur.created_by === store.me.id || store.me.isAdmin) ? h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { closeAll(); store.remove('board_items', cur.id).then(() => toast('Moved to the Bin')).catch(fail); } }, 'Remove') : null))];
   };
@@ -282,7 +284,8 @@ export function renderSwipe(root, opts = {}) {
       h('div', { class: 'sw-done-acts' },
         lastVote ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { const lv = lastVote; lastVote = null; vote(lv.o, lv.v).catch(fail); } }, '↶ Undo last') : null,
         w ? h('a', { class: 'btn', href: `#/w/${w.id}/choose` }, 'See all categories') : weddings().map(x => h('a', { class: 'btn ghost', href: `#/w/${x.id}/choose` }, (x.couple || '').split('&')[0].trim() + '’s choices')),
-        w ? h('button', { type: 'button', class: 'btn ghost', onclick: () => editOption(w, step && step.id) }, '+ Add an option') : null)));
+        w ? h('button', { type: 'button', class: 'btn ghost', onclick: () => editOption(w, step && step.id) }, '+ Add an option') : null),
+      all.length ? h('div', { class: 'sw-done-wa' }, h('span', { class: 'muted' }, 'Get the others to vote too:'), waButton({ label: 'Ask the family on WhatsApp', small: false, text: () => swipeMessage(w && w.id, all.length) })) : null));
     return;
   }
   const o = list[0];
@@ -332,6 +335,7 @@ export function renderChoose(root, w) {
     h('div', {}, h('h1', { class: 'page-title' }, 'Choose'), h('p', { class: 'ph-sub' }, 'Everything waiting to be chosen, and what the family thinks.')),
     h('div', { class: 'ph-right' },
       h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
+      (() => { const n = optionsOf(w.id).filter(isOpen).length; return n ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, n) }) : null; })(),
       h('a', { class: 'btn ghost', href: `#/w/${w.id}/board` }, 'Mood board'))));
   const nfy = newForYou(w.id); if (nfy) root.append(nfy);
   const cats = categoriesOf(w);

@@ -213,6 +213,8 @@ export const ICONS = {
   maybe: sv('<path d="M9.2 9a2.9 2.9 0 1 1 4.1 2.6c-.8.4-1.3 1-1.3 1.9v.5M12 17.5v.01"/>'),
   sparkle: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 6.4 6.6 2.1-6.6 2.1L12 19.5l-1.9-6.4L3.5 11l6.6-2.1z"/></svg>',
   plus: sv('<path d="M12 5v14M5 12h14"/>'),
+  chat: sv('<path d="M4.5 19.5l1.2-3.6A8 8 0 1 1 8.6 18.7z"/><path d="M9.3 9.2c.2 1.9 2.4 4.3 4.6 4.8l.9-1.1 1.6.7c-.2 1-1 1.7-2 1.6-3-.3-6.1-3.3-6.3-6.4 0-1 .7-1.7 1.6-1.9l.7 1.5z" stroke-width="1.2"/>'),
+  bell: sv('<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2H4.5z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'),
   grip: sv('<circle cx="9" cy="6" r="1.2" fill="currentColor"/><circle cx="15" cy="6" r="1.2" fill="currentColor"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><circle cx="9" cy="18" r="1.2" fill="currentColor"/><circle cx="15" cy="18" r="1.2" fill="currentColor"/>'),
   check: sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
   trash: sv('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),

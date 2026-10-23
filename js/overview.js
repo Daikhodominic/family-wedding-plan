@@ -1,21 +1,22 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=29';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=29';
-import { live, stepVisible, feedList, themeOf, render } from './app.js?v=29';
-import { openStep, lockIcon } from './panel.js?v=29';
-import { planOf, journeyBar } from './map.js?v=29';
-import { listSummary } from './lists.js?v=29';
-import { budgetMath, inr } from './budget.js?v=29';
-import { editStep } from './pipeline.js?v=29';
-import { canonical } from './myjobs.js?v=29';
-import { pictureEl } from './map.js?v=29';
-import { readyToDecide, favScore } from './boardauto.js?v=29';
-import { isDecider } from './tools.js?v=29';
-import { cardTitle } from './decisions.js?v=29';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=29';
-import { share, siteLink, copyLink } from './tools.js?v=29';
-import { planOffer } from './plans.js?v=29';
-import { newForYou } from './swipe.js?v=29';
+import { store } from './store.js?v=30';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=30';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=30';
+import { openStep, lockIcon } from './panel.js?v=30';
+import { planOf, journeyBar } from './map.js?v=30';
+import { listSummary } from './lists.js?v=30';
+import { budgetMath, inr } from './budget.js?v=30';
+import { editStep } from './pipeline.js?v=30';
+import { canonical } from './myjobs.js?v=30';
+import { pictureEl } from './map.js?v=30';
+import { readyToDecide, favScore } from './boardauto.js?v=30';
+import { isDecider } from './tools.js?v=30';
+import { cardTitle } from './decisions.js?v=30';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=30';
+import { share, siteLink, copyLink } from './tools.js?v=30';
+import { planOffer } from './plans.js?v=30';
+import { newForYou } from './swipe.js?v=30';
+import { waButton, jobsMessage } from './nudge.js?v=30';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -179,7 +180,8 @@ export function renderOverview(root, w, params = {}) {
       const sorted = [...p.list].sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
       return h('div', { class: 'person' + (k === '~' ? ' nobody' : '') },
         h('div', { class: 'p-h' }, h('span', { class: 'p-av' }, k === '~' ? '?' : p.name.charAt(0).toUpperCase()), h('b', {}, p.name),
-          h('span', { class: 'p-n' }, `${p.list.length} open`, late ? h('span', { class: 'neg' }, ` · ${late} overdue`) : null)),
+          h('span', { class: 'p-n' }, `${p.list.length} open`, late ? h('span', { class: 'neg' }, ` · ${late} overdue`) : null),
+          store.me && p.name.trim().toLowerCase() !== (store.me.name || '').trim().toLowerCase() ? waButton({ label: 'Nudge', to: p.name, cls: 'ghost p-wa', text: () => jobsMessage(p.name, sorted, w.id) }) : null),
         h('div', { class: 'olist' }, sorted.slice(0, 3).map(x => taskRow(x, { showOwner: false })), sorted.length > 3 ? h('span', { class: 'o-more' }, `+ ${sorted.length - 3} more`) : null));
     })) : h('p', { class: 'muted o-empty' }, 'Nothing open. Give steps and to-dos a “person in charge” and they appear here.'),
     moreToggle(w.id + 'who', ppl.filter(([k]) => k !== '~').length, 4));

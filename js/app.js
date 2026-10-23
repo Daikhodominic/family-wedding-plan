@@ -1,24 +1,26 @@
-import { store, onStatus, syncState } from './store.js?v=29';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=29';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=29';
-import { renderBoard } from './board.js?v=29';
-import { renderTodo } from './todo.js?v=29';
-import { renderFiles } from './files.js?v=29';
-import { renderDecide } from './decide.js?v=29';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=29';
-import { clearPage, clearAll } from './clear.js?v=29';
-import { undoButtons } from './history.js?v=29';
-import { downloadBackup } from './tools.js?v=29';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=29';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=29';
-import { announcementBars } from './planauto.js?v=29';
-import { renderPartner } from './partner.js?v=29';
-import { renderOverview, editDate } from './overview.js?v=29';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=29';
-import { renderLists } from './lists.js?v=29';
-import { planOf } from './map.js?v=29';
-import { openStep, closeDrawer } from './panel.js?v=29';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=29';
+import { store, onStatus, syncState } from './store.js?v=30';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=30';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=30';
+import { renderBoard } from './board.js?v=30';
+import { renderTodo } from './todo.js?v=30';
+import { renderFiles } from './files.js?v=30';
+import { renderDecide } from './decide.js?v=30';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=30';
+import { clearPage, clearAll } from './clear.js?v=30';
+import { undoButtons } from './history.js?v=30';
+import { downloadBackup } from './tools.js?v=30';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=30';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=30';
+import { announcementBars } from './planauto.js?v=30';
+import { renderPartner } from './partner.js?v=30';
+import { renderOverview, editDate } from './overview.js?v=30';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=30';
+import { renderLists } from './lists.js?v=30';
+import { planOf } from './map.js?v=30';
+import { openStep, closeDrawer } from './panel.js?v=30';
+import { waNumber } from './nudge.js?v=30';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=30';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=30';
 
 const app = document.getElementById('app');
 
@@ -99,7 +101,8 @@ function avatarMenu(btn) {
     item('folder', 'Download a backup', downloadBackup),
     ...pageClearItems(item),
     store.me.isAdmin ? item('broom', 'Clear all and start over…', () => { const { parts } = parseRoute(); clearAll(parts[0] === 'w' ? { weddingId: parts[1] } : {}); }) : null,
-    item('user', 'Change your name', profileMenu),
+    item('user', store.me.phone ? 'Your name and number' : 'Your name · add your WhatsApp', profileMenu),
+    notifySupported() ? item('bell', 'Notifications on this phone', notifySettings, notifyOn() ? h('span', { class: 'mi-on' }, 'On') : null) : null,
     item('zoomIn', easyOn() ? 'Normal view' : 'Easy view (bigger text)', () => { toggleEasy(); render(); }),
     store.mode === 'demo' ? item('restore', 'Reset the sample', () => store.resetDemo()) : null,
     store.mode === 'live' ? item('logout', 'Sign out of this device', async () => { if (await confirmBox('Sign out?', 'You will need the family passcode to come back in on this device.', 'Sign out')) { await store.signOut(); location.hash = '#/'; location.reload(); } }) : null);
@@ -139,10 +142,18 @@ function avatar() {
 
 function profileMenu() {
   const name = h('input', { value: store.me.name, maxlength: 60, autocomplete: 'name' });
+  const phone = h('input', { type: 'tel', value: store.me.phone || '', maxlength: 20, autocomplete: 'tel', inputmode: 'tel', placeholder: 'e.g. 98765 43210' });
   modal({
-    title: 'Your name',
-    body: [field('This is how your changes are signed', name)],
-    actions: [{ label: 'Save', onClick: async () => { const v = name.value.trim(); if (!v) return false; await store.rename(v); toast('Saved'); render(); } }]
+    title: 'Your name and WhatsApp',
+    body: [field('This is how your changes are signed', name),
+      field('Your WhatsApp number', phone, 'So the family can nudge you on WhatsApp in one tap (“could you add the caterer’s quote?”). Only people in the family can see it. 10-digit Indian numbers are fine; add the country code for others.')],
+    actions: [{ label: 'Save', onClick: async () => {
+      const v = name.value.trim(); if (!v) return false;
+      const ph = phone.value.trim();
+      if (ph && !waNumber(ph)) { toast('That number doesn’t look right — 10 digits, or with the country code', 'error'); return false; }
+      try { if (v !== store.me.name) await store.rename(v); if (ph !== (store.me.phone || '')) await store.setPhone(ph); toast('Saved'); render(); }
+      catch (e) { toast(e.message, 'error'); return false; }
+    } }]
   });
 }
 
@@ -467,6 +478,7 @@ async function boot() {
     return;
   }
   booted = true;
+  startNotifier();
   if (!onLandingNow()) render();
 }
 

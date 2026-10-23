@@ -1,7 +1,7 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=29';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=30';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates
@@ -19,6 +19,15 @@ class BaseStore {
     this.missing = {};
   }
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+  // Row-level hook for changes made by other people (used for phone notifications).
+  onRemoteRow(fn) { (this._rowHooks = this._rowHooks || new Set()).add(fn); return () => this._rowHooks.delete(fn); }
+  _remoteRow(ev) { for (const f of (this._rowHooks || [])) { try { f(ev); } catch (e) { console.error(e); } } }
+  memberPhone(name) {
+    const n = String(name || '').trim().toLowerCase(); if (!n) return '';
+    const ms = this.cache.members || [];
+    const m = ms.find(r => (r.name || '').trim().toLowerCase() === n) || ms.find(r => (r.name || '').trim().toLowerCase().split(/\s+/)[0] === n.split(/\s+/)[0]);
+    return (m && m.phone) || '';
+  }
   // Change notices. During a big action (batch) they wait and fire once at the end;
   // a burst of changes arriving from other devices is gathered into one notice.
   emit(info) {
@@ -81,7 +90,7 @@ class LiveStore extends BaseStore {
     if (!u || !u.user) return false;
     const { data, error } = await this.sb.from('members').select('*').eq('user_id', u.user.id).maybeSingle();
     if (error || !data) return false;
-    this.me = { id: data.user_id, name: data.name, isAdmin: data.is_admin, isDecider: !!(data.is_admin || data.is_decider), deciderFor: data.decider_for || [], lastSeen: Number(data.last_seen_activity) || 0 };
+    this.me = { id: data.user_id, name: data.name, isAdmin: data.is_admin, isDecider: !!(data.is_admin || data.is_decider), deciderFor: data.decider_for || [], phone: data.phone || '', lastSeen: Number(data.last_seen_activity) || 0 };
     return true;
   }
 
@@ -128,8 +137,12 @@ class LiveStore extends BaseStore {
       .on('postgres_changes', { event: '*', schema: 'public' }, (p) => {
         const t = p.table;
         if (!this.cache[t]) return;
+        const key = t === 'members' ? 'user_id' : 'id';
+        const prev = p.new && p.new[key] != null ? (this.cache[t].find(r => r[key] === p.new[key]) || null) : null;
+        const prevCopy = prev ? { ...prev } : null;
         if (p.eventType === 'DELETE') this.dropLocal(t, (p.old || {}).id || (p.old || {}).user_id);
         else this.upsertLocal(t, p.new);
+        if (p.eventType !== 'DELETE') this._remoteRow({ type: p.eventType, table: t, row: p.new, prev: prevCopy });
         if (t === 'activity') this.cache.activity.sort((x, y) => y.id - x.id);
         this.emit({ table: t, remote: true });
         this.saveSnapshot();
@@ -241,6 +254,11 @@ class LiveStore extends BaseStore {
   async rename(name) {
     await this.sb.from('members').update({ name }).eq('user_id', this.me.id);
     this.me.name = name; this.upsertLocal('members', { user_id: this.me.id, name }); this.emit({ table: 'members' });
+  }
+  async setPhone(phone) {
+    const { error } = await this.sb.from('members').update({ phone }).eq('user_id', this.me.id);
+    if (error) throw new Error(/phone/.test(error.message) ? 'Saving a number needs database update 11.' : error.message);
+    this.me.phone = phone; this.upsertLocal('members', { user_id: this.me.id, phone }); this.emit({ table: 'members' });
   }
 
   async uploadBlob(blob, ext) {
@@ -417,7 +435,7 @@ class DemoStore extends BaseStore {
     if (saved && saved.cache) { this.cache = { ...this.cache, ...saved.cache }; for (const t of TABLES) if (!this.cache[t]) this.cache[t] = []; this.nextAct = saved.nextAct || 1; }
     else { this.cache = demoSeed(); this.save(); }
     const m = this.cache.members[0];
-    this.me = { id: m.user_id, name: m.name, isAdmin: true, isDecider: true, lastSeen: Number(m.last_seen_activity) || 0 };
+    this.me = { id: m.user_id, name: m.name, phone: m.phone || '', isAdmin: true, isDecider: true, lastSeen: Number(m.last_seen_activity) || 0 };
     return 'ready';
   }
   async join() { }
@@ -509,6 +527,9 @@ class DemoStore extends BaseStore {
     this.me.lastSeen = activityId; this.cache.members[0].last_seen_activity = activityId; this.save();
   }
   async rename(name) { this.me.name = name; this.cache.members[0].name = name; this.save(); this.emit({ table: 'members' }); }
+  async setPhone(phone) { this.me.phone = phone; this.cache.members[0].phone = phone; this.save(); this.emit({ table: 'members' }); }
+  // Pretend someone else changed a row (tests and the notification preview).
+  simulateRemote(table, row, type = 'INSERT') { const key = table === 'members' ? 'user_id' : 'id'; const prev = this.cache[table].find(r => r[key] === row[key]); const prevCopy = prev ? { ...prev } : null; this.upsertLocal(table, row); this.save(); this._remoteRow({ type, table, row, prev: prevCopy }); this.emit({ table, remote: true }); }
   async uploadBlob(blob, ext) {
     const path = `demo/${uid()}.${ext}`;
     this.blobs.set(path, URL.createObjectURL(blob));

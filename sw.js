@@ -1,6 +1,6 @@
 // Lets the site open on a weak connection and be installed on a phone.
 // Always the newest version when online; the saved copy only when offline.
-const CACHE = 'fwp-shell-v11';
+const CACHE = 'fwp-shell-v12';
 self.addEventListener('install', () => { self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -21,5 +21,15 @@ self.addEventListener('fetch', (e) => {
     const hit = await cc.match(req);
     const net = fetch(req).then(r => { if (r && (r.ok || r.type === 'opaque')) cc.put(req, r.clone()); return r; }).catch(() => hit);
     return hit || net;
+  }));
+});
+// Tapping a notification opens the War Room at the right page.
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const hash = (e.notification.data && e.notification.data.url) || '#/home';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const c = list.find(x => x.url.startsWith(self.registration.scope));
+    if (c) { c.navigate ? c.navigate(c.url.split('#')[0] + hash).catch(() => { }) : null; return c.focus(); }
+    return self.clients.openWindow(self.registration.scope + 'index.html' + hash);
   }));
 });
