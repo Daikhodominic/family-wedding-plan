@@ -1,7 +1,7 @@
 // Adding and removing things anywhere in the plan: between two steps, at the end of an area,
 // a new area in a stage, a new stage. Used by the Map view and the step drawer.
-import { store } from './store.js?v=26';
-import { h, toast, modal, field, confirmBox } from './ui.js?v=26';
+import { store } from './store.js?v=27';
+import { h, toast, modal, field, confirmBox } from './ui.js?v=27';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

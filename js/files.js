@@ -1,9 +1,9 @@
 // The Files tab: every file and list for one wedding, in one place.
-import { store } from './store.js?v=26';
-import { h, secHead } from './ui.js?v=26';
-import { render } from './app.js?v=26';
-import { fileTile, listRow, uploadTo, newList } from './panel.js?v=26';
-import { pickFiles } from './board.js?v=26';
+import { store } from './store.js?v=27';
+import { h, secHead } from './ui.js?v=27';
+import { render } from './app.js?v=27';
+import { fileTile, listRow, uploadTo, newList } from './panel.js?v=27';
+import { pickFiles } from './board.js?v=27';
 
 let filter = 'all';
 const live = (rows) => rows.filter(r => !r.deleted_at);

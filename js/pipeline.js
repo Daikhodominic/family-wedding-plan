@@ -1,13 +1,13 @@
-import { store } from './store.js?v=26';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=26';
-import { live, ui, render } from './app.js?v=26';
-import { openStep, lockIcon } from './panel.js?v=26';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=26';
-import { personInput } from './tools.js?v=26';
-import { openIdeas, sectionFor } from './decisions.js?v=26';
-import { renderGlimpse } from './glimpse.js?v=26';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=26';
-import { planOffer } from './plans.js?v=26';
+import { store } from './store.js?v=27';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=27';
+import { live, ui, render } from './app.js?v=27';
+import { openStep, lockIcon } from './panel.js?v=27';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=27';
+import { personInput } from './tools.js?v=27';
+import { openIdeas, sectionFor } from './decisions.js?v=27';
+import { renderGlimpse } from './glimpse.js?v=27';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=27';
+import { planOffer } from './plans.js?v=27';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -83,7 +83,6 @@ export function renderPlanHead(root, w, current, plan = planOf(w), onPick) {
   };
   root.append(h('div', { class: 'plan-head' },
     h('div', { class: 'ph-title' },
-      h('div', { class: 'eyebrow' }, current === 'todo' ? 'Little jobs' : current === 'glimpse' ? 'Glimpse' : 'Start to finish'),
       h('h1', {}, current === 'todo' ? 'To-do list' : current === 'glimpse' ? 'The wedding at a glance' : 'The plan')),
     h('div', { class: 'viewtoggle', role: 'group', 'aria-label': 'View' },
       [['list', 'List'], ['map', 'Map'], ['glimpse', 'Glimpse'], ['todo', 'To-do']].map(([k, l]) =>
@@ -109,6 +108,10 @@ export function renderPipeline(root, w, params) {
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
   });
   { const po = planOffer(w); if (po) root.append(po); }
+  if (view === 'list') root.append(h('div', { class: 'fold-all' },
+    h('button', { type: 'button', class: 'link-btn', onclick: () => setAllFolded(w, true) }, 'Open all'),
+    h('span', { 'aria-hidden': 'true' }, '/'),
+    h('button', { type: 'button', class: 'link-btn', onclick: () => setAllFolded(w, false) }, 'Fold all')));
   if (view === 'glimpse') { renderGlimpse(root, w, plan); return; }
   if (view === 'map') {
     renderMap(root, w, plan, params);
@@ -120,7 +123,7 @@ export function renderPipeline(root, w, params) {
     const areas = areasAll.filter(a => a.stage_id === st.id).sort(byPos);
     const stepCount = visSteps.filter(s => areas.some(a => a.id === s.area_id)).length;
     const areasEl = h('div', { class: 'areas', dataset: { stage: st.id } });
-    for (const a of areas) areasEl.append(areaEl(a, visSteps.filter(s => s.area_id === a.id).sort(byPos), w));
+    for (const a of areas) areasEl.append(areaEl(a, visSteps.filter(s => s.area_id === a.id).sort(byPos), w, { here: plan.here, focus: params.focus }));
 
     const addArea = h('button', {
       class: 'dashed', type: 'button', onclick: () => {
@@ -213,7 +216,24 @@ export function renderPipeline(root, w, params) {
   }
 }
 
-function areaEl(a, steps, w) {
+/* ---------- Folding areas ----------
+   An area folds to one line. The area you're on, and areas with something late or under way,
+   open by themselves; anything you open or fold yourself is remembered on this device. */
+const foldKey = (wid) => 'fwp-fold-' + wid;
+const foldState = (wid) => { try { return JSON.parse(localStorage.getItem(foldKey(wid)) || '{}'); } catch (e) { return {}; } };
+const setFold = (wid, patch) => { try { localStorage.setItem(foldKey(wid), JSON.stringify({ ...foldState(wid), ...patch })); } catch (e) { } };
+export function setAllFolded(w, open) {
+  const ids = live(store.rows('areas')).filter(a => a.wedding_id === w.id).map(a => a.id);
+  setFold(w.id, Object.fromEntries(ids.map(id => [id, open])));
+  render();
+}
+function areaEl(a, steps, w, ctx = {}) {
+  const late = steps.some(x => x.due && !isComplete(x) && daysUntil(x.due) < 0);
+  const busy = steps.some(x => x.status === 'doing');
+  const hasFocus = ctx.focus && (ctx.focus === a.id || steps.some(x => x.id === ctx.focus));
+  const saved = foldState(w.id)[a.id];
+  const open = hasFocus || (saved !== undefined ? saved : (a.id === ctx.here || late || busy || !steps.length));
+  const next = steps.find(x => !isComplete(x));
   const done = steps.filter(isComplete).length;
   const list = h('ul', { class: 'steps', dataset: { area: a.id } }, steps.map(stepEl));
   const input = h('input', { placeholder: 'Add a step…', maxlength: 200, 'aria-label': `Add a step to ${a.title}` });
@@ -228,21 +248,28 @@ function areaEl(a, steps, w) {
   input.addEventListener('blur', () => { if (input.value.trim()) add(); });
   const cpl = steps.filter(isComplete).length, lk = steps.filter(x => x.locked_at).length;
   const st = steps.length && cpl === steps.length ? (lk ? 'locked' : 'done') : (cpl || steps.some(x => x.status === 'doing')) ? 'doing' : 'todo';
-  return h('div', { class: 'area st-' + st, dataset: { id: a.id } },
+  const toggle = () => { setFold(w.id, { [a.id]: !open }); render(); };
+  const pct = steps.length ? Math.round(done / steps.length * 100) : 0;
+  return h('div', { class: 'area st-' + st + (open ? ' open' : ' folded') + (late ? ' has-late' : ''), dataset: { id: a.id } },
     h('div', { class: 'area-h' },
       h('button', { class: 'icon-btn grip area-grip', type: 'button', 'aria-label': 'Drag to move area', html: ICONS.grip }),
-      h('h4', { onclick: () => renameBox('Rename area', a.title, v => store.update('areas', a.id, { title: v })) }, a.title),
-      h('button', { type: 'button', class: 'ideas-link' + (sectionFor(a.id) ? ' has' : ''), title: 'See the mood board ideas for ' + a.title, onclick: () => openIdeas(w, a) }, 'Ideas'),
+      h('button', { type: 'button', class: 'area-toggle', 'aria-expanded': String(open), onclick: toggle },
+        h('h4', {}, a.title),
+        h('span', { class: 'fold-ic', 'aria-hidden': 'true' })),
       h('span', { class: 'meta' }, steps.length ? `${done} of ${steps.length}` : ''),
       menu({
         title: a.title, list: [
           { label: 'Rename', onClick: () => renameBox('Rename area', a.title, v => store.update('areas', a.id, { title: v })) },
+          { label: sectionFor(a.id) ? 'See its ideas on the mood board' : 'Ideas on the mood board', onClick: () => openIdeas(w, a) },
           ...otherWeddings(w.id).map(o => ({ label: `Copy this area to ${o.couple}`, onClick: () => copyArea(a, o.id) })),
           { label: 'Move this area to the Bin', kind: 'danger', onClick: () => store.remove('areas', a.id).then(() => toast('Moved to the Bin')).catch(fail) }
         ]
       })),
-    list,
-    h('div', { class: 'add-line' }, input));
+    h('div', { class: 'area-prog', 'aria-hidden': 'true' }, h('span', { style: { width: pct + '%' } })),
+    open ? null : h('button', { type: 'button', class: 'area-next', onclick: toggle },
+      next ? h('span', {}, h('span', { class: 'an-l' }, late ? 'Overdue · ' : 'Next · '), next.title) : h('span', { class: 'an-l' }, steps.length ? 'All done' : 'No steps yet')),
+    open ? list : null,
+    open ? h('div', { class: 'add-line' }, input) : null);
 }
 
 function stepEl(s) {

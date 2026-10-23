@@ -1,13 +1,13 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=26';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl } from './ui.js?v=26';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=26';
-import { isDecider } from './tools.js?v=26';
-import { addVendor } from './decisions.js?v=26';
-import { pickFiles, fetchPreview } from './board.js?v=26';
-import { planOf } from './map.js?v=26';
+import { store } from './store.js?v=27';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl } from './ui.js?v=27';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=27';
+import { isDecider } from './tools.js?v=27';
+import { addVendor } from './decisions.js?v=27';
+import { pickFiles, fetchPreview } from './board.js?v=27';
+import { planOf } from './map.js?v=27';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -326,7 +326,7 @@ export function newForYou(weddingId) {
 /* ---------- Choose: every category of a wedding ---------- */
 export function renderChoose(root, w) {
   root.append(h('div', { class: 'ph-row' },
-    h('div', {}, h('div', { class: 'eyebrow' }, 'Options & decisions'), h('h1', { class: 'page-title' }, 'Choose')),
+    h('div', {}, h('h1', { class: 'page-title' }, 'Choose'), h('p', { class: 'ph-sub' }, 'Everything waiting to be chosen, and what the family thinks.')),
     h('div', { class: 'ph-right' },
       h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
       h('a', { class: 'btn ghost', href: `#/w/${w.id}/board` }, 'Mood board'))));
@@ -348,8 +348,11 @@ export function renderChoose(root, w) {
         h('b', {}, step.title),
         h('span', { class: 'ct-sub' }, step.locked_at ? '✓ ' + ((step.lock_note && (step.lock_note.with || step.lock_note.vendor)) || 'Final') : n ? `${n} ${n === 1 ? 'option' : 'options'}${lead ? ' · leading: ' + (lead.data || {}).title : ''}` : 'No options yet — add one')));
   };
-  const open = cats.filter(c => !c.step.locked_at), done = cats.filter(c => c.step.locked_at);
-  root.append(h('section', { class: 'cat-grid' }, open.map(tile)));
+  const open = cats.filter(c => !c.step.locked_at && c.n), empty = cats.filter(c => !c.step.locked_at && !c.n), done = cats.filter(c => c.step.locked_at);
+  if (open.length) root.append(h('section', { class: 'cat-grid' }, open.map(tile)));
+  if (empty.length) root.append(h('section', { class: 'cat-empty' },
+    h('h2', { class: 'cat-h' }, 'Still needs options'),
+    h('div', { class: 'cat-chips' }, empty.map(({ step }) => h('button', { type: 'button', class: 'lchip', title: 'Add an option for ' + step.title, onclick: () => editOption(w, step.id) }, '+ ' + step.title)))));
   if (done.length) root.append(h('h2', { class: 'cat-h' }, `Decided · ${done.length}`), h('section', { class: 'cat-grid' }, done.map(tile)));
 }
 

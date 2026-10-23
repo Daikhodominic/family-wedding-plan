@@ -1,21 +1,21 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=26';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=26';
-import { live, stepVisible, feedList, themeOf } from './app.js?v=26';
-import { openStep, lockIcon } from './panel.js?v=26';
-import { planOf, journeyBar } from './map.js?v=26';
-import { listSummary } from './lists.js?v=26';
-import { budgetMath, inr } from './budget.js?v=26';
-import { editStep } from './pipeline.js?v=26';
-import { canonical } from './myjobs.js?v=26';
-import { pictureEl } from './map.js?v=26';
-import { readyToDecide, favScore } from './boardauto.js?v=26';
-import { isDecider } from './tools.js?v=26';
-import { cardTitle } from './decisions.js?v=26';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=26';
-import { share, siteLink, copyLink } from './tools.js?v=26';
-import { planOffer } from './plans.js?v=26';
-import { newForYou } from './swipe.js?v=26';
+import { store } from './store.js?v=27';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=27';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=27';
+import { openStep, lockIcon } from './panel.js?v=27';
+import { planOf, journeyBar } from './map.js?v=27';
+import { listSummary } from './lists.js?v=27';
+import { budgetMath, inr } from './budget.js?v=27';
+import { editStep } from './pipeline.js?v=27';
+import { canonical } from './myjobs.js?v=27';
+import { pictureEl } from './map.js?v=27';
+import { readyToDecide, favScore } from './boardauto.js?v=27';
+import { isDecider } from './tools.js?v=27';
+import { cardTitle } from './decisions.js?v=27';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=27';
+import { share, siteLink, copyLink } from './tools.js?v=27';
+import { planOffer } from './plans.js?v=27';
+import { newForYou } from './swipe.js?v=27';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -52,10 +52,19 @@ function taskRow(t, { showOwner = true } = {}) {
     h('span', { class: 'o-main' }, h('b', {}, t.title), h('span', {}, bits.join(' · '))));
 }
 
+// Sections show their first three; "Show all" opens the rest right there.
+const opened = new Set();
+function moreToggle(key, n, shown) {
+  if (n <= shown) return null;
+  const on = opened.has(key);
+  return h('button', { type: 'button', class: 'o-more', 'aria-expanded': String(on), onclick: () => { if (on) opened.delete(key); else opened.add(key); render(); } }, on ? 'Show fewer' : `Show all ${n}`);
+}
 function block(title, items, empty, opts = {}) {
+  const key = (opts.key || '') + title;
+  const limit = opened.has(key) ? items.length : (opts.limit || 3);
   return h('section', { class: 'oblock' + (opts.cls ? ' ' + opts.cls : '') },
     h('div', { class: 'ob-h' }, h('h2', {}, title), items.length ? h('span', { class: 'count' + (opts.countCls ? ' ' + opts.countCls : '') }, String(items.length)) : null, opts.link ? h('a', { class: 'ob-link', href: opts.link[0] }, opts.link[1]) : null),
-    items.length ? h('div', { class: 'olist' }, items.slice(0, opts.limit || 6).map(t => taskRow(t, opts)), items.length > (opts.limit || 6) ? h('a', { class: 'o-more', href: opts.more || '#' }, `See all ${items.length} →`) : null)
+    items.length ? h('div', { class: 'olist' }, items.slice(0, limit).map(t => taskRow(t, opts)), moreToggle(key, items.length, opts.limit || 3))
       : h('p', { class: 'muted o-empty' }, empty));
 }
 
@@ -122,7 +131,6 @@ export function renderOverview(root, w, params = {}) {
   root.append(h('section', { class: 'ohero calm' },
     h('div', { class: 'oh-top' },
       h('div', { class: 'oh-when' },
-        h('div', { class: 'eyebrow' }, 'The big day'),
         store.me.isAdmin
           ? h('button', { type: 'button', class: 'oh-date', onclick: () => editDate(w), title: 'Change the date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date not fixed yet'), h('span', { class: 'oh-edit', html: ICONS.edit }))
           : h('div', { class: 'oh-date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date not fixed yet')),
@@ -166,14 +174,15 @@ export function renderOverview(root, w, params = {}) {
   const ppl = [...people.entries()].sort((a, b) => (a[0] === '~') - (b[0] === '~') || b[1].list.length - a[1].list.length);
   const whoEl = h('section', { class: 'oblock who' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Who is doing what'), h('span', { class: 'ob-sub' }, 'Open jobs, by the person in charge')),
-    ppl.length ? h('div', { class: 'who-grid' }, ppl.filter(([k]) => k !== '~').map(([k, p]) => {
+    ppl.length ? h('div', { class: 'who-grid' }, ppl.filter(([k]) => k !== '~').slice(0, opened.has(w.id + 'who') ? 99 : 4).map(([k, p]) => {
       const late = p.list.filter(x => x.due && daysUntil(x.due) < 0).length;
       const sorted = [...p.list].sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
       return h('div', { class: 'person' + (k === '~' ? ' nobody' : '') },
         h('div', { class: 'p-h' }, h('span', { class: 'p-av' }, k === '~' ? '?' : p.name.charAt(0).toUpperCase()), h('b', {}, p.name),
           h('span', { class: 'p-n' }, `${p.list.length} open`, late ? h('span', { class: 'neg' }, ` · ${late} overdue`) : null)),
         h('div', { class: 'olist' }, sorted.slice(0, 3).map(x => taskRow(x, { showOwner: false })), sorted.length > 3 ? h('span', { class: 'o-more' }, `+ ${sorted.length - 3} more`) : null));
-    })) : h('p', { class: 'muted o-empty' }, 'Nothing open. Give steps and to-dos a “person in charge” and they appear here.'));
+    })) : h('p', { class: 'muted o-empty' }, 'Nothing open. Give steps and to-dos a “person in charge” and they appear here.'),
+    moreToggle(w.id + 'who', ppl.filter(([k]) => k !== '~').length, 4));
 
   // Recently done (from the edit history)
   const recent = store.rows('activity').filter(a => a.wedding_id === w.id && a.changes && ((a.changes.status && a.changes.status.new === 'done') || (a.changes.locked_at && a.changes.locked_at.new))).slice(0, 6);
@@ -200,10 +209,10 @@ export function renderOverview(root, w, params = {}) {
   const named = ppl.filter(([k]) => k !== '~');
   const nothingUrgent = !overdue.length && !doing.length && !soon.length;
   const left = [
-    overdue.length ? block('Overdue', overdue, '', { cls: 'warnblock', countCls: 'warn', more: `#/w/${w.id}/plan` }) : null,
-    doing.length ? block('Happening now', doing, '', { more: `#/w/${w.id}/plan` }) : null,
-    soon.length ? block('Coming up · next 3 weeks', soon, '', { more: `#/w/${w.id}/plan` }) : null,
-    block('Waiting on a decision', waiting, 'No big decisions waiting.', { countCls: 'gold', more: `#/w/${w.id}/decide`, limit: 4, link: [`#/w/${w.id}/decide`, 'All →'] })].filter(Boolean);
+    overdue.length ? block('Overdue', overdue, '', { key: w.id, cls: 'warnblock', countCls: 'warn', more: `#/w/${w.id}/plan` }) : null,
+    doing.length ? block('Happening now', doing, '', { key: w.id, more: `#/w/${w.id}/plan` }) : null,
+    soon.length ? block('Coming up · next 3 weeks', soon, '', { key: w.id, more: `#/w/${w.id}/plan` }) : null,
+    block('Waiting on a decision', waiting, 'No big decisions waiting.', { key: w.id, countCls: 'gold', link: [`#/w/${w.id}/choose`, 'Choose'] })].filter(Boolean);
   const right = [
     named.length ? whoEl : null,
     partnerSugg(w),

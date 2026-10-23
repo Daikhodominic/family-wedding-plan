@@ -1,24 +1,24 @@
-import { store, onStatus, syncState } from './store.js?v=26';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=26';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=26';
-import { renderBoard } from './board.js?v=26';
-import { renderTodo } from './todo.js?v=26';
-import { renderFiles } from './files.js?v=26';
-import { renderDecide } from './decide.js?v=26';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=26';
-import { clearPage, clearAll } from './clear.js?v=26';
-import { undoButtons } from './history.js?v=26';
-import { downloadBackup } from './tools.js?v=26';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=26';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=26';
-import { announcementBars } from './planauto.js?v=26';
-import { renderPartner } from './partner.js?v=26';
-import { renderOverview, editDate } from './overview.js?v=26';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=26';
-import { renderLists } from './lists.js?v=26';
-import { planOf } from './map.js?v=26';
-import { openStep } from './panel.js?v=26';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=26';
+import { store, onStatus, syncState } from './store.js?v=27';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=27';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=27';
+import { renderBoard } from './board.js?v=27';
+import { renderTodo } from './todo.js?v=27';
+import { renderFiles } from './files.js?v=27';
+import { renderDecide } from './decide.js?v=27';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=27';
+import { clearPage, clearAll } from './clear.js?v=27';
+import { undoButtons } from './history.js?v=27';
+import { downloadBackup } from './tools.js?v=27';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=27';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=27';
+import { announcementBars } from './planauto.js?v=27';
+import { renderPartner } from './partner.js?v=27';
+import { renderOverview, editDate } from './overview.js?v=27';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=27';
+import { renderLists } from './lists.js?v=27';
+import { planOf } from './map.js?v=27';
+import { openStep } from './panel.js?v=27';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=27';
 
 const app = document.getElementById('app');
 
@@ -421,7 +421,9 @@ export function render() {
   else { view = renderHome(); setTimeout(maybeWelcome, 400); }
   document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
+  const newPage = app.dataset.view !== key;
   app.dataset.view = key;
+  if (newPage && view && view.classList) view.classList.add('page-in');
   const boardView = $('.board-view');
   const boardScroll = boardView ? [boardView.scrollLeft, boardView.scrollTop] : null;
   const pop = document.querySelector('.menu-pop'); if (pop) pop.remove();
