@@ -1,3 +1,4 @@
+import { copyPlanFrom, planSize } from './template.js?v=48';
 import { storagePanel } from './storage.js?v=48';
 import { sampleButton } from './swipe.js?v=48';
 import { backupsPanel } from './backups.js?v=48';
@@ -275,12 +276,15 @@ export function renderSettings() {
   const nMono = h('input', { maxlength: 9, placeholder: 'e.g. A&B' });
   const nDate = h('input', { type: 'date' });
   const nTheme = h('select', {}, h('option', { value: 'blue' }, 'Navy & gold'), h('option', { value: 'rose' }, 'Emerald garden'));
-  const nTpl = h('input', { type: 'checkbox', checked: true, id: 'new-tpl', style: { width: 'auto' } });
+  const nTpl = h('select', { id: 'new-tpl' },
+    h('option', { value: 'template', selected: true }, 'The Before / During / After plan'),
+    weddings().filter(x => planSize(x.id).steps).map(x => h('option', { value: 'copy:' + x.id }, `A copy of ${x.couple}’s plan (${planSize(x.id).steps} steps, nothing ticked)`)),
+    h('option', { value: 'empty' }, 'An empty plan'));
   const addSpace = h('section', { class: 'panel' },
     h('h2', { class: 'serif', style: { margin: '0 0 6px', fontWeight: 500, fontSize: '26px' } }, 'Add a wedding or event'),
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Gives it its own arch on the home page, with a pipeline, to-do list and mood board.'),
     h('div', { class: 'form-grid' }, h('div', { class: 'full' }, field('Names or title', nCouple)), field('Monogram', nMono), field('Date (if fixed)', nDate), h('div', { class: 'full' }, field('Theme', nTheme))),
-    h('label', { for: 'new-tpl', style: { display: 'flex', gap: '8px', alignItems: 'center', margin: '12px 0' } }, nTpl, 'Start with the Before / During / After plan'),
+    h('div', { style: { margin: '12px 0' } }, field('Start with', nTpl, 'A copy keeps the stages, sections, steps, big decisions, list columns and budget lines — no names, dates, ticks, options or payments.')),
     h('button', {
       class: 'btn', type: 'button', style: { background: '#2F2B2C' }, onclick: async () => {
         const name = nCouple.value.trim(); if (!name) return toast('Add the names or a title first', 'error');
@@ -288,7 +292,8 @@ export function renderSettings() {
         const pos = Math.max(0, ...store.rows('weddings').map(x => x.position || 0)) + 1;
         try {
           await store.insert('weddings', { id: slug, couple: name, monogram: nMono.value.trim(), wedding_date: nDate.value || null, date_note: nDate.value ? '' : 'Date to be fixed', theme: nTheme.value, theme_custom: {}, position: pos });
-          if (nTpl.checked) await store.addTemplate(slug);
+          if (nTpl.value === 'template') await store.addTemplate(slug);
+          else if (nTpl.value.startsWith('copy:')) { const n = await copyPlanFrom(nTpl.value.slice(5), slug); toast(`Copied ${n.steps} steps in ${n.sections} sections`); }
           toast('Added'); location.hash = '#/w/' + slug;
         } catch (e) { toast(e.message.includes('policy') || e.message.includes('row-level') ? 'Run database update 2 in Supabase first.' : e.message, 'error'); }
       }

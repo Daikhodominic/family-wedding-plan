@@ -1,4 +1,5 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
+import { duplicateStep } from './duplicate.js?v=48';
 import { store } from './store.js?v=48';
 import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=48';
 import { addStepAt } from './addhere.js?v=48';
@@ -218,6 +219,7 @@ export function openStep(stepId) {
         h('div', { class: 'd-foot' },
           h('span', { class: 'ft-sub' }, s.created_by ? 'Added by ' + (store.memberName(s.created_by) || 'someone') : 'From the starting plan'),
           canEdit ? h('button', { type: 'button', class: 'link-btn', onclick: () => { close(); addStepAt(s.area_id, s); } }, '+ Add a step after this') : null,
+          canEdit ? h('button', { type: 'button', class: 'link-btn', onclick: () => duplicateStep(s).then(c => { close(); setTimeout(() => openStep(c.id), 80); }).catch(fail) }, 'Duplicate') : null,
           canEdit ? h('button', { type: 'button', class: 'link-btn', style: { color: 'var(--warn)' }, onclick: () => store.remove('steps', s.id).then(() => { toast('Moved to the Bin'); close(); }).catch(fail) }, 'Move step to Bin') : null)));
     // Changes save as you go; the Save button makes that visible (and closes the drawer).
     if (canEdit) root.append(h('div', { class: 'd-save' }, h('span', { class: 'd-saved' }, '✓ Changes save by themselves'),
