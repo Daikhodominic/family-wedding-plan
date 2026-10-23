@@ -1,26 +1,26 @@
-import { store, onStatus, syncState } from './store.js?v=37';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=37';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=37';
-import { renderBoard } from './board.js?v=37';
-import { renderTodo } from './todo.js?v=37';
-import { renderFiles } from './files.js?v=37';
-import { renderDecide } from './decide.js?v=37';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=37';
-import { clearPage, clearAll } from './clear.js?v=37';
-import { undoButtons } from './history.js?v=37';
-import { downloadBackup } from './tools.js?v=37';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=37';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=37';
-import { announcementBars } from './planauto.js?v=37';
-import { renderPartner } from './partner.js?v=37';
-import { renderOverview, editDate } from './overview.js?v=37';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=37';
-import { renderLists } from './lists.js?v=37';
-import { planOf } from './map.js?v=37';
-import { openStep, closeDrawer } from './panel.js?v=37';
-import { waNumber } from './nudge.js?v=37';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=37';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=37';
+import { store, onStatus, syncState } from './store.js?v=38';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=38';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=38';
+import { renderBoard } from './board.js?v=38';
+import { renderTodo } from './todo.js?v=38';
+import { renderFiles } from './files.js?v=38';
+import { renderDecide } from './decide.js?v=38';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=38';
+import { clearPage, clearAll } from './clear.js?v=38';
+import { undoButtons } from './history.js?v=38';
+import { downloadBackup } from './tools.js?v=38';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=38';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=38';
+import { announcementBars } from './planauto.js?v=38';
+import { renderPartner } from './partner.js?v=38';
+import { renderOverview, editDate } from './overview.js?v=38';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=38';
+import { renderLists } from './lists.js?v=38';
+import { planOf } from './map.js?v=38';
+import { openStep, closeDrawer } from './panel.js?v=38';
+import { waNumber } from './nudge.js?v=38';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=38';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=38';
 
 const app = document.getElementById('app');
 
@@ -309,7 +309,7 @@ function renderSpace(id, sub, params) {
     : `${w.date_note || 'Date'} · to be fixed`;
   const link = (k) => '#/w/' + id + (k === 'overview' ? '' : '/' + k);
 
-  const root = h('div', { class: 'space deco-' + t.deco + (tab === 'board' ? ' on-board' : '') });
+  const root = h('div', { class: 'space deco-' + t.deco + (tab === 'board' ? ' on-board' : '') + (tab === 'swipe' ? ' is-swipe' : '') });
   root.append(
     demoFlag() || '',
     h('header', { class: 'shead' },
@@ -339,7 +339,7 @@ function renderSpace(id, sub, params) {
   if (tab === 'board') renderBoard(body, w, params);
   else if (tab === 'choose') renderChoose(body, w);
   else if (tab === 'options') renderOptions(body, w, params.step);
-  else if (tab === 'swipe') renderSwipe(body, { weddingId: w.id, stepId: params.step });
+  else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step }); }
   else if (tab === 'decide') renderDecide(body, w, params);
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
@@ -485,7 +485,8 @@ async function boot() {
 }
 
 applyEasy();
-store.onChange(() => scheduleRender());
+// Your own vote on the swipe screen redraws only the deck (instant), not the whole page.
+store.onChange((info) => { if (info && !info.remote && info.table === 'reactions' && /^#\/(w\/[^/]+\/)?swipe/.test(location.hash)) return; scheduleRender(); });
 if (store.mode === 'live' && 'serviceWorker' in navigator && location.protocol === 'https:') {
   // When a new version of the site is published, refresh once so everyone sees it — but never while typing or in a pop-up.
   const hadController = !!navigator.serviceWorker.controller;

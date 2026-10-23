@@ -1,8 +1,8 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=37';
-import { sampleRows } from './samples.js?v=37';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=38';
+import { sampleRows } from './samples.js?v=38';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates

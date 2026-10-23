@@ -1,15 +1,15 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=37';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=37';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=37';
-import { isDecider } from './tools.js?v=37';
-import { addVendor } from './decisions.js?v=37';
-import { pickFiles, fetchPreview } from './board.js?v=37';
-import { planOf } from './map.js?v=37';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=37';
-import { sampleRows, isSample } from './samples.js?v=37';
+import { store } from './store.js?v=38';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=38';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=38';
+import { isDecider } from './tools.js?v=38';
+import { addVendor } from './decisions.js?v=38';
+import { pickFiles, fetchPreview } from './board.js?v=38';
+import { planOf } from './map.js?v=38';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=38';
+import { sampleRows, isSample } from './samples.js?v=38';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -26,7 +26,18 @@ export function votesOf(o) {
   v.total = v.love.length + v.maybe.length + v.no.length;
   return v;
 }
-export const myVote = (o) => { const r = reactions(o).find(x => x.created_by === store.me.id); return r ? r.value : null; };
+// Votes show at once; saving happens in the background (pendingVotes holds them until it's done).
+const pendingVotes = new Map();
+export const myVote = (o) => { if (pendingVotes.has(o.id)) return pendingVotes.get(o.id); const r = reactions(o).find(x => x.created_by === store.me.id); return r ? r.value : null; };
+function undoVote(o, redraw) {
+  pendingVotes.set(o.id, null); redraw();
+  const mine = reactions(o).filter(r => r.created_by === store.me.id);
+  store.batch(async () => { for (const r of mine) await store.del('reactions', r.id); }).then(() => pendingVotes.delete(o.id)).catch((e) => { pendingVotes.delete(o.id); fail(e); redraw(); });
+}
+function quickVote(o, value, redraw) {
+  pendingVotes.set(o.id, value);
+  vote(o, value).then(() => pendingVotes.delete(o.id)).catch((e) => { pendingVotes.delete(o.id); fail(e); redraw(); });
+}
 const stepOf = (o) => store.find('steps', (o.data || {}).step_id);
 const isOpen = (o) => { const s = stepOf(o); const d = o.data || {}; return d.status !== 'not' && d.status !== 'chosen' && !(s && s.locked_at); };
 const newestFirst = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
@@ -267,6 +278,7 @@ function deckCard(o, rest, onVote) {
 }
 
 export function renderSwipe(root, opts = {}) {
+  const redraw = () => { if (!root.isConnected) return; root.replaceChildren(); renderSwipe(root, opts); };
   const w = opts.weddingId ? wedding(opts.weddingId) : null;
   const step = opts.stepId ? store.find('steps', opts.stepId) : null;
   const list = pendingFor(w && w.id, step && step.id);
@@ -283,18 +295,21 @@ export function renderSwipe(root, opts = {}) {
       h('h2', {}, all.length ? 'You’re up to date' : 'Nothing to look at yet'),
       h('p', { class: 'muted' }, all.length ? 'You’ve given your opinion on everything new. The Deciders will choose — you can still change your votes in each category.' : 'When anyone adds options — a photographer, rings, cards, a caterer — they show up here for everyone to swipe.'),
       h('div', { class: 'sw-done-acts' },
-        lastVote ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { const lv = lastVote; lastVote = null; vote(lv.o, lv.v).catch(fail); } }, '↶ Undo last') : null,
+        lastVote ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { const lv = lastVote; lastVote = null; undoVote(lv.o, redraw); } }, '↶ Undo last') : null,
         w ? h('a', { class: 'btn', href: `#/w/${w.id}/choose` }, 'See all categories') : weddings().map(x => h('a', { class: 'btn ghost', href: `#/w/${x.id}/choose` }, (x.couple || '').split('&')[0].trim() + '’s choices')),
         w ? h('button', { type: 'button', class: 'btn ghost', onclick: () => editOption(w, step && step.id) }, '+ Add an option') : null),
       all.length ? h('div', { class: 'sw-done-wa' }, h('span', { class: 'muted' }, 'Get the others to vote too:'), waButton({ label: 'Ask the family on WhatsApp', small: false, text: () => swipeMessage(w && w.id, all.length) })) : null));
     return;
   }
   const o = list[0];
+  let done = false;
   const doVote = (value) => {
+    if (done) return; done = true;
     buzz(value === 'love' ? 18 : 10);
     const c = root.querySelector('.sw-card'); if (c) { c.classList.add('fly-' + value); }
     lastVote = { o, v: value };
-    setTimeout(() => vote(o, value).catch(fail), 180);
+    quickVote(o, value, redraw);
+    setTimeout(redraw, 170); // the next card appears while the vote saves
   };
   const stage = h('div', { class: 'sw-stage' },
     list[2] ? h('div', { class: 'sw-under two' }) : null,
@@ -306,7 +321,7 @@ export function renderSwipe(root, opts = {}) {
       h('button', { type: 'button', class: 'sw-btn maybe', 'aria-label': 'Maybe', html: ICONS.maybe, onclick: () => doVote('maybe') }),
       h('button', { type: 'button', class: 'sw-btn love', 'aria-label': 'Love it', html: ICONS.heart, onclick: () => doVote('love') })),
     h('p', { class: 'sw-hint' }, 'Swipe right to love it, left for not this, up for maybe — or use ← ↑ →. Tap the photo’s sides to see more photos.',
-      lastVote ? h('button', { type: 'button', class: 'link-btn', style: { marginLeft: '8px' }, onclick: () => { const lv = lastVote; lastVote = null; vote(lv.o, lv.v).catch(fail); } }, '↶ Undo') : null));
+      lastVote ? h('button', { type: 'button', class: 'link-btn', style: { marginLeft: '8px' }, onclick: () => { const lv = lastVote; lastVote = null; undoVote(lv.o, redraw); } }, '↶ Undo') : null));
 }
 document.addEventListener('keydown', (e) => {
   const c = document.querySelector('.sw-card'); if (!c || document.querySelector('.modal-wrap, .lightbox')) return;

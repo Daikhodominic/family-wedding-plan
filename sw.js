@@ -1,6 +1,6 @@
 // Lets the site open on a weak connection and be installed on a phone.
 // Always the newest version when online; the saved copy only when offline.
-const CACHE = 'fwp-shell-v19';
+const CACHE = 'fwp-shell-v20';
 self.addEventListener('install', () => { self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
