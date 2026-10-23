@@ -1,6 +1,7 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
 import { store } from './store.js?v=25';
 import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=25';
+import { addStepAt } from './addhere.js?v=25';
 import { uploadFile, pickFiles } from './board.js?v=25';
 import { isDecider, deciderNames, personInput } from './tools.js?v=25';
 import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=25';
@@ -208,6 +209,7 @@ export function openStep(stepId) {
           missing.lists ? h('div', { class: 'ft-sub' }, 'Lists need database update 4.') : lists.length ? h('div', {}, lists.map(l => listRow(l))) : h('div', { class: 'ft-sub' }, 'No lists yet. Start a guest list, invitation list or shopping list.')),
         h('div', { class: 'd-foot' },
           h('span', { class: 'ft-sub' }, s.created_by ? 'Added by ' + (store.memberName(s.created_by) || 'someone') : 'From the starting plan'),
+          canEdit ? h('button', { type: 'button', class: 'link-btn', onclick: () => { close(); addStepAt(s.area_id, s); } }, '+ Add a step after this') : null,
           canEdit ? h('button', { type: 'button', class: 'link-btn', style: { color: 'var(--warn)' }, onclick: () => store.remove('steps', s.id).then(() => { toast('Moved to the Bin'); close(); }).catch(fail) }, 'Move step to Bin') : null)));
   };
 

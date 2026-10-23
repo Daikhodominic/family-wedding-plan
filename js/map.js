@@ -3,6 +3,7 @@ import { store } from './store.js?v=25';
 import { h, shortDate, daysUntil, ICONS } from './ui.js?v=25';
 import { openStep, lockIcon } from './panel.js?v=25';
 import { stepPicture, previewUrl } from './decisions.js?v=25';
+import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=25';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -55,14 +56,18 @@ export function renderMap(root, w, plan, params) {
   const map = h('div', { class: 'pmap' });
   const inner = h('div', { class: 'pmap-inner' });
   map.append(inner);
+  const gap = (a, s) => h('button', { type: 'button', class: 'mgap', title: s ? `Add a step after “${s.title}”` : 'Add a step', 'aria-label': s ? `Add a step after ${s.title}` : `Add a step to ${a.title}`, onclick: (e) => { e.stopPropagation(); addStepAt(a.id, s); } }, h('span', {}, '+'));
   for (const st of plan.stages) {
     inner.append(h('section', { class: 'mstage' },
       h('div', { class: 'mstage-h' }, h('span', { class: 'ft-sub' }, 'Stage'), h('h3', {}, st.title)),
-      h('div', { class: 'mareas' }, st.areas.length ? st.areas.map(a => h('div', { class: 'marea ' + a.state, dataset: { area: a.id } },
-        h('div', { class: 'marea-h' + (plan.here === a.id ? ' here' : '') }, h('b', {}, a.title), h('span', { class: 'ft-sub' }, `${a.complete}/${a.steps.length}`), plan.here === a.id ? h('span', { class: 'here-tag' }, 'You are here') : null),
-        h('div', { class: 'mnodes' }, a.steps.length ? a.steps.map(s => nodeEl(s)) : h('div', { class: 'ft-sub', style: { padding: '8px' } }, 'No steps yet'))))
-        : h('div', { class: 'ft-sub', style: { padding: '20px' } }, 'No areas yet'))));
+      h('div', { class: 'mareas' }, st.areas.map(a => h('div', { class: 'marea ' + a.state, dataset: { area: a.id } },
+        h('div', { class: 'marea-h' + (plan.here === a.id ? ' here' : '') }, h('b', {}, a.title), h('span', { class: 'ft-sub' }, `${a.complete}/${a.steps.length}`), plan.here === a.id ? h('span', { class: 'here-tag' }, 'You are here') : null,
+          h('button', { type: 'button', class: 'marea-x', title: `Remove ${a.title}`, 'aria-label': `Remove the area ${a.title}`, html: ICONS.trash, onclick: () => removeArea(a) })),
+        h('div', { class: 'mnodes' }, a.steps.flatMap((s, i) => i < a.steps.length - 1 ? [nodeEl(s), gap(a, s)] : [nodeEl(s)]),
+          h('button', { type: 'button', class: 'madd', onclick: () => addStepAt(a.id, null) }, '+ Add a step')))),
+        h('button', { type: 'button', class: 'madd area', onclick: () => addAreaTo(st) }, '+ Add an area'))));
   }
+  inner.append(h('section', { class: 'mstage add' }, h('button', { type: 'button', class: 'madd stage', onclick: () => addStageTo(w.id) }, '+ Add a stage')));
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'pmap-lines'); svg.setAttribute('aria-hidden', 'true');
   inner.prepend(svg);

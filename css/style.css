@@ -1339,3 +1339,16 @@ body[data-page=page]::after { right: -4vh; width: 42vw; background-image: url('.
 .others-gate b { color: var(--warn); }
 .others-note { margin: 4px 0 0; font-size: 13.5px; color: var(--warn); }
 .bin-group.has-others { border-left: 3px solid var(--gold); padding-left: 10px; }
+
+/* ---------- Adding anywhere on the map ---------- */
+.mgap { position: relative; z-index: 2; align-self: flex-start; margin: -6px 0 -6px 11px; width: 24px; height: 24px; border-radius: 50%; border: 1px dashed var(--gold-line); background: rgba(255, 255, 255, .85); color: var(--gold); font: 600 15px var(--sans); line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: .55; transition: opacity .15s, transform .15s; padding: 0; }
+.mgap:hover, .mgap:focus-visible { opacity: 1; transform: scale(1.12); border-style: solid; }
+@media (hover: none) { .mgap { opacity: .8; } }
+.madd { border: 1px dashed var(--gold-line); background: rgba(255, 255, 255, .5); border-radius: 10px; padding: 9px 12px; font: 500 13.5px var(--sans); color: var(--w-muted); cursor: pointer; text-align: left; }
+.madd:hover { background: #fff; color: var(--w-ink); border-color: var(--gold); }
+.madd.area { width: 200px; align-self: flex-start; margin-top: 32px; }
+.madd.stage { margin-top: 40px; white-space: nowrap; }
+.mstage.add { border-left: 1px dashed var(--gold-line); }
+.marea-x { margin-left: auto; width: 28px; height: 28px; border: 0; background: none; color: var(--w-muted); opacity: .45; cursor: pointer; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+.marea-x:hover { opacity: 1; color: var(--warn); background: rgba(0, 0, 0, .04); }
+.marea-x svg { width: 15px; height: 15px; }
