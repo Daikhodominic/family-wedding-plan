@@ -1,10 +1,10 @@
-import { store } from './store.js?v=31';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=31';
-import { othersSummary, bringBackOthers } from './safety.js?v=31';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=31';
-import { confirmAreaRestore, inr } from './budget.js?v=31';
-import { clearAll } from './clear.js?v=31';
-import { downloadBackup, decidesFor } from './tools.js?v=31';
+import { store } from './store.js?v=32';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=32';
+import { othersSummary, bringBackOthers } from './safety.js?v=32';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=32';
+import { confirmAreaRestore, inr } from './budget.js?v=32';
+import { clearAll } from './clear.js?v=32';
+import { downloadBackup, decidesFor } from './tools.js?v=32';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };

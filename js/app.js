@@ -1,26 +1,26 @@
-import { store, onStatus, syncState } from './store.js?v=31';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=31';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=31';
-import { renderBoard } from './board.js?v=31';
-import { renderTodo } from './todo.js?v=31';
-import { renderFiles } from './files.js?v=31';
-import { renderDecide } from './decide.js?v=31';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=31';
-import { clearPage, clearAll } from './clear.js?v=31';
-import { undoButtons } from './history.js?v=31';
-import { downloadBackup } from './tools.js?v=31';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=31';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=31';
-import { announcementBars } from './planauto.js?v=31';
-import { renderPartner } from './partner.js?v=31';
-import { renderOverview, editDate } from './overview.js?v=31';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=31';
-import { renderLists } from './lists.js?v=31';
-import { planOf } from './map.js?v=31';
-import { openStep, closeDrawer } from './panel.js?v=31';
-import { waNumber } from './nudge.js?v=31';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=31';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=31';
+import { store, onStatus, syncState } from './store.js?v=32';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=32';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=32';
+import { renderBoard } from './board.js?v=32';
+import { renderTodo } from './todo.js?v=32';
+import { renderFiles } from './files.js?v=32';
+import { renderDecide } from './decide.js?v=32';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=32';
+import { clearPage, clearAll } from './clear.js?v=32';
+import { undoButtons } from './history.js?v=32';
+import { downloadBackup } from './tools.js?v=32';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=32';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=32';
+import { announcementBars } from './planauto.js?v=32';
+import { renderPartner } from './partner.js?v=32';
+import { renderOverview, editDate } from './overview.js?v=32';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=32';
+import { renderLists } from './lists.js?v=32';
+import { planOf } from './map.js?v=32';
+import { openStep, closeDrawer } from './panel.js?v=32';
+import { waNumber } from './nudge.js?v=32';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=32';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=32';
 
 const app = document.getElementById('app');
 
@@ -190,15 +190,14 @@ function emblem(w) {
   const t = themeOf(w);
   const days = daysUntil(w.wedding_date);
   const plan = planOf(w);
-  const lit = Math.round((plan.pct || 0) / 100 * 16);
-  const big = w.wedding_date && days !== null ? String(Math.max(0, days)) : '—';
-  const unit = !w.wedding_date ? 'date to be fixed' : days === 0 ? 'today' : days < 0 ? 'married' : days === 1 ? 'day to go' : 'days to go';
-  return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, 'aria-label': 'Open ' + w.couple, style: { '--e0': t.g0, '--e1': t.g1, '--e2': t.g2 } },
-    h('span', { class: 'emb-top' }, h('span', { class: 'emb-name' }, w.couple), h('span', { class: 'emb-go', 'aria-hidden': 'true' }, '→')),
-    w.wedding_date ? h('span', { class: 'emb-count' }, h('b', {}, big), h('span', {}, unit)) : h('span', { class: 'emb-count tbd' }, h('span', {}, 'Date to be fixed')),
-    h('span', { class: 'emb-date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date to be fixed')),
-    h('span', { class: 'emb-bars', 'aria-hidden': 'true' }, Array.from({ length: 16 }, (_, i) => h('i', { class: i < lit ? 'on' : '', style: { height: (30 + ((i * 37) % 60)) + '%' } }))),
-    h('span', { class: 'emb-meta' }, plan.total ? `${plan.pct}% there · ${plan.total} steps` : 'No plan yet'));
+  return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, 'aria-label': 'Open ' + w.couple, style: { '--e-deep': t.deep, '--e-gold': t.gold } },
+    monogram(w, 'xl'),
+    h('span', { class: 'emb-name' }, w.couple),
+    h('span', { class: 'emb-date' }, w.wedding_date ? fancyDate(w.wedding_date) : `${w.date_note || 'Date'} · date to be fixed`),
+    h('span', { class: 'emb-meta' },
+      w.wedding_date && days !== null ? h('span', {}, h('b', {}, String(Math.max(0, days))), days === 0 ? ' today' : days < 0 ? ' married' : days === 1 ? ' day to go' : ' days to go') : null,
+      plan.total ? h('span', { class: 'emb-prog' }, h('i', { style: { width: plan.pct + '%' } })) : null,
+      plan.total ? h('span', {}, plan.pct + '% there') : null));
 }
 
 export function feedList(items, { compact = false } = {}) {

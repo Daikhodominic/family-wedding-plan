@@ -1,281 +1,32 @@
 /* =====================================================================
-   The frosted look (locked 23 Oct 2026)
-   Frosted glass over soft gradients · Urbanist · ink pill buttons.
-   Charani & Adahrii — Slate & Mint · Elow & Maniziia — Peony & Pearl.
-   Each wedding's palette comes from THEMES in app.js as --w-* tokens.
-   Champagne = decided, in both. One opposite colour (--w-pop) for "new".
-   Loaded after style.css, so it wins.
+   The original War Room look, enhanced (23 Oct 2026)
+   Cormorant headings · Pinyon names · Jost text · gold hairlines · wreath & wax-seal monograms —
+   now on soft wedding gradients, frosted glass panels and frosted pop-ups, with 3D monograms.
+   Charani & Adahrii — Slate & Mint · Elow & Maniziia — Peony & Pearl (tokens from THEMES in app.js).
+   Champagne = decided. Loaded after style.css, so it wins.
    ===================================================================== */
-@font-face { font-family: 'Urbanist'; src: url('../assets/fonts/urbanist-var.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
-
 :root {
-  --serif: 'Urbanist', 'Helvetica Neue', Arial, sans-serif;
-  --script: 'Urbanist', 'Helvetica Neue', Arial, sans-serif;
-  --sans: 'Urbanist', 'Helvetica Neue', Arial, sans-serif;
   --w-g0: #3B4A57; --w-g1: #6C7B88; --w-g2: #C9D2D8; --w-g3: #EEF1F3; --w-base: #F7F8F9;
   --w-pop: #E89F7E; --w-pop-ink: #4A2412; --champ: #CBA86E;
   --glass: rgba(255, 255, 255, .58);
-  --glass-strong: rgba(255, 255, 255, .78);
-  --glass-line: rgba(255, 255, 255, .82);
+  --glass-strong: rgba(255, 255, 255, .8);
+  --glass-line: rgba(255, 255, 255, .85);
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 1px 2px rgba(20, 30, 40, .04), 0 22px 40px -28px rgba(20, 30, 40, .42);
   --glass-blur: blur(22px) saturate(1.4);
-  --r-xl: 30px; --r-lg: 24px; --r-md: 18px;
-  --gold: #8E6E33; --gold-line: #E3D2AE; --gold-fill: #F6EEDC;
+  --r-xl: 28px; --r-lg: 22px;
+  --gold: #9A7428; --gold-line: #E0CC9C; --gold-fill: #F6EEDC;
   --sheet: var(--glass);
 }
-body { font-family: var(--sans); font-weight: 400; letter-spacing: .005em; -webkit-font-smoothing: antialiased; }
-h1, h2, h3, h4, .serif { font-family: var(--sans); }
 
-/* ---------- Grounds ---------- */
+/* ---------- Grounds: soft wedding gradients, a faint floral arch, the old corner florals ---------- */
 body[data-page=space], body[data-page=partner] { background: var(--w-base); }
 .space, body[data-page=partner] .pv {
   background:
-    radial-gradient(900px 520px at 88% -8%, color-mix(in srgb, var(--w-g2) 75%, transparent), transparent 70%),
-    radial-gradient(800px 520px at -10% 40%, rgba(255, 255, 255, .7), transparent 70%),
-    linear-gradient(180deg, var(--w-g3) 0, var(--w-base) 1100px) !important;
-  background-attachment: scroll !important;
-}
-body[data-page=home], body[data-page=page] {
-  background:
-    radial-gradient(900px 600px at 0% 0%, rgba(159, 185, 196, .45), transparent 65%),
-    radial-gradient(900px 600px at 100% 0%, rgba(232, 203, 209, .5), transparent 65%),
-    linear-gradient(180deg, #EEF1F3 0%, #F7F8F9 70%) !important;
-  background-attachment: scroll !important;
-}
-body[data-page=page]::before, body[data-page=page]::after { display: none !important; }
-.shead-rule, .home .hb, .home .frame, .home-stage::before, .emblems .divider { display: none !important; }
-
-/* ---------- Glass: every sheet ---------- */
-.area, .oblock, .panel, .stat, .bcard, .barea, .lcard, .dcard, .gl-tile, .money-table, .locked-list, .cat-tile, .opt-card, .journey, .hcard, .plan-offer, .tip, .nfy, .ds-item, .person, .board-view, .others-gate, .d-card, .tl-card, .pv-card, .list-card, .lrow, .vcard {
-  background: var(--glass) !important;
-  border: 1px solid var(--glass-line) !important;
-  border-radius: var(--r-lg) !important;
-  box-shadow: var(--glass-shadow) !important;
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
-}
-.area.st-locked, .area.st-done { background: var(--glass) !important; }
-.area.st-locked { border-color: color-mix(in srgb, var(--champ) 55%, #fff) !important; }
-.lcard:hover, .dcard:hover, .gl-tile:hover, .cat-tile:hover, .opt-card:hover { background: var(--glass-strong) !important; transform: translateY(-2px); }
-@media (max-width: 760px) {
-  /* Over a smooth gradient a plain milky panel looks the same as blurred glass — and scrolls smoothly on phones. */
-  .area, .oblock, .panel, .stat, .bcard, .barea, .lcard, .dcard, .gl-tile, .money-table, .locked-list, .cat-tile, .opt-card, .journey, .hcard, .plan-offer, .tip, .nfy, .person, .board-view {
-    -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(255, 255, 255, .66) !important;
-  }
-}
-
-/* ---------- Type ---------- */
-.page-title, .plan-head h1, .ph-title h1, .sw-title, .ph-row h1, .secHead h1 { font-family: var(--sans) !important; font-weight: 300 !important; font-style: normal !important; letter-spacing: -.02em !important; color: var(--w-ink) !important; }
-.ob-h h2, .cat-h, .insp-h h2, .dsec-h h2, .panel h2, .oblock h2 { font-family: var(--sans) !important; font-weight: 500 !important; font-style: normal !important; letter-spacing: -.01em; color: var(--w-ink) !important; }
-.stage-h h3 { font-family: var(--sans) !important; font-weight: 300 !important; letter-spacing: -.015em !important; color: var(--w-ink) !important; }
-.area-toggle h4, .area-h h4 { font-weight: 600; }
-.eyebrow { color: var(--w-muted) !important; font-weight: 500; letter-spacing: .01em; }
-.stat b, .oh-count b, .ost b, .omoney b, .od-rate, .emb-count b { font-family: var(--sans) !important; font-weight: 200 !important; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.mono-letters { font-family: var(--sans); font-style: normal; font-weight: 300; }
-
-/* ---------- Buttons, chips, fields ---------- */
-.btn { background: var(--w-accent) !important; color: var(--w-accent-ink) !important; border: 0 !important; border-radius: 999px !important; box-shadow: 0 14px 24px -16px color-mix(in srgb, var(--w-accent) 80%, transparent) !important; font-weight: 500; filter: none; }
-.btn:hover { filter: brightness(1.12); }
-.btn.ghost, .btn.soft, .tip-x, .madd, .lchip, .link-chip, .chip-btn {
-  background: var(--glass-strong) !important; color: var(--w-ink) !important; border: 1px solid var(--glass-line) !important;
-  box-shadow: inset 0 1px 0 #fff, 0 8px 18px -14px rgba(20, 30, 40, .4) !important;
-}
-.btn.ghost:hover, .btn.soft:hover, .lchip:hover { background: #fff !important; }
-.btn.danger { background: #A3401F !important; }
-.icon-btn { border-radius: 999px; }
-input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), select, textarea {
-  border-radius: 18px; border: 1px solid var(--glass-line); background: rgba(255, 255, 255, .8); box-shadow: inset 0 1px 0 #fff, 0 8px 18px -16px rgba(20, 30, 40, .45);
-  font-family: var(--sans); color: var(--w-ink);
-}
-input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), select { border-radius: 999px; min-height: 46px; padding-left: 16px; padding-right: 16px; }
-input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--w-accent) 40%, transparent); outline-offset: 1px; border-color: #fff; }
-.d-seg, .viewtoggle, .seg { background: rgba(255, 255, 255, .55) !important; border-radius: 999px !important; padding: 4px !important; box-shadow: none !important; border: 1px solid var(--glass-line) !important; }
-.d-seg button, .viewtoggle button, .seg button { border-radius: 999px !important; }
-.d-seg button.on, .d-seg button[aria-pressed=true], .viewtoggle button[aria-pressed=true], .seg button[aria-pressed=true] { background: var(--w-accent) !important; color: var(--w-accent-ink) !important; box-shadow: none !important; }
-.nbadge, .badge, .count { background: var(--w-pop) !important; color: var(--w-pop-ink) !important; box-shadow: none !important; font-weight: 600; }
-.ct-new, .sw-count { background: var(--w-pop) !important; color: var(--w-pop-ink) !important; }
-.tick { background: rgba(255, 255, 255, .85) !important; border-color: color-mix(in srgb, var(--w-ink) 22%, transparent) !important; box-shadow: none !important; }
-.tick.done { background: var(--w-accent) !important; border-color: var(--w-accent) !important; }
-
-/* Decided = champagne */
-.lock-badge, .oc-chosen, .d-lock.on, .ds-item.final, .gold-chip { --gold: #8E6E33; }
-.d-lock.on { background: color-mix(in srgb, var(--champ) 16%, #fff) !important; border-color: color-mix(in srgb, var(--champ) 55%, #fff) !important; border-radius: var(--r-lg) !important; }
-.d-lock { border-radius: var(--r-lg) !important; background: rgba(255, 255, 255, .5) !important; border: 1px dashed color-mix(in srgb, var(--w-ink) 18%, transparent) !important; }
-.d-lock .btn[style*="gold"] { background: var(--w-accent) !important; }
-.jseg.locked, .area.st-locked .area-prog span { background: var(--champ) !important; }
-
-/* ---------- Header of a wedding: dark glass in the wedding's colours ---------- */
-.shead {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--w-g0) 96%, transparent), color-mix(in srgb, var(--w-g1) 94%, transparent)) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3);
-  border-bottom: 0 !important; box-shadow: 0 18px 40px -30px rgba(10, 20, 30, .7) !important; color: #fff;
-}
-.shead::after { display: none !important; }
-.shead-couple, .shead-sub, .shead-sub a, .shead .date-btn { color: #fff !important; }
-.shead-couple { font-family: var(--sans) !important; font-weight: 400 !important; font-style: normal !important; letter-spacing: -.01em; }
-.shead-sub { opacity: .85; }
-.shead .avatar, .shead .icon-btn, .shead .undo-btn, .shead .ubtn, .shead .sync { color: #fff !important; background: rgba(255, 255, 255, .14) !important; border: 1px solid rgba(255, 255, 255, .24) !important; box-shadow: none !important; }
-.shead .sync i { background: #9FE0B8; }
-.medal { background: none; }
-.medal img.wreath, .seal-m .ring, .seal-m .ring2 { display: none !important; }
-.seal-m .wax, .medal.disc { background: rgba(255, 255, 255, .16) !important; border: 1px solid rgba(255, 255, 255, .3); border-radius: 50% !important; box-shadow: none !important; }
-.medal .mono-letters, .seal-m .mono-letters, .mono-letters .amp, .seal-m .mono-letters .amp { color: #fff !important; text-shadow: none !important; }
-@media (min-width: 761px) {
-  .snav { background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .2); border-radius: 999px; padding: 4px; }
-  .snav a { color: rgba(255, 255, 255, .86) !important; }
-  .snav a:hover { background: rgba(255, 255, 255, .14) !important; color: #fff !important; }
-  .snav a[aria-current] { background: #fff !important; color: var(--w-ink) !important; box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .5) !important; }
-}
-/* Phones: a floating glass pill at the bottom */
-@media (max-width: 760px) {
-  body .snav {
-    left: 12px !important; right: 12px !important; bottom: max(12px, env(safe-area-inset-bottom)) !important;
-    padding: 6px !important; border-radius: 999px !important; border: 1px solid var(--glass-line) !important;
-    background: rgba(255, 255, 255, .78) !important; -webkit-backdrop-filter: blur(20px) saturate(1.4) !important; backdrop-filter: blur(20px) saturate(1.4) !important;
-    box-shadow: inset 0 1px 0 #fff, 0 20px 40px -18px rgba(10, 20, 30, .45) !important;
-  }
-  body .snav a { color: var(--w-ink) !important; border-radius: 999px !important; padding: 7px 2px !important; font-weight: 500; }
-  body .snav a[aria-current] { background: var(--w-accent) !important; color: #fff !important; }
-  body .snav a[aria-current] .snav-ic { background: none !important; box-shadow: none !important; color: #fff !important; }
-  body .snav-ic { padding: 0 !important; }
-  body[data-page=space] #toasts { bottom: calc(96px + env(safe-area-inset-bottom)); }
-  .space main, .space .wrap.body { padding-bottom: 110px; }
-}
-
-/* ---------- Overview: the hero is the dark gradient card ---------- */
-.ohero, .ohero.calm {
-  background: linear-gradient(160deg, var(--w-g0) 0%, var(--w-g1) 60%, color-mix(in srgb, var(--w-g1) 70%, var(--w-g2)) 100%) !important;
-  color: #fff !important; border: 0 !important; outline: 0 !important; border-radius: var(--r-xl) !important;
-  box-shadow: 0 30px 60px -36px color-mix(in srgb, var(--w-g0) 90%, transparent) !important; position: relative; overflow: hidden;
-}
-.ohero::before { content: ''; position: absolute; width: 460px; height: 460px; right: -160px; top: -200px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, .22), transparent); pointer-events: none; }
-.ohero > * { position: relative; }
-.ohero .oh-date, .ohero .oh-count span, .ohero .ot, .ohero .ot b, .ohero .jstage-name, .ohero .jlegend, .ohero .oh-edit, .ohero .muted, .ohero a { color: #fff !important; }
-.ohero .oh-date { opacity: .85; font-family: var(--sans) !important; font-style: normal !important; letter-spacing: .01em !important; text-transform: none !important; font-size: 14px !important; }
-.ohero .oh-count b { font-size: clamp(72px, 12vw, 112px) !important; line-height: .95; color: #fff !important; }
-.ohero .ot { background: rgba(255, 255, 255, .14) !important; border: 1px solid rgba(255, 255, 255, .22) !important; border-radius: 999px !important; }
-.ohero .btn, .ohero .oh-more { background: rgba(255, 255, 255, .16) !important; color: #fff !important; border: 1px solid rgba(255, 255, 255, .28) !important; box-shadow: none !important; }
-.ohero .jseg { background: rgba(255, 255, 255, .2) !important; box-shadow: none !important; }
-.ohero .jseg.doing { background: rgba(255, 255, 255, .5) !important; }
-.ohero .jseg.done { background: #fff !important; }
-.ohero .jseg.locked { background: var(--champ) !important; }
-.ohero .jseg.here { outline-color: rgba(255, 255, 255, .8) !important; }
-
-/* ---------- Family home ---------- */
-.home-stage { height: auto !important; min-height: 100vh; display: flex !important; flex-direction: column; gap: 22px; padding-bottom: 40px; overflow: visible !important; }
-.home-top { padding: 26px 40px 0 !important; }
-.brand { font-family: var(--sans) !important; letter-spacing: .02em !important; text-transform: none !important; font-size: 15px !important; font-weight: 600; color: #1E2A33 !important; }
-.home-top-r, .greet { color: #3F4A52 !important; }
-.home-top .avatar { background: var(--glass-strong) !important; border: 1px solid var(--glass-line) !important; color: #1E2A33 !important; }
-.home .nfy { margin: 0 40px; }
-.emblems { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px !important; padding: 0 40px !important; align-items: stretch; }
-.emb {
-  position: relative; overflow: hidden; align-items: stretch !important; text-align: left !important; gap: 6px !important;
-  padding: 24px 26px 22px; border-radius: 34px; color: #fff !important; min-height: 300px;
-  background: linear-gradient(165deg, var(--e0) 0%, var(--e1) 55%, color-mix(in srgb, var(--e1) 55%, var(--e2)) 100%);
-  box-shadow: 0 34px 60px -38px color-mix(in srgb, var(--e0) 90%, transparent);
-}
-.emb::before { content: ''; position: absolute; width: 420px; height: 420px; right: -150px; top: -170px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, .24), transparent); }
-.emb > * { position: relative; }
-.emb:hover { transform: translateY(-4px); }
-.emb-top { display: flex; align-items: center; justify-content: space-between; }
-.emb-name { font-family: var(--sans) !important; font-size: 17px !important; font-weight: 500 !important; color: #fff !important; letter-spacing: 0 !important; }
-.emb-go { width: 40px; height: 40px; border-radius: 99px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .26); font-size: 18px; }
-.emb-count { display: flex; align-items: flex-end; gap: 10px; margin-top: 14px; }
-.emb-count b { font-size: 96px; line-height: .9; color: #fff; }
-.emb-count span { font-size: 14px; opacity: .85; margin-bottom: 12px; }
-.emb-date { font-family: var(--sans) !important; font-size: 13.5px !important; letter-spacing: .01em !important; text-transform: none !important; color: rgba(255, 255, 255, .85) !important; }
-.emb-bars { display: flex; align-items: flex-end; gap: 6px; height: 64px; margin-top: auto; padding-top: 18px; }
-.emb-bars i { flex: 1; border-radius: 6px; background: rgba(255, 255, 255, .28); }
-.emb-bars i.on { background: rgba(255, 255, 255, .95); }
-.emb-meta { color: rgba(255, 255, 255, .85) !important; font-size: 13px !important; margin-top: 8px; }
-.home-row { padding: 0 40px !important; gap: 22px !important; }
-.hcard, .hcol { border-radius: var(--r-xl) !important; }
-.hcol { background: var(--glass); border: 1px solid var(--glass-line); box-shadow: var(--glass-shadow); padding: 18px 20px; -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
-.hc-label { color: #3F4A52 !important; font-weight: 600 !important; font-size: 15px !important; }
-.hrow { border-radius: 16px; }
-@media (max-width: 760px) {
-  .home-top { padding: 18px 16px 0 !important; flex-wrap: wrap; }
-  .home .nfy, .emblems, .home-row { margin-left: 0; margin-right: 0; padding-left: 16px !important; padding-right: 16px !important; }
-  .home .nfy { margin: 0 16px; }
-  .home-row { grid-template-columns: 1fr !important; }
-  .emb { min-height: 260px; padding: 20px 22px 18px; border-radius: 30px; }
-  .emb-count b { font-size: 84px; }
-  .hcol { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255, 255, 255, .66); }
-}
-
-/* ---------- Family-wide page header ---------- */
-.pbar { background: rgba(255, 255, 255, .6) !important; -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); border-bottom: 1px solid var(--glass-line) !important; box-shadow: 0 12px 30px -26px rgba(20, 30, 40, .5) !important; }
-.pbar::after { display: none !important; }
-
-/* ---------- Sheets, menus, toasts ---------- */
-.modal { background: rgba(246, 248, 248, .82) !important; -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); border: 1px solid rgba(255, 255, 255, .9) !important; outline: 0 !important; border-radius: 32px !important; box-shadow: inset 0 1px 0 #fff, 0 40px 80px -40px rgba(10, 20, 30, .6) !important; }
-.modal-head h2 { font-family: var(--sans) !important; font-weight: 400 !important; font-style: normal !important; letter-spacing: -.01em; }
-.modal-wrap { background: rgba(20, 28, 36, .28) !important; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.modal-actions { background: transparent !important; }
-.drawer { background: rgba(246, 248, 248, .86) !important; -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); border-left: 1px solid rgba(255, 255, 255, .9) !important; }
-.drawer .d-body h1, .drawer .d-title, .drawer h2 { font-family: var(--sans) !important; font-weight: 400 !important; font-style: normal !important; letter-spacing: -.015em; }
-.shade { background: rgba(20, 28, 36, .28) !important; }
-.menu-pop { background: rgba(250, 251, 251, .86) !important; -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); border: 1px solid rgba(255, 255, 255, .9) !important; border-radius: 24px !important; }
-.toast { background: rgba(22, 30, 38, .9) !important; border-radius: 999px !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
-@media (max-width: 760px) {
-  .modal-wrap .modal { border-radius: 30px 30px 0 0 !important; background: rgba(246, 248, 248, .94) !important; }
-  .drawer { border-radius: 30px 30px 0 0 !important; background: rgba(246, 248, 248, .95) !important; }
-}
-
-/* ---------- Plan bits ---------- */
-.area-prog { background: color-mix(in srgb, var(--w-ink) 8%, transparent) !important; box-shadow: none !important; height: 6px !important; }
-.area-prog span { background: var(--w-accent) !important; }
-.jseg { background: color-mix(in srgb, var(--w-ink) 10%, transparent) !important; box-shadow: none !important; }
-.jseg.doing { background: var(--w-light) !important; }
-.jseg.done { background: var(--w-accent) !important; }
-.step:hover { background: rgba(255, 255, 255, .5) !important; }
-.stage-h::after { background: linear-gradient(90deg, color-mix(in srgb, var(--w-ink) 14%, transparent), transparent) !important; }
-
-/* ---------- Swipe ---------- */
-.sw-card { border-radius: 34px !important; border: 0 !important; box-shadow: 0 40px 60px -32px rgba(10, 20, 30, .5) !important; }
-.sw-under { border-radius: 34px !important; background: rgba(255, 255, 255, .4) !important; border: 1px solid var(--glass-line) !important; box-shadow: none !important; }
-.sw-btn { background: var(--glass-strong) !important; border: 1px solid var(--glass-line) !important; color: var(--w-ink) !important; box-shadow: inset 0 1px 0 #fff, 0 16px 26px -16px rgba(10, 20, 30, .45) !important; }
-.sw-btn.love { background: var(--w-accent) !important; color: #fff !important; border-color: var(--w-accent) !important; }
-.vote-btn.on.love { background: var(--w-accent) !important; color: #fff !important; }
-.nfy-go { background: var(--w-accent) !important; }
-
-/* ---------- WhatsApp buttons keep their own green, softened ---------- */
-.wa-btn { border-radius: 999px !important; }
-.wa-btn.ghost { background: rgba(255, 255, 255, .8) !important; }
-
-/* Fixes after the first look */
-@media (max-width: 760px) { .shead { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; } }
-.ohero .journey { background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; padding-left: 0 !important; padding-right: 0 !important; }
-.ohero .journey * { color: #fff; }
-.emb-count.tbd span { font-size: 26px; font-weight: 300; opacity: .95; margin-bottom: 0; }
-.nfy-ph, .ph.nfy-ph, .ct-ph, .sw-photo .ph, .oc-pic .ph { background: linear-gradient(160deg, var(--w-g1, #6C7B88), var(--w-g2, #C9D2D8)) !important; color: rgba(255, 255, 255, .92) !important; font-family: var(--sans) !important; font-weight: 300 !important; }
-.shead .undo-redo { background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important; }
-.shead .ur-btn { color: #fff !important; background: transparent !important; }
-.shead .ur-btn:disabled { opacity: .45; }
-.stat.accent { background: linear-gradient(160deg, var(--w-g0), var(--w-g1)) !important; border: 0 !important; color: #fff !important; }
-.stat.accent > span, .stat.accent small, .stat.accent b { color: #fff !important; }
-.sw-count { padding: 4px 10px; border-radius: 999px; font-weight: 600; }
-
-/* =====================================================================
-   Landing & passcode gate: the original navy and gold, untouched
-   ===================================================================== */
-.landing, .gate-card, body[data-page=landing], body[data-page=gate] {
-  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --script: 'Pinyon Script', 'Snell Roundhand', cursive;
-  --sans: 'Jost', 'Helvetica Neue', Arial, sans-serif;
-  font-family: var(--sans);
-}
-.landing input, .gate-card input { font-family: 'Jost', sans-serif; }
-
-/* =====================================================================
-   More wedding: richer gradients, the accent colours, a faint floral arch
-   ===================================================================== */
-.space {
-  background:
     radial-gradient(760px 520px at 92% -6%, color-mix(in srgb, var(--w-g2) 95%, transparent), transparent 72%),
-    radial-gradient(620px 460px at 4% 18%, color-mix(in srgb, var(--w-pop) 22%, transparent), transparent 70%),
+    radial-gradient(620px 460px at 4% 18%, color-mix(in srgb, var(--w-pop) 18%, transparent), transparent 70%),
     radial-gradient(900px 600px at 50% 100%, color-mix(in srgb, var(--w-g2) 55%, transparent), transparent 70%),
     linear-gradient(180deg, color-mix(in srgb, var(--w-g3) 85%, var(--w-g2)) 0, var(--w-g3) 520px, var(--w-base) 1200px) !important;
+  background-attachment: scroll !important;
 }
 .space::after {
   content: ''; position: absolute; z-index: -1; pointer-events: none; left: 50%; top: 64px; transform: translateX(-50%);
@@ -283,31 +34,171 @@ input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb
   background: url('../assets/arch_blue.svg') center top / contain no-repeat;
 }
 .space.deco-rose::after { background-image: url('../assets/arch_rose.svg'); }
-.space-flora { display: block !important; opacity: .13 !important; filter: saturate(.8); }
-.space-flora.two { opacity: .11 !important; }
-.home-stage::after {
-  content: '' !important; display: block !important; position: absolute; z-index: -1; pointer-events: none; inset: auto !important;
-  left: 50%; top: 40px; transform: translateX(-50%); width: min(1300px, 160vw); aspect-ratio: 1.2; opacity: .45;
-  background: url('../assets/arch_mix.svg') center top / contain no-repeat !important;
+.space-flora { opacity: .16 !important; }
+.space-flora.two { opacity: .13 !important; }
+body[data-page=home], body[data-page=page] {
+  background:
+    radial-gradient(900px 600px at 0% 0%, rgba(159, 185, 196, .5), transparent 65%),
+    radial-gradient(900px 600px at 100% 0%, rgba(232, 203, 209, .55), transparent 65%),
+    radial-gradient(900px 600px at 50% 100%, rgba(203, 168, 110, .14), transparent 70%),
+    linear-gradient(180deg, #EEF1F3 0%, #F8F6F4 70%) !important;
+  background-attachment: scroll !important;
 }
-body[data-page=home] .home-stage { isolation: isolate; }
+body[data-page=page]::before, body[data-page=page]::after { opacity: .14 !important; }
 body[data-page=page] .page { position: relative; isolation: isolate; }
-body[data-page=page] .page::after { content: ''; position: absolute; z-index: -1; pointer-events: none; left: 50%; top: 40px; transform: translateX(-50%); width: min(1300px, 160vw); aspect-ratio: 1.2; opacity: .35; background: url('../assets/arch_mix.svg') center top / contain no-repeat; }
+body[data-page=page] .page::after { content: ''; position: absolute; z-index: -1; pointer-events: none; left: 50%; top: 40px; transform: translateX(-50%); width: min(1300px, 160vw); aspect-ratio: 1.2; opacity: .32; background: url('../assets/arch_mix.svg') center top / contain no-repeat; }
+.shead-rule { display: none !important; }
 
-/* Titles shimmer from the wedding's deep colour into its accent */
+/* ---------- Frosted glass: every sheet, with the old gold hairline on top ---------- */
+.area, .oblock, .panel, .stat, .bcard, .barea, .lcard, .dcard, .gl-tile, .money-table, .locked-list, .cat-tile, .opt-card, .journey, .hcard, .plan-offer, .tip, .nfy, .ds-item, .person, .board-view, .others-gate, .d-card, .pv-card, .ohero {
+  background: var(--glass) !important;
+  border: 1px solid var(--glass-line) !important;
+  border-top: 1px solid color-mix(in srgb, var(--gold-line) 85%, #fff) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--glass-shadow) !important;
+  outline: 0 !important;
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+}
+.area.st-done { background: var(--glass) !important; }
+.area.st-locked { background: color-mix(in srgb, var(--champ) 10%, var(--glass)) !important; border-color: color-mix(in srgb, var(--champ) 55%, #fff) !important; }
+.lcard:hover, .dcard:hover, .gl-tile:hover, .cat-tile:hover, .opt-card:hover { background: var(--glass-strong) !important; transform: translateY(-2px); }
+@media (max-width: 760px) {
+  /* Over a smooth gradient a milky panel looks like blurred glass and scrolls smoothly on phones. */
+  .area, .oblock, .panel, .stat, .bcard, .barea, .lcard, .dcard, .gl-tile, .money-table, .locked-list, .cat-tile, .opt-card, .journey, .hcard, .plan-offer, .tip, .nfy, .person, .board-view, .ohero {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(255, 255, 255, .68) !important;
+  }
+}
+
+/* ---------- Titles: the old serif, now with a soft gradient in the wedding's colours ---------- */
 .plan-head h1, .ph-title h1, .ph-row h1, .page-title, .sw-title, .secHead h1 {
-  background: linear-gradient(100deg, var(--w-g0) 0%, var(--w-g1) 70%, color-mix(in srgb, var(--w-g1) 80%, var(--w-pop)) 100%);
+  background: linear-gradient(100deg, var(--w-g0) 0%, var(--w-g1) 70%, color-mix(in srgb, var(--w-g1) 75%, var(--champ)) 100%);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent !important; padding-bottom: .08em;
 }
 .stat b { background: linear-gradient(100deg, var(--w-g0), var(--w-g1)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.stat.accent { background: linear-gradient(150deg, var(--w-g0), var(--w-g1)) !important; border: 0 !important; color: #fff !important; }
 .stat.accent b { -webkit-text-fill-color: #fff; background: none; }
+.stat.accent > span, .stat.accent small { color: rgba(255, 255, 255, .85) !important; }
+.ob-h h2, .cat-h, .panel h2, .oblock h2, .stage-h h3 { color: var(--w-deep) !important; }
+.tip-i { color: var(--gold) !important; }
 
-/* Things you tap glow in the wedding's colours */
-.btn:not(.ghost):not(.soft):not(.danger) { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 14px 26px -14px color-mix(in srgb, var(--w-g0) 85%, transparent) !important; }
-.tick.done { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; }
-.area-prog span, .jseg.done { background: linear-gradient(90deg, var(--w-g1), color-mix(in srgb, var(--w-pop) 80%, var(--w-g1))) !important; }
-.d-seg button.on, .d-seg button[aria-pressed=true], .viewtoggle button[aria-pressed=true], .seg button[aria-pressed=true] { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; }
-@media (max-width: 760px) { body .snav a[aria-current] { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; } }
-.eyebrow { color: color-mix(in srgb, var(--w-pop) 55%, var(--w-g0)) !important; }
-.tip-i { color: var(--w-pop) !important; }
-.ob-h h2::after, .cat-h::after { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 9px; margin-left: 8px; vertical-align: middle; background: var(--w-pop); }
+/* ---------- Buttons: wedding-gradient pills; quiet ones are frosted ---------- */
+.btn:not(.ghost):not(.soft):not(.danger) { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; color: #fff !important; border: 0 !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 14px 26px -14px color-mix(in srgb, var(--w-g0) 85%, transparent) !important; }
+.btn.ghost, .btn.soft, .tip-x, .madd, .lchip {
+  background: var(--glass-strong) !important; color: var(--w-ink) !important; border: 1px solid color-mix(in srgb, var(--gold-line) 70%, #fff) !important;
+  box-shadow: inset 0 1px 0 #fff, 0 8px 18px -14px rgba(20, 30, 40, .4) !important;
+}
+.btn.ghost:hover, .btn.soft:hover, .lchip:hover { background: #fff !important; }
+.tick.done { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; border-color: transparent !important; }
+.area-prog { background: color-mix(in srgb, var(--w-ink) 8%, transparent) !important; box-shadow: none !important; }
+.area-prog span, .jseg.done { background: linear-gradient(90deg, var(--w-g1), var(--w-g0)) !important; }
+.jseg.doing { background: var(--w-light) !important; }
+.jseg.locked, .area.st-locked .area-prog span { background: linear-gradient(90deg, #E3C98E, var(--champ)) !important; }
+.d-seg button.on, .d-seg button[aria-pressed=true], .viewtoggle button[aria-pressed=true] { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; color: #fff !important; }
+.nbadge, .badge, .count, .ct-new { background: var(--w-pop) !important; color: var(--w-pop-ink) !important; box-shadow: none !important; }
+input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), select, textarea { background: rgba(255, 255, 255, .82); border-color: color-mix(in srgb, var(--gold-line) 60%, #fff); border-radius: 14px; }
+
+/* ---------- Header: frosted, with the wedding's gradient glowing through ---------- */
+.shead, .pbar {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--w-g2) 55%, rgba(255, 255, 255, .7)), rgba(255, 255, 255, .72) 55%, color-mix(in srgb, var(--w-g2) 40%, rgba(255, 255, 255, .7))) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid color-mix(in srgb, var(--gold-line) 80%, #fff) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 14px 30px -26px rgba(20, 30, 40, .5) !important;
+}
+.shead::after, .pbar::after { display: none !important; }
+@media (min-width: 761px) {
+  .snav a[aria-current] { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 8px 18px -10px color-mix(in srgb, var(--w-g0) 80%, transparent) !important; }
+}
+@media (max-width: 760px) {
+  .shead { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  body .snav { background: rgba(255, 255, 255, .86) !important; -webkit-backdrop-filter: blur(20px) saturate(1.4) !important; backdrop-filter: blur(20px) saturate(1.4) !important; border-top: 1px solid color-mix(in srgb, var(--gold-line) 80%, #fff) !important; }
+  body .snav a[aria-current] { color: var(--w-deep) !important; }
+  body .snav a[aria-current] .snav-ic { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; color: #fff !important; box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--w-g0) 90%, transparent) !important; }
+}
+
+/* ---------- 3D monograms ---------- */
+/* Blue: a navy enamel medallion, domed, with a gold rim and a gilded wreath. */
+.medal.disc {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, 0) 32%),
+    radial-gradient(circle at 50% 58%, #3A5C80 0%, #223650 58%, #142236 100%) !important;
+  box-shadow:
+    inset 0 0 0 2px #E7CF8F, inset 0 0 0 4px #9A7428, inset 0 0 0 5px rgba(255, 240, 200, .6),
+    inset 0 -10px 22px rgba(0, 0, 0, .35), inset 0 8px 16px rgba(255, 255, 255, .16),
+    0 2px 0 #7E5E22, 0 22px 40px -16px rgba(16, 28, 46, .75), 0 40px 70px -40px rgba(16, 28, 46, .6) !important;
+}
+.medal.disc::after { content: ''; position: absolute; left: 18%; top: 9%; width: 46%; height: 26%; border-radius: 50%; background: linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0)); filter: blur(2px); pointer-events: none; }
+.medal.disc .wreath { filter: brightness(0) invert(80%) sepia(48%) saturate(560%) hue-rotate(2deg) brightness(102%) drop-shadow(0 1px 0 rgba(0, 0, 0, .45)) drop-shadow(0 -1px 0 rgba(255, 255, 255, .25)) !important; }
+.medal .mono-letters { color: #F6E7BF; text-shadow: 0 1px 0 #8C6A24, 0 2px 0 #5E4616, 0 4px 8px rgba(0, 0, 0, .45), 0 -1px 0 rgba(255, 255, 255, .35); }
+.medal .mono-letters .amp { color: #E2C479; }
+/* Rose: a pressed wax seal — thick, glossy, with a raised rim and embossed letters. */
+.seal-m .wax {
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, .42) 0%, rgba(255, 255, 255, 0) 28%),
+    radial-gradient(circle at 40% 34%, #A35A75 0%, #7A3A52 40%, #5A2536 72%, #3E1825 100%) !important;
+  box-shadow:
+    inset 0 4px 8px rgba(255, 255, 255, .22), inset 0 -10px 18px rgba(0, 0, 0, .38), inset 0 0 0 3px rgba(0, 0, 0, .08),
+    0 3px 0 #3E1825, 0 24px 44px -18px rgba(62, 24, 37, .8), 0 44px 80px -44px rgba(62, 24, 37, .6) !important;
+}
+.seal-m .wax::after { content: ''; position: absolute; left: 16%; top: 8%; width: 44%; height: 24%; border-radius: 50%; background: linear-gradient(180deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, 0)); filter: blur(2px); pointer-events: none; }
+.seal-m .ring { box-shadow: inset 0 0 0 1.5px rgba(240, 220, 170, .85), inset 0 3px 6px rgba(0, 0, 0, .45), 0 1px 0 rgba(255, 255, 255, .18) !important; }
+.seal-m .mono-letters, .seal-m .mono-letters .amp { color: #F1D9A6 !important; text-shadow: 0 1px 0 #7A5A26, 0 2px 0 #4E3616, 0 4px 8px rgba(0, 0, 0, .5), 0 -1px 0 rgba(255, 255, 255, .3) !important; }
+.medal.sm .mono-letters { text-shadow: 0 1px 1px rgba(0, 0, 0, .5); }
+.medal.sm.disc::after, .medal.sm .wax::after { display: none; }
+.medal.sm.disc { box-shadow: inset 0 0 0 1.5px #E7CF8F, inset 0 0 0 2.5px #9A7428, inset 0 -4px 8px rgba(0, 0, 0, .35), 0 6px 14px -6px rgba(16, 28, 46, .7) !important; }
+.medal.xl, .medal.lg { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.emb:hover .medal { transform: translateY(-4px) rotate(-2deg); }
+
+/* ---------- Family home: the old emblems, standing on frosted plinths ---------- */
+.emblems { gap: 4vw !important; }
+.emb {
+  padding: 30px 40px 26px; border-radius: 34px;
+  background: linear-gradient(170deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .38)) !important;
+  border: 1px solid rgba(255, 255, 255, .9); border-top-color: color-mix(in srgb, var(--gold-line) 80%, #fff);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: inset 0 1px 0 #fff, 0 30px 60px -36px rgba(20, 30, 40, .45);
+}
+.emb.blue { background: linear-gradient(170deg, rgba(255, 255, 255, .78), rgba(159, 185, 196, .32)) !important; }
+.emb.rose { background: linear-gradient(170deg, rgba(255, 255, 255, .78), rgba(232, 203, 209, .42)) !important; }
+.home-stage::after {
+  content: '' !important; position: absolute; z-index: -1; pointer-events: none; inset: auto !important;
+  left: 50%; top: 30px; transform: translateX(-50%); width: min(1400px, 170vw); aspect-ratio: 1.2; opacity: .4 !important;
+  background: url('../assets/arch_mix.svg') center top / contain no-repeat !important;
+}
+.hcol { background: var(--glass); border: 1px solid var(--glass-line); border-top-color: color-mix(in srgb, var(--gold-line) 85%, #fff); border-radius: var(--r-xl); box-shadow: var(--glass-shadow); padding: 18px 20px; -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.hcard { border-radius: var(--r-xl) !important; }
+@media (max-width: 760px) {
+  .emb { padding: 22px 22px 20px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .hcol { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(255, 255, 255, .66); }
+}
+
+/* ---------- Overview hero: frosted, with the countdown in the wedding's gradient ---------- */
+.ohero, .ohero.calm { background: linear-gradient(160deg, rgba(255, 255, 255, .78), color-mix(in srgb, var(--w-g2) 40%, rgba(255, 255, 255, .5))) !important; border-radius: var(--r-xl) !important; position: relative; overflow: hidden; }
+.ohero .oh-count b { background: linear-gradient(110deg, var(--w-g0), var(--w-g1)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* ---------- Pop-ups, sheets, menus, toasts: frosted glass ---------- */
+.modal { background: linear-gradient(170deg, rgba(255, 255, 255, .86), rgba(250, 247, 242, .74)) !important; -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); border: 1px solid rgba(255, 255, 255, .92) !important; border-top-color: color-mix(in srgb, var(--gold-line) 80%, #fff) !important; outline: 0 !important; border-radius: 30px !important; box-shadow: inset 0 1px 0 #fff, 0 40px 80px -40px rgba(10, 20, 30, .6) !important; }
+.modal-wrap { background: rgba(20, 28, 36, .26) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.modal-actions { background: transparent !important; }
+.drawer { background: linear-gradient(170deg, rgba(255, 255, 255, .88), rgba(250, 247, 242, .78)) !important; -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); border-left: 1px solid rgba(255, 255, 255, .92) !important; }
+.shade { background: rgba(20, 28, 36, .26) !important; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.menu-pop { background: linear-gradient(170deg, rgba(255, 255, 255, .88), rgba(250, 247, 242, .78)) !important; -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); border: 1px solid rgba(255, 255, 255, .92) !important; border-top-color: color-mix(in srgb, var(--gold-line) 80%, #fff) !important; border-radius: 22px !important; }
+.toast { background: rgba(26, 32, 44, .82) !important; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-radius: 999px !important; }
+.lightbox { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+@media (max-width: 760px) {
+  .modal-wrap .modal { border-radius: 28px 28px 0 0 !important; background: rgba(252, 250, 247, .95) !important; }
+  .drawer { border-radius: 28px 28px 0 0 !important; background: rgba(252, 250, 247, .96) !important; }
+}
+
+/* ---------- Swipe ---------- */
+.sw-card { border-radius: 30px !important; }
+.sw-btn { background: var(--glass-strong) !important; border: 1px solid var(--glass-line) !important; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.sw-btn.love { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; color: #fff !important; border-color: transparent !important; }
+.nfy-go { background: linear-gradient(135deg, var(--w-g0), var(--w-g1)) !important; }
+.wa-btn { border-radius: 999px !important; }
+
+/* Home: let the page flow so the emblems never overlap "New for you" */
+.home-stage { height: auto !important; min-height: 100vh; display: flex !important; flex-direction: column; gap: 26px; padding-bottom: 44px; overflow: visible !important; }
+.home .nfy { margin: 0 auto !important; width: min(760px, calc(100% - 32px)); }
+.emblems { flex-wrap: wrap; padding-top: 6px !important; }
+.emblems .medal.xl { --ms: clamp(140px, 22vh, 210px); }
