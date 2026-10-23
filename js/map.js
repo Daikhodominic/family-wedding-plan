@@ -1,9 +1,10 @@
 // Progress tracking and the Map view of a wedding's pipeline.
-import { store } from './store.js?v=39';
-import { h, shortDate, daysUntil, ICONS } from './ui.js?v=39';
-import { openStep, lockIcon } from './panel.js?v=39';
-import { stepPicture, previewUrl } from './decisions.js?v=39';
-import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=39';
+import { store } from './store.js?v=40';
+import { h, shortDate, daysUntil, ICONS } from './ui.js?v=40';
+import { openStep, lockIcon } from './panel.js?v=40';
+import { stepPicture, previewUrl } from './decisions.js?v=40';
+import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=40';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=40';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -57,16 +58,22 @@ export function renderMap(root, w, plan, params) {
   const inner = h('div', { class: 'pmap-inner' });
   map.append(inner);
   const gap = (a, s) => h('button', { type: 'button', class: 'mgap', title: s ? `Add a step after “${s.title}”` : 'Add a step', 'aria-label': s ? `Add a step after ${s.title}` : `Add a step to ${a.title}`, onclick: (e) => { e.stopPropagation(); addStepAt(a.id, s); } }, h('span', {}, '+'));
-  for (const st of plan.stages) {
+  plan.stages.forEach((st, si) => {
+    const stSteps = st.areas.flatMap(a => a.steps), stDone = stSteps.filter(isComplete).length, stFinal = stSteps.filter(x => x.locked_at).length;
     inner.append(h('section', { class: 'mstage' },
-      h('div', { class: 'mstage-h' }, h('span', { class: 'ft-sub' }, 'Stage'), h('h3', {}, st.title)),
+      h('div', { class: 'mstage-h' },
+        h('span', { class: 'stage-num', 'aria-hidden': 'true' }, h('span', { html: ringSvg(stDone, stFinal, stSteps.length, 52) }), h('b', {}, roman(si + 1))),
+        h('div', {}, h('h3', {}, st.title), h('span', { class: 'ft-sub' }, `${stDone} of ${stSteps.length} done${stFinal ? ` · ${stFinal} final` : ''}`))),
       h('div', { class: 'mareas' }, st.areas.map(a => h('div', { class: 'marea ' + a.state, dataset: { area: a.id } },
-        h('div', { class: 'marea-h' + (plan.here === a.id ? ' here' : '') }, h('b', {}, a.title), h('span', { class: 'ft-sub' }, `${a.complete}/${a.steps.length}`), plan.here === a.id ? h('span', { class: 'here-tag' }, 'You are here') : null,
+        h('div', { class: 'marea-h' + (plan.here === a.id ? ' here' : '') },
+          h('span', { class: 'area-badge', 'aria-hidden': 'true' }, h('span', { class: 'ab-ring', html: ringSvg(a.complete, a.steps.filter(x => x.locked_at).length, a.steps.length, 42) }), h('span', { class: 'ab-ic', html: areaIcon(a.title) })),
+          h('span', { class: 'area-tt' }, h('b', {}, a.title), h('span', { class: 'ft-sub' }, `${a.complete} of ${a.steps.length}`)),
+          plan.here === a.id ? h('span', { class: 'here-tag' }, 'You are here') : null,
           h('button', { type: 'button', class: 'marea-x', title: `Remove ${a.title}`, 'aria-label': `Remove the area ${a.title}`, html: ICONS.trash, onclick: () => removeArea(a) })),
         h('div', { class: 'mnodes' }, a.steps.flatMap((s, i) => i < a.steps.length - 1 ? [nodeEl(s), gap(a, s)] : [nodeEl(s)]),
           h('button', { type: 'button', class: 'madd', onclick: () => addStepAt(a.id, null) }, '+ Add a step')))),
         h('button', { type: 'button', class: 'madd area', onclick: () => addAreaTo(st) }, '+ Add an area'))));
-  }
+  });
   inner.append(h('section', { class: 'mstage add' }, h('button', { type: 'button', class: 'madd stage', onclick: () => addStageTo(w.id) }, '+ Add a stage')));
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'pmap-lines'); svg.setAttribute('aria-hidden', 'true');
@@ -82,10 +89,11 @@ export function renderMap(root, w, plan, params) {
     const areas = [...inner.querySelectorAll('.marea')];
     areas.forEach((ar, i) => {
       const ns = [...ar.querySelectorAll('.mnode')];
+      // The line runs through each step's numbered station.
+      const stn = (n) => { const m = n.querySelector('.mnum') || n; const r = m.getBoundingClientRect(); return [r.left - box.left + r.width / 2, r.top - box.top + r.height / 2]; };
       for (let k = 0; k < ns.length - 1; k++) {
-        const a = ns[k].getBoundingClientRect(), b = ns[k + 1].getBoundingClientRect();
-        const x = a.left - box.left + 22;
-        paths.push(`<path d="M${x} ${a.bottom - box.top} L${x} ${b.top - box.top}" class="${ns[k].classList.contains('complete') ? 'done' : ''}"/>`);
+        const [x1, y1] = stn(ns[k]), [, y2] = stn(ns[k + 1]);
+        paths.push(`<path d="M${x1} ${y1} L${x1} ${y2}" class="track ${ns[k].classList.contains('complete') && ns[k + 1].classList.contains('complete') ? 'done' : ns[k].classList.contains('complete') ? 'half' : ''}"/>`);
       }
       const next = areas[i + 1];
       if (ns.length && next) {
@@ -93,11 +101,11 @@ export function renderMap(root, w, plan, params) {
         if (nn) {
           const [x1, y1] = pt(ns[ns.length - 1], 'out'), [x2, y2] = pt(nn, 'in');
           const mx = (x1 + x2) / 2;
-          paths.push(`<path d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2 - 6} ${y2}" class="${ar.classList.contains('done') || ar.classList.contains('locked') ? 'done' : ''}" marker-end="url(#ah)"/>`);
+          paths.push(`<path d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2 - 4} ${y2}" class="link ${ar.classList.contains('done') || ar.classList.contains('locked') ? 'done' : ''}"/><circle cx="${x2 - 4}" cy="${y2}" r="3" class="link-dot"/>`);
         }
       }
     });
-    svg.innerHTML = `<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ahead"/></marker></defs>` + paths.join('');
+    svg.innerHTML = paths.join('');
     void nodes;
   };
   requestAnimationFrame(() => requestAnimationFrame(drawLines));
@@ -115,7 +123,7 @@ function nodeEl(s) {
   const sub = s.locked_at ? ((s.lock_note && s.lock_note.with) || 'Final') : [s.owner, s.due ? (late ? 'overdue' : 'due ' + shortDate(s.due)) : null].filter(Boolean).join(' · ');
   if (s.locked_at) return decidedNode(s, cls);
   return h('button', { type: 'button', class: cls, dataset: { id: s.id }, onclick: () => openStep(s.id), 'aria-label': `${s.n}. ${s.title}${s.locked_at ? ', final' : isComplete(s) ? ', done' : ''}` },
-    h('span', { class: 'mnum' }, String(s.n)),
+    h('span', { class: 'mnum' }, isComplete(s) ? h('span', { html: ICONS.check }) : String(s.n)),
     h('span', { class: 'mtxt' }, h('span', { class: 'mt' }, s.title), sub ? h('span', { class: 'ms' + (late ? ' late' : '') }, sub) : null),
     s.locked_at ? h('span', { class: 'mic', html: lockIcon(16) }) : isComplete(s) ? h('span', { class: 'mic', html: ICONS.check }) : s.gate ? h('span', { class: 'mic gate-ic', title: 'Big decision' }, '◆') : s.status === 'doing' ? h('span', { class: 'pulse' }) : null);
 }
@@ -133,7 +141,7 @@ function decidedNode(s, cls) {
   const pic = pictureEl(s);
   const el = h('div', { class: cls + ' decided' + (pic ? ' with-pic' : ''), dataset: { id: s.id }, role: 'button', tabindex: '0', onclick: (e) => { if (!e.target.closest('a')) openStep(s.id); }, onkeydown: (e) => { if (e.key === 'Enter') openStep(s.id); } },
     pic,
-    h('span', { class: 'mnum' }, String(s.n)),
+    h('span', { class: 'mnum final' }, h('span', { class: 'diamond' })),
     h('span', { class: 'mtxt' }, h('span', { class: 'mt' }, s.title),
       n.with ? h('span', { class: 'ms gold' }, n.with) : h('span', { class: 'ms' }, 'Final'),
       n.phone ? h('a', { class: 'ms tel', href: 'tel:' + n.phone.replace(/[^\d+]/g, '') }, '☏ ' + n.phone) : null),

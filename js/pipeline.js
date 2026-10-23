@@ -1,13 +1,14 @@
-import { store } from './store.js?v=39';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=39';
-import { live, ui, render } from './app.js?v=39';
-import { openStep, lockIcon } from './panel.js?v=39';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=39';
-import { personInput } from './tools.js?v=39';
-import { openIdeas, sectionFor } from './decisions.js?v=39';
-import { renderGlimpse } from './glimpse.js?v=39';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=39';
-import { planOffer } from './plans.js?v=39';
+import { store } from './store.js?v=40';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=40';
+import { live, ui, render } from './app.js?v=40';
+import { openStep, lockIcon } from './panel.js?v=40';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=40';
+import { personInput } from './tools.js?v=40';
+import { openIdeas, sectionFor } from './decisions.js?v=40';
+import { renderGlimpse } from './glimpse.js?v=40';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=40';
+import { planOffer } from './plans.js?v=40';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=40';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -141,11 +142,15 @@ export function renderPipeline(root, w, params) {
       }
     }, '+ Add an area');
 
+    const stSteps = visSteps.filter(s => areas.some(a => a.id === s.area_id));
+    const stDone = stSteps.filter(isComplete).length, stFinal = stSteps.filter(s => s.locked_at).length;
     stagesEl.append(h('section', { class: 'stage', dataset: { id: st.id } },
       h('div', { class: 'stage-h' },
         h('button', { class: 'icon-btn grip stage-grip', type: 'button', 'aria-label': 'Drag to reorder stage', html: ICONS.grip }),
-        h('h3', { onclick: () => renameBox('Rename stage', st.title, v => store.update('stages', st.id, { title: v })) }, st.title),
-        h('span', { class: 'meta' }, `${areas.length} ${areas.length === 1 ? 'area' : 'areas'} · ${stepCount} steps`),
+        h('span', { class: 'stage-num', 'aria-hidden': 'true' }, h('span', { html: ringSvg(stDone, stFinal, stSteps.length, 52) }), h('b', {}, roman(stages.indexOf(st) + 1))),
+        h('div', { class: 'stage-tt' },
+          h('h3', { onclick: () => renameBox('Rename stage', st.title, v => store.update('stages', st.id, { title: v })) }, st.title),
+          h('span', { class: 'meta' }, `${areas.length} ${areas.length === 1 ? 'area' : 'areas'} · ${stDone} of ${stepCount} done${stFinal ? ` · ${stFinal} final` : ''}`)),
         menu({
           title: st.title, list: [
             { label: 'Rename', onClick: () => renameBox('Rename stage', st.title, v => store.update('stages', st.id, { title: v })) },
@@ -246,17 +251,16 @@ function areaEl(a, steps, w, ctx = {}) {
   };
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
   input.addEventListener('blur', () => { if (input.value.trim()) add(); });
-  const cpl = steps.filter(isComplete).length, lk = steps.filter(x => x.locked_at).length;
+  const cpl = steps.filter(isComplete).length, lk = steps.filter(x => x.locked_at).length; 
   const st = steps.length && cpl === steps.length ? (lk ? 'locked' : 'done') : (cpl || steps.some(x => x.status === 'doing')) ? 'doing' : 'todo';
   const toggle = () => { setFold(w.id, { [a.id]: !open }); render(); };
-  const pct = steps.length ? Math.round(done / steps.length * 100) : 0;
   return h('div', { class: 'area st-' + st + (open ? ' open' : ' folded') + (late ? ' has-late' : ''), dataset: { id: a.id } },
     h('div', { class: 'area-h' },
       h('button', { class: 'icon-btn grip area-grip', type: 'button', 'aria-label': 'Drag to move area', html: ICONS.grip }),
       h('button', { type: 'button', class: 'area-toggle', 'aria-expanded': String(open), onclick: toggle },
-        h('h4', {}, a.title),
+        h('span', { class: 'area-badge', 'aria-hidden': 'true' }, h('span', { class: 'ab-ring', html: ringSvg(done, lk, steps.length, 42) }), h('span', { class: 'ab-ic', html: areaIcon(a.title) })),
+        h('span', { class: 'area-tt' }, h('h4', {}, a.title), h('span', { class: 'meta' }, steps.length ? `${done} of ${steps.length}${lk ? ` · ${lk} final` : ''}` : 'No steps yet')),
         h('span', { class: 'fold-ic', 'aria-hidden': 'true' })),
-      h('span', { class: 'meta' }, steps.length ? `${done} of ${steps.length}` : ''),
       menu({
         title: a.title, list: [
           { label: 'Rename', onClick: () => renameBox('Rename area', a.title, v => store.update('areas', a.id, { title: v })) },
@@ -265,7 +269,7 @@ function areaEl(a, steps, w, ctx = {}) {
           { label: 'Move this area to the Bin', kind: 'danger', onClick: () => store.remove('areas', a.id).then(() => toast('Moved to the Bin')).catch(fail) }
         ]
       })),
-    h('div', { class: 'area-prog', 'aria-hidden': 'true' }, h('span', { style: { width: pct + '%' } })),
+    steps.length ? h('div', { class: 'beads', 'aria-hidden': 'true' }, steps.map(x => h('i', { class: x.locked_at ? 'b-final' : isComplete(x) ? 'b-done' : (x.due && daysUntil(x.due) < 0) ? 'b-late' : x.status === 'doing' ? 'b-doing' : x.gate ? 'b-gate' : '' }))) : null,
     open ? null : h('button', { type: 'button', class: 'area-next', onclick: toggle },
       next ? h('span', {}, h('span', { class: 'an-l' }, late ? 'Overdue · ' : 'Next · '), next.title) : h('span', { class: 'an-l' }, steps.length ? 'All done' : 'No steps yet')),
     open ? list : null,
@@ -288,5 +292,6 @@ function stepEl(s) {
     h('button', { class: 'txt', type: 'button', onclick: () => openStep(s.id) },
       h('span', { class: 't' }, s.title),
       (sub || late) ? h('span', { class: 'sub' }, sub, late ? h('span', { class: 'late' }, (sub ? ' · ' : '') + 'overdue since ' + shortDate(s.due)) : null) : null),
+    s.owner && !locked ? h('span', { class: 'who-av', title: s.owner }, s.owner.trim().charAt(0).toUpperCase()) : null,
     locked ? h('span', { class: 'chip lockchip' }, 'Final') : s.gate ? h('span', { class: 'gate-ic', title: 'Big decision' }, '◆') : s.status !== 'todo' ? h('span', { class: 'chip ' + s.status }, STATUS[s.status]) : h('span'));
 }
