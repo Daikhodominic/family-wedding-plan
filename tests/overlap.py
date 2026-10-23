@@ -47,7 +47,7 @@ async def main():
             ctx = await b.new_context(viewport={'width': w, 'height': 800}, is_mobile=w < 700, has_touch=w < 700, reduced_motion='reduce'); pg = await ctx.new_page()
             errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
             await pg.goto(B + '#/home'); await pg.wait_for_timeout(500)
-            await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
+            await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
             for h in PAGES:
                 await pg.goto(B.replace('?demo', '?demo&' + (h.split('?')[1] if '?' in h else '')) + h.split('?')[0]) if '?' in h else await pg.goto(B + h)
                 if 'view=' in h:

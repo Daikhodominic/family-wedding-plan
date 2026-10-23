@@ -2,10 +2,10 @@
 // (no prices, rates or phone numbers), what's been decided (no amounts) and how far along
 // it is — and can react, vote and send suggestions, which the family sees.
 // Security lives in the database (update 9): partners only ever receive partner_data().
-import { store } from './store.js?v=43';
-import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=43';
-import { live, themeOf, monogram, applyTheme, render } from './app.js?v=43';
-import { EMOJI } from './feedback.js?v=43';
+import { store } from './store.js?v=44';
+import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=44';
+import { live, themeOf, monogram, applyTheme, render } from './app.js?v=44';
+import { EMOJI } from './feedback.js?v=44';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That didn’t work. Check your connection.', 'error'); };
 let state = { token: null, data: null, mode: null, loading: false, error: null };
@@ -91,7 +91,7 @@ async function suggest(itemId, body) {
 function pic(path, cls = '') {
   const im = h('img', { class: cls, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
   if (!path) return null;
-  if (/^https?:/.test(path)) im.src = path; else store.url(path).then(u => { if (u) im.src = u; else im.remove(); });
+  if (/^https?:/.test(path)) im.src = path; else (im.dataset.path = path, store.url(path, 'small')).then(u => { if (u) im.src = u; else im.remove(); });
   return im;
 }
 const count = (itemId, target, value) => (state.data.reactions || []).find(r => r.item_id === itemId && r.target === target && r.value === value) || { n: 0, mine: false };

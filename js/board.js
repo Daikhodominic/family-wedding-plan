@@ -1,12 +1,13 @@
-import { store } from './store.js?v=43';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=43';
-import { live, ui, render, wedding } from './app.js?v=43';
-import { cardsToOptions } from './swipe.js?v=43';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=43';
-import { together } from './history.js?v=43';
-import { isDecider } from './tools.js?v=43';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=43';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=43';
+import { store } from './store.js?v=44';
+import { h, modal, field, toast, ICONS, instaEmbed, instaPost, compressImage, uploadPhoto, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=44';
+import { live, ui, render, wedding } from './app.js?v=44';
+import { cardsToOptions } from './swipe.js?v=44';
+import { downloadZip, boardFiles } from './downloads.js?v=44';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=44';
+import { together } from './history.js?v=44';
+import { isDecider } from './tools.js?v=44';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=44';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=44';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -25,9 +26,10 @@ const KIND = {
 function fail(e) { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); }
 const topZ = (w) => Math.max(1, ...live(store.rows('board_items')).filter(i => i.wedding_id === w.id).map(i => i.z || 1));
 
-async function setImg(img, path, fallback) {
+async function setImg(img, path, fallback, size = 'small') {
   if (!path) { if (fallback) img.replaceWith(fallback); return; }
-  const url = await store.url(path);
+  img.dataset.path = path;
+  const url = await store.url(path, size);
   if (url) img.src = url; else if (fallback) img.replaceWith(fallback);
 }
 
@@ -38,9 +40,8 @@ export async function uploadFile(file) {
   const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
   if (file.size > 50 * 1024 * 1024 && !isImg) throw new Error(`“${file.name}” is bigger than 50 MB. For long videos, upload them to YouTube or Google Drive and add the link instead.`);
   if (isImg) {
-    const blob = await compressImage(file);
-    const path = await store.uploadBlob(blob, blob === file ? fileExt(file.name) : 'jpg');
-    return { kind: 'image', data: { path, name: file.name, size: blob.size, caption: '' } };
+    const path = await uploadPhoto(store, file);
+    return { kind: 'image', data: { path, name: file.name, size: file.size, caption: '' } };
   }
   if (isVid) {
     const [path, tb] = await Promise.all([store.uploadBlob(file, fileExt(file.name)), videoThumb(file)]);
@@ -367,6 +368,8 @@ function cardBody(item) {
       else if (d.thumb) { pic = h('img', { class: 'media', alt: '', loading: 'lazy' }); setImg(pic, d.thumb, null); }
       else if (d.preview && d.preview.image) pic = h('img', { class: 'media', alt: '', loading: 'lazy', referrerpolicy: 'no-referrer', src: d.preview.image, onerror: (e) => e.target.remove() });
       const host = hostOf(url);
+      // An Instagram post: a tap shows the post itself on the card (loaded only when asked, so the board stays quick).
+      if (!pic && instaPost(url)) { const slot = h('div', { class: 'ig-slot' }); pic = h('button', { type: 'button', class: 'ig-show', onclick: (e) => { e.stopPropagation(); slot.replaceChildren(instaEmbed(url)); } }, '▶ Show the Instagram post'); return [slot, h('div', { class: 'body linkcard' }, pic, h('div', { class: 'ttl' }, d.title || 'Instagram post'), d.caption ? h('div', { class: 'cap' }, d.caption) : null, h('a', { href: url, target: '_blank', rel: 'noopener', style: { fontSize: '13px', color: 'var(--w-accent)' } }, 'Open in Instagram ↗'), byline)]; }
       return [pic ? h('a', { href: url || '#', target: '_blank', rel: 'noopener' }, pic) : null,
         h('div', { class: 'body linkcard', style: { paddingTop: pic ? '8px' : '2px' } },
           h('span', { class: 'host' }, host ? h('img', { src: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`, alt: '' }) : null, host || 'Link'),
@@ -776,7 +779,7 @@ export function renderBoard(root, w, params) {
     h('div', { class: 'wrap' },
       h('div', { class: 'plan-head board-bar' },
         h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
-        h('div', { class: 'ph-right' }, h('button', { type: 'button', class: 'btn ghost', title: 'Arrange every section into neat columns — chosen first', onclick: () => tidyUp(w, cardEls) }, 'Tidy up'), topAdd())),
+        h('div', { class: 'ph-right' }, h('button', { type: 'button', class: 'btn ghost', title: 'Arrange every section into neat columns — chosen first', onclick: () => tidyUp(w, cardEls) }, 'Tidy up'), h('button', { type: 'button', class: 'btn ghost', title: 'Download every photo and file on this board as one .zip', onclick: () => downloadZip(boardFiles(items), `${w.couple} mood board`) }, '⬇ Photos'), topAdd())),
       findBar(),
       h('p', { class: 'board-hint' }, board.multi.size ? `${board.multi.size} selected · drag any of them to move them together · Esc to clear` : hint)),
     h('div', { class: 'wrap board-holder' }, view, h('div', { class: 'drop-hint', 'aria-hidden': 'true' }, h('span', {}, 'Drop to add to the board')), drawBar, selBar, zoomBar, fab, addMenu)));

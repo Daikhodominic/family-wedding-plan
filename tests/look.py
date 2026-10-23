@@ -14,7 +14,7 @@ async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); ctx=await b.new_context(viewport={'width':W,'height':800}, is_mobile=W<700, has_touch=W<700, device_scale_factor=2, reduced_motion='reduce'); pg=await ctx.new_page()
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(500)
-        await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
+        await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
         await pg.reload(); await pg.wait_for_timeout(400)
         fs=[]
         for name,h,act in STEPS:

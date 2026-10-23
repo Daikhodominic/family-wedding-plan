@@ -1,6 +1,6 @@
 // Small shared helpers: roles, backup, sharing, calendar files, people.
-import { store } from './store.js?v=43';
-import { h, toast } from './ui.js?v=43';
+import { store } from './store.js?v=44';
+import { h, toast, modal } from './ui.js?v=44';
 
 /* ---------- Roles ---------- */
 const routeWedding = () => { const m = /^#\/w\/([^/?]+)/.exec(location.hash || ''); return m ? decodeURIComponent(m[1]) : null; };
@@ -23,17 +23,40 @@ export function deciderOnly(what = 'do this', wid) {
 export function peopleNames() {
   const set = new Map();
   for (const m of store.rows('members') || []) if (m.name) set.set(m.name.trim().toLowerCase(), m.name.trim());
-  for (const t of ['steps', 'todos']) for (const r of store.rows(t) || []) if (r.owner && !r.deleted_at) { const k = r.owner.trim().toLowerCase(); if (k && !set.has(k)) set.set(k, r.owner.trim()); }
+  for (const t of ['steps', 'todos']) for (const r of store.rows(t) || []) if (r.owner && !r.deleted_at) for (const one of splitPeople(r.owner)) { const k = one.toLowerCase(); if (k && !set.has(k)) set.set(k, one); }
   return [...set.values()].sort((a, b) => a.localeCompare(b));
 }
 // A text box that suggests family names while still allowing anything (e.g. "Caterer").
+// One to several people in charge, as removable name chips. Stored as one text: "Ela, Vizo".
+export const splitPeople = (v) => String(v || '').split(/\s*(?:,|&|\/|\band\b)\s*/i).map(x => x.trim()).filter(Boolean);
+export const joinPeople = (list) => list.length <= 1 ? (list[0] || '') : list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
 export function personInput(value = '', attrs = {}) {
   let dl = document.getElementById('fwp-people');
   if (!dl) { dl = h('datalist', { id: 'fwp-people' }); document.body.append(dl); }
   dl.replaceChildren(...peopleNames().map(n => h('option', { value: n })));
-  return h('input', { value, maxlength: 60, autocomplete: 'off', list: 'fwp-people', placeholder: 'Who is handling it', ...attrs });
+  let names = splitPeople(value);
+  const off = !!attrs.disabled;
+  const wrap = h('div', { class: 'ppl' + (off ? ' off' : ''), role: 'group', 'aria-label': attrs['aria-label'] || 'People in charge', style: attrs.style || null });
+  const input = h('input', { list: 'fwp-people', autocomplete: 'off', maxlength: 60, disabled: off ? true : null, 'aria-label': attrs['aria-label'] || 'Add a person in charge' });
+  const fire = () => wrap.dispatchEvent(new Event('change', { bubbles: true }));
+  const commit = () => { const v = input.value.replace(/[,\s]+$/, '').trim(); if (!v) return false; for (const n of splitPeople(v)) if (!names.some(x => x.toLowerCase() === n.toLowerCase())) names.push(n); input.value = ''; draw(); fire(); return true; };
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ',') { if (input.value.trim()) { e.preventDefault(); commit(); input.focus(); } } else if (e.key === 'Backspace' && !input.value && names.length) { names.pop(); draw(); fire(); } });
+  input.addEventListener('change', (e) => { e.stopPropagation(); commit(); });
+  input.addEventListener('blur', () => { if (input.value.trim()) commit(); });
+  const draw = () => {
+    input.placeholder = names.length ? (names.length >= 5 ? '' : '+ another person') : (attrs.placeholder || 'Who is handling it');
+    wrap.replaceChildren(...names.map((n, i) => h('span', { class: 'ppl-chip' }, n, off ? null : h('button', { type: 'button', 'aria-label': 'Remove ' + n, onclick: () => { names.splice(i, 1); draw(); fire(); } }, '×'))), input);
+  };
+  draw();
+  Object.defineProperty(wrap, 'value', { get: () => { const p = input.value.trim(); return [...names, ...(p && !names.includes(p) ? [p] : [])].join(', '); }, set: (v) => { names = splitPeople(v); draw(); } });
+  wrap.focus = () => input.focus();
+  if (typeof attrs.onchange === 'function') wrap.addEventListener('change', attrs.onchange);
+  return wrap;
 }
+// Is `name` one of the people in `owner`? (Both can be lists.)
 export const samePerson = (a, b) => {
+  const as = splitPeople(a), bs = splitPeople(b);
+  if (as.length > 1 || bs.length > 1) return as.some(x => bs.some(y => samePerson(x, y)));
   const x = (a || '').trim().toLowerCase(), y = (b || '').trim().toLowerCase();
   if (!x || !y) return false;
   return x === y || x.split(/\s+/)[0] === y.split(/\s+/)[0] && (x.split(/\s+/).length === 1 || y.split(/\s+/).length === 1);
@@ -51,8 +74,10 @@ export function downloadBackup() {
   for (const [t, rows] of Object.entries(store.cache || {})) if (!skip.has(t)) data[t] = rows;
   data.activity = (store.rows('activity') || []).slice(0, 500);
   const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-  downloadText(`wedding-war-room-backup-${stamp}.json`, JSON.stringify({ made: new Date().toISOString(), by: store.me && store.me.name, data }, null, 1), 'application/json');
-  toast('Backup downloaded — keep it somewhere safe');
+  const json = JSON.stringify({ made: new Date().toISOString(), by: store.me && store.me.name, data }, null, 1);
+  modal({ title: 'Download a backup', body: h('p', { class: 'muted', style: { margin: 0 } }, 'The plan, lists, votes, budget and comments — on their own (small), or with every photo and file too (bigger, takes a while).'),
+    actions: [{ label: 'Just the data', kind: 'ghost', onClick: () => { downloadText(`wedding-war-room-backup-${stamp}.json`, json, 'application/json'); toast('Backup downloaded — keep it somewhere safe'); } },
+      { label: 'With all photos (.zip)', onClick: () => { import('./downloads.js?v=44').then(m => m.backupWithPhotos(json, stamp)); } }] });
 }
 
 /* ---------- Sharing ---------- */

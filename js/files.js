@@ -1,9 +1,10 @@
 // The Files tab: every file and list for one wedding, in one place.
-import { store } from './store.js?v=43';
-import { h, secHead } from './ui.js?v=43';
-import { render } from './app.js?v=43';
-import { fileTile, listRow, uploadTo, newList } from './panel.js?v=43';
-import { pickFiles } from './board.js?v=43';
+import { store } from './store.js?v=44';
+import { h, secHead } from './ui.js?v=44';
+import { render } from './app.js?v=44';
+import { fileTile, listRow, uploadTo, newList } from './panel.js?v=44';
+import { pickFiles } from './board.js?v=44';
+import { downloadZip } from './downloads.js?v=44';
 
 let filter = 'all';
 const live = (rows) => rows.filter(r => !r.deleted_at);
@@ -28,7 +29,8 @@ export function renderFiles(root, w, params = {}, opts = {}) {
         h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } },
           h('div', { class: 'filters', style: { margin: 0 } }, [['all', `All (${files.length})`], ['photos', 'Photos and videos'], ['docs', 'Documents']].map(([k, l]) =>
             h('button', { class: 'filter', type: 'button', 'aria-pressed': String(filter === k), onclick: () => { filter = k; render(); } }, l))),
-          h('button', { class: 'btn small', type: 'button', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(w.id, null, fs); } }, '+ Upload files'))),
+          h('button', { class: 'btn small', type: 'button', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(w.id, null, fs); } }, '+ Upload files'),
+          shown.length ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => downloadZip(shown.map(f => ({ path: f.path, name: (f.name || f.title || 'file').replace(/\.[^.]+$/, '') })), `${w.couple} files`) }, '⬇ Download all') : null)),
       drop);
   if (opts.embedded) { root.append(filesPanel); return; }
   root.append(h('div', { class: 'files-page' },

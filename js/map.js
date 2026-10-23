@@ -1,10 +1,10 @@
 // Progress tracking and the Map view of a wedding's pipeline.
-import { store } from './store.js?v=43';
-import { h, shortDate, daysUntil, ICONS } from './ui.js?v=43';
-import { openStep, lockIcon } from './panel.js?v=43';
-import { stepPicture, previewUrl } from './decisions.js?v=43';
-import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=43';
-import { areaIcon, ringSvg, roman } from './areaicons.js?v=43';
+import { store } from './store.js?v=44';
+import { h, shortDate, daysUntil, ICONS } from './ui.js?v=44';
+import { openStep, lockIcon } from './panel.js?v=44';
+import { stepPicture, previewUrl } from './decisions.js?v=44';
+import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=44';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=44';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -54,7 +54,7 @@ export function journeyBar(w, plan, { onPick } = {}) {
 
 // The map: stages left to right (top to bottom on phones), areas as columns of numbered stations, joined by lines.
 export function renderMap(root, w, plan, params) {
-  const map = h('div', { class: 'pmap' });
+  const map = h('div', { class: 'pmap', 'data-fresh': '' }); // drawn lines follow the nodes, so the map is always rebuilt whole
   const inner = h('div', { class: 'pmap-inner' });
   map.append(inner);
   const gap = (a, s) => h('button', { type: 'button', class: 'mgap', title: s ? `Add a step after “${s.title}”` : 'Add a step', 'aria-label': s ? `Add a step after ${s.title}` : `Add a step to ${a.title}`, onclick: (e) => { e.stopPropagation(); addStepAt(a.id, s); } }, h('span', {}, '+'));
@@ -140,7 +140,7 @@ export function pictureEl(step, cls = 'dn-pic') {
   const path = stepPicture(step), ext = path ? null : previewUrl(step);
   if (!path && !ext) return null;
   const im = h('img', { class: cls, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
-  if (ext) im.src = ext; else store.url(path).then(u => { if (u) im.src = u; else im.remove(); });
+  if (ext) im.src = ext; else { im.dataset.path = path; store.url(path, 'small').then(u => { if (u) im.src = u; else im.remove(); }); }
   return im;
 }
 function decidedNode(s, cls) {

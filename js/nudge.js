@@ -1,9 +1,9 @@
 // One-tap WhatsApp nudges: opens WhatsApp with the message already written.
 // With a saved number it goes straight to that person; without one WhatsApp asks who to send it to.
-import { store } from './store.js?v=43';
-import { h, ICONS, shortDate, daysUntil, buzz } from './ui.js?v=43';
-import { wedding, live } from './app.js?v=43';
-import { siteLink } from './tools.js?v=43';
+import { store } from './store.js?v=44';
+import { h, ICONS, shortDate, daysUntil, buzz } from './ui.js?v=44';
+import { wedding, live } from './app.js?v=44';
+import { siteLink, splitPeople, joinPeople } from './tools.js?v=44';
 
 // Indian numbers are usually typed as 10 digits; WhatsApp needs the country code.
 export function waNumber(raw) {
@@ -15,7 +15,7 @@ export function waNumber(raw) {
 export const waHref = (phone, text) => `https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`;
 export function openWhatsApp(phone, text) { buzz(10); window.open(waHref(phone, text), '_blank', 'noopener'); }
 
-const first = (name) => String(name || '').trim().split(/\s+/)[0] || '';
+const first = (name) => { const ps = splitPeople(name); return ps.length > 1 ? joinPeople(ps.map(p => p.split(/\s+/)[0])) : (String(name || '').trim().split(/\s+/)[0] || ''); };
 const coupleOf = (wid) => { const w = wedding(wid); return w ? w.couple : 'the wedding'; };
 const sign = () => (store.me && store.me.name ? `\n\n— ${store.me.name}` : '');
 
@@ -60,7 +60,7 @@ export function vendorMessage(o, stepTitle) {
 
 // The button itself. `to` is a person's name (their saved number is used when there is one).
 export function waButton({ label, text, to = '', phone = '', small = true, cls = '' }) {
-  const num = phone || (to ? store.memberPhone(to) : '');
+  const num = phone || (to && splitPeople(to).length === 1 ? store.memberPhone(to) : '');
   return h('button', {
     type: 'button', class: `btn ${small ? 'small ' : ''}wa-btn ${cls}`.trim(),
     title: num ? `Opens WhatsApp to ${to || 'them'}` : 'Opens WhatsApp — pick who to send it to',

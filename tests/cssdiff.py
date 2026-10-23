@@ -12,7 +12,7 @@ async def shoot(tag):
             ctx=await b.new_context(viewport={'width':w,'height':hh}, is_mobile=mob, has_touch=mob, device_scale_factor=1, reduced_motion='reduce'); pg=await ctx.new_page()
             errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
             await pg.goto(B+'#/home'); await pg.wait_for_timeout(500)
-            await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
+            await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
             for i,h in enumerate(PAGES):
                 await pg.goto(B+h); await pg.wait_for_timeout(1400)
                 await pg.evaluate("()=>{const d=document.querySelector('.demo-flag'); if(d) d.remove(); document.querySelectorAll('*').forEach(e=>{e.style.animation='none';e.style.transition='none'})}")

@@ -6,7 +6,7 @@ async def main():
         b=await p.chromium.launch(); ctx=await b.new_context(viewport={'width':360,'height':780}, is_mobile=True, has_touch=True); pg=await ctx.new_page()
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(600)
-        await pg.evaluate("()=>{for(const k of ['welcome','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
+        await pg.evaluate("()=>{for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
         await pg.goto(B+'#/w/elow/swipe'); await pg.wait_for_timeout(1500)
         await pg.evaluate("()=>{const d=document.querySelector('.demo-flag'); if(d) d.remove()}")
         cnt=lambda: pg.evaluate("()=>document.querySelector('.sw-count')?.textContent")

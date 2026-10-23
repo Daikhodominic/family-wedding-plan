@@ -1,15 +1,15 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=43';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=43';
-import { addStepAt } from './addhere.js?v=43';
-import { uploadFile, pickFiles } from './board.js?v=43';
-import { isDecider, deciderNames, personInput } from './tools.js?v=43';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=43';
-import { voteCounts, optionKey } from './feedback.js?v=43';
-import { suggestDue } from './planauto.js?v=43';
-import { guestCount } from './boardauto.js?v=43';
-import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=43';
-import { stepWaButton } from './nudge.js?v=43';
+import { store } from './store.js?v=44';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=44';
+import { addStepAt } from './addhere.js?v=44';
+import { uploadFile, pickFiles } from './board.js?v=44';
+import { isDecider, deciderNames, personInput } from './tools.js?v=44';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=44';
+import { voteCounts, optionKey } from './feedback.js?v=44';
+import { suggestDue } from './planauto.js?v=44';
+import { guestCount } from './boardauto.js?v=44';
+import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=44';
+import { stepWaButton } from './nudge.js?v=44';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -64,7 +64,7 @@ export function fileTile(f, { showStep = false } = {}) {
   const isImg = /^image\//.test(f.mime);
   const ext = fileExt(f.title).toUpperCase();
   let pic;
-  if (f.thumb) { pic = h('img', { alt: '', loading: 'lazy' }); store.url(f.thumb).then(u => { if (u) pic.src = u; }); }
+  if (f.thumb) { pic = h('img', { alt: '', loading: 'lazy', 'data-path': f.thumb }); store.url(f.thumb).then(u => { if (u) pic.src = u; }); }
   else pic = h('div', { class: 'ft-doc' }, ext);
   const step = showStep && f.step_id ? store.find('steps', f.step_id) : null;
   return h('div', { class: 'ftile' },
@@ -218,6 +218,9 @@ export function openStep(stepId) {
           h('span', { class: 'ft-sub' }, s.created_by ? 'Added by ' + (store.memberName(s.created_by) || 'someone') : 'From the starting plan'),
           canEdit ? h('button', { type: 'button', class: 'link-btn', onclick: () => { close(); addStepAt(s.area_id, s); } }, '+ Add a step after this') : null,
           canEdit ? h('button', { type: 'button', class: 'link-btn', style: { color: 'var(--warn)' }, onclick: () => store.remove('steps', s.id).then(() => { toast('Moved to the Bin'); close(); }).catch(fail) }, 'Move step to Bin') : null)));
+    // Changes save as you go; the Save button makes that visible (and closes the drawer).
+    if (canEdit) root.append(h('div', { class: 'd-save' }, h('span', { class: 'd-saved' }, '✓ Changes save by themselves'),
+      h('button', { type: 'button', class: 'btn', onclick: () => { const a = document.activeElement; if (a && root.contains(a)) a.blur(); setTimeout(() => { toast('Saved'); close(); }, 80); } }, 'Save')));
   };
 
   let pending = false;
@@ -239,8 +242,8 @@ export function openStep(stepId) {
 }
 
 // Ideas pinned from the mood board, and the comparison that decides this step.
-function stepPictureEl(s) { const p = stepPicture(s), ext = p ? null : previewUrl(s); if (!p && !ext) return null; const im = h('img', { class: 'd-final-pic', alt: '', referrerpolicy: 'no-referrer' }); if (ext) im.src = ext; else store.url(p).then(u => { if (u) im.src = u; }); return im; }
-function thumb(path) { const im = h('img', { alt: '', loading: 'lazy' }); if (path) store.url(path).then(u => { if (u) im.src = u; }); return im; }
+function stepPictureEl(s) { const p = stepPicture(s), ext = p ? null : previewUrl(s); if (!p && !ext) return null; const im = h('img', { class: 'd-final-pic', alt: '', referrerpolicy: 'no-referrer' }); if (ext) im.src = ext; else { im.dataset.path = p; store.url(p).then(u => { if (u) im.src = u; }); } return im; }
+function thumb(path) { const im = h('img', { alt: '', loading: 'lazy', 'data-path': path || null }); if (path) store.url(path, 'small').then(u => { if (u) im.src = u; }); return im; }
 // The step's options (vendors, products) — swiped and compared on the Choose tab.
 function optionsSection(s) {
   const w = store.find('weddings', s.wedding_id);

@@ -1,10 +1,10 @@
 // Joins the mood board to the plan: pin cards to steps, card status, card → job,
 // comparisons that become final decisions, and the follow-ups a decision brings.
-import { store } from './store.js?v=43';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=43';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=43';
-import { together } from './history.js?v=43';
-import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=43';
+import { store } from './store.js?v=44';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=44';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=44';
+import { together } from './history.js?v=44';
+import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=44';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -173,6 +173,10 @@ export async function openIdeas(w, area) {
 // The picture for a step: the chosen option's photo, a photo added when it was made final,
 // or a photo pinned to it from the board (chosen ones first).
 export function stepPicture(step) {
+  // The final design (latest version) of the chosen option wins over the sample.
+  const ch = live(store.rows('board_items')).find(i => i.kind === 'option' && i.data && i.data.step_id === step.id && i.data.status === 'chosen');
+  const fin = ch && (ch.data.final || []).slice(-1)[0];
+  if (fin) { const p = (fin.images || [])[0] ? fin.images[0].path : ((fin.docs || []).find(x => x.thumb) || {}).thumb; if (p) return p; }
   const n = step.lock_note || {};
   if (n.choice && n.choice.image) return n.choice.image;
   if (n.image) return n.image;

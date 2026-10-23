@@ -7,7 +7,7 @@ async def main():
         for name,vp in [('d',{'width':1440,'height':900}),('m',{'width':390,'height':844})]:
             pg=await b.new_page(viewport=vp); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
             await pg.goto(B+'#/home'); await pg.wait_for_timeout(1000)
-            if await pg.locator('text=Skip').count(): await pg.locator('text=Skip').first.click()
+            if await pg.locator('.wl-never').count(): await pg.locator('.wl-never').first.click()
             print(name,'home nfy:', (await pg.locator('.nfy').inner_text()).replace('\n',' | ') if await pg.locator('.nfy').count() else None)
             await pg.screenshot(path=f'shots/s_{name}_home.png')
             await pg.click('.nfy'); await pg.wait_for_timeout(800)
@@ -29,7 +29,7 @@ async def main():
                 await pg.click('button:has-text("Compare the top 3")'); await pg.wait_for_timeout(500)
                 print('compare cols:', await pg.locator('.cmp-col').count()); await pg.screenshot(path='shots/s_compare.png')
                 await pg.locator('.modal-wrap .cmp-col').first.locator('button:has-text("See everything")').click(); await pg.wait_for_timeout(600)
-                print('detail links:', await pg.locator('.link-tile').count(), '| votes', await pg.locator('.od-who').inner_text())
+                print('detail links:', await pg.locator('.link-tile').count(), '| votes', await pg.locator('.pf-who').inner_text())
                 await pg.screenshot(path='shots/s_detail.png')
                 await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
                 for _ in range(3):
@@ -38,7 +38,7 @@ async def main():
                 await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400)
                 await pg.locator('.oe-form input[placeholder^="e.g. Lens"]').fill('Test Studio'); await pg.locator('.oe-form input[placeholder^="e.g. ₹"]').fill('₹70,000')
                 await pg.locator('.oe-form textarea[placeholder^="One link"]').fill('https://www.instagram.com/test\nhttps://example.org')
-                await pg.click('.modal-actions .btn:has-text("Add option")'); await pg.wait_for_timeout(700)
+                await pg.click('.modal-actions .btn:has-text("Save option")'); await pg.wait_for_timeout(700)
                 print('after add:', await pg.locator('.opt-card .oc-t').all_inner_texts())
                 await pg.locator('.opt-card:has-text("Lens") button:has-text("Choose")').click(); await pg.wait_for_timeout(300)
                 await pg.click('.modal-actions .btn:has-text("Choose it")'); await pg.wait_for_timeout(900)

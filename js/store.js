@@ -1,8 +1,8 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=43';
-import { sampleRows } from './samples.js?v=43';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=44';
+import { sampleRows } from './samples.js?v=44';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates
@@ -269,9 +269,20 @@ class LiveStore extends BaseStore {
     return path;
   }
 
-  async url(path) {
+  async uploadPhotoPair(full, small, ext = 'jpg') {
+    const base = `${new Date().getFullYear()}/${uid()}~t`;
+    const up = (name, blob) => this.sb.storage.from('media').upload(name, blob, { contentType: blob.type || undefined, upsert: false });
+    const { error } = await up(`${base}.${ext}`, full);
+    if (error) throw new Error(error.message.includes('exceeded') ? 'That file is too big. The limit is 50 MB.' : error.message);
+    if (small) await up(`${base}.small.jpg`, small).catch(() => null); // if the small copy fails, the full one is used everywhere
+    return `${base}.${ext}`;
+  }
+
+  // size 'small' gives the small copy when the photo has one (photos uploaded since v44), otherwise the full picture.
+  async url(path, size) {
     if (!path) return '';
     if (/^assets\//.test(path)) return path; // pictures that ship with the site (samples)
+    if (size === 'small' && /~t\.\w+$/.test(path)) { const u = await this.url(path.replace(/~t\.\w+$/, '~t.small.jpg')); if (u) return u; }
     const hit = this.urlCache.get(path);
     if (hit && hit.until > Date.now()) return hit.url;
     const { data, error } = await this.sb.storage.from('media').createSignedUrl(path, 60 * 60 * 6);
@@ -530,7 +541,17 @@ class DemoStore extends BaseStore {
     this.blobs.set(path, URL.createObjectURL(blob));
     return path;
   }
-  async url(path) { if (/^assets\//.test(path || '')) return path; return this.blobs.get(path) || ''; }
+  async uploadPhotoPair(full, small, ext = 'jpg') {
+    const base = `demo/${uid()}~t`;
+    this.blobs.set(`${base}.${ext}`, URL.createObjectURL(full));
+    if (small) this.blobs.set(`${base}.small.jpg`, URL.createObjectURL(small));
+    return `${base}.${ext}`;
+  }
+  async url(path, size) {
+    if (/^assets\//.test(path || '')) return path;
+    if (size === 'small' && /~t\.\w+$/.test(path || '')) { const u = this.blobs.get(path.replace(/~t\.\w+$/, '~t.small.jpg')); if (u) return u; }
+    return this.blobs.get(path) || '';
+  }
 }
 
 export const store = MODE === 'demo' ? new DemoStore() : new LiveStore();

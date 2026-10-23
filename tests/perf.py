@@ -6,7 +6,7 @@ async def main():
         b=await p.chromium.launch(); ctx=await b.new_context(viewport={'width':360,'height':780}, device_scale_factor=2.6, is_mobile=True, has_touch=True); pg=await ctx.new_page()
         cdp=await ctx.new_cdp_session(pg); await cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(800)
-        await pg.evaluate("()=>{for(const k of ['welcome','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
+        await pg.evaluate("()=>{for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}")
         await pg.goto(B+'#/w/elow/swipe'); await pg.wait_for_timeout(2500)
         await pg.evaluate("""()=>{window.__lt=[]; new PerformanceObserver(l=>{for(const e of l.getEntries()) window.__lt.push(Math.round(e.duration))}).observe({type:'longtask',buffered:false});}""")
         res=[]
@@ -20,7 +20,7 @@ async def main():
         print('swipe page height', sh)
         for h in ['#/w/elow/choose','#/w/elow/plan','#/w/charani','#/w/charani/budget','#/w/charani/lists']:
             await pg.goto(B+h); await pg.wait_for_timeout(1500)
-            t=await pg.evaluate("""async()=>{const t0=performance.now(); const {render}=await import('./js/app.js?v=43'); render(); await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); return Math.round(performance.now()-t0)}""")
+            t=await pg.evaluate("""async()=>{const t0=performance.now(); const {render}=await import('./js/app.js?v=44'); render(); await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); return Math.round(performance.now()-t0)}""")
             w=await pg.evaluate("()=>[document.documentElement.scrollWidth, innerWidth]")
             print(h,'redraw ms',t,'width',w)
         await b.close()

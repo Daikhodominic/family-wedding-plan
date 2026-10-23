@@ -7,7 +7,7 @@ async def main():
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: m.type=='error' and errs.append(m.text))
         pops=[]; ctx.on('page', lambda np: pops.append(np.url))
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(500)
-        await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','guide']) localStorage.setItem('fwp-once-'+k,'1')}"); await pg.reload(); await pg.wait_for_timeout(500)
+        await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}"); await pg.reload(); await pg.wait_for_timeout(500)
         # Charani: add the preparations from the plan offer
         await pg.goto(B+'#/w/charani/plan'); await pg.wait_for_timeout(1200)
         print('offer:', await pg.locator('.tip.auto').inner_text() if await pg.locator('.tip.auto').count() else None)
@@ -31,7 +31,7 @@ async def main():
             await pg.wait_for_timeout(300)
         print('summary', await pg.locator('.lp-sum').inner_text())
         print('datalist', await pg.locator('.ltable tbody tr').first.locator('input').nth(3).get_attribute('list'), await pg.locator('datalist#sg-share option').count())
-        msg = await pg.evaluate("async()=>{const m=await import('./js/customs.js?v=43'); const {store}=await import('./js/store.js?v=43'); const l=store.rows('lists').find(x=>x.title.startsWith('Meat list')); return m.listMessage(l)}")
+        msg = await pg.evaluate("async()=>{const m=await import('./js/customs.js?v=44'); const {store}=await import('./js/store.js?v=44'); const l=store.rows('lists').find(x=>x.title.startsWith('Meat list')); return m.listMessage(l)}")
         print('--- message ---\n'+msg); assert 'Pig head' in msg and 'Meat in all: 14 kg' in msg
         await pg.screenshot(path='shots/meat_list.png', full_page=True)
         await pg.locator('button:has-text("Print or save as PDF")').click(); await pg.wait_for_timeout(800)

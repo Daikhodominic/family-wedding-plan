@@ -1,25 +1,27 @@
-import { store, onStatus, syncState } from './store.js?v=43';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=43';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=43';
-import { renderBoard } from './board.js?v=43';
-import { renderTodo } from './todo.js?v=43';
-import { renderFiles } from './files.js?v=43';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=43';
-import { clearPage, clearAll } from './clear.js?v=43';
-import { undoButtons } from './history.js?v=43';
-import { downloadBackup } from './tools.js?v=43';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=43';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=43';
-import { announcementBars } from './planauto.js?v=43';
-import { renderPartner } from './partner.js?v=43';
-import { renderOverview, editDate } from './overview.js?v=43';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=43';
-import { renderLists } from './lists.js?v=43';
-import { planOf } from './map.js?v=43';
-import { openStep, closeDrawer } from './panel.js?v=43';
-import { waNumber } from './nudge.js?v=43';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=43';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=43';
+import { store, onStatus, syncState } from './store.js?v=44';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=44';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=44';
+import { renderBoard } from './board.js?v=44';
+import { renderTodo } from './todo.js?v=44';
+import { renderFiles } from './files.js?v=44';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=44';
+import { clearPage, clearAll } from './clear.js?v=44';
+import { undoButtons } from './history.js?v=44';
+import { downloadBackup } from './tools.js?v=44';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=44';
+import { maybeWelcome, openTour, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=44';
+import { announcementBars } from './planauto.js?v=44';
+import { renderPartner } from './partner.js?v=44';
+import { renderOverview, editDate } from './overview.js?v=44';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=44';
+import { renderLists } from './lists.js?v=44';
+import { planOf } from './map.js?v=44';
+import { openStep, closeDrawer } from './panel.js?v=44';
+import { waNumber } from './nudge.js?v=44';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=44';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=44';
+import { morphInto, onScreen } from './morph.js?v=44';
+import { installApp, installOffer, isStandalone } from './install.js?v=44';
 
 const app = document.getElementById('app');
 
@@ -86,6 +88,7 @@ export function monogram(w, size = 'lg') {
 }
 
 function avatarMenu(btn) {
+  btn = onScreen(btn);
   const old = document.querySelector('.menu-pop');
   if (old) { old.remove(); return; }
   const n = unread().length;
@@ -104,6 +107,8 @@ function avatarMenu(btn) {
     store.me.isAdmin ? item('broom', 'Clear all and start over…', () => { const { parts } = parseRoute(); clearAll(parts[0] === 'w' ? { weddingId: parts[1] } : {}); }) : null,
     item('user', store.me.phone ? 'Your name and number' : 'Your name · add your WhatsApp', profileMenu),
     notifySupported() ? item('bell', 'Notifications on this phone', notifySettings, notifyOn() ? h('span', { class: 'mi-on' }, 'On') : null) : null,
+    item('overview', 'How to use the War Room', () => openTour()),
+    isStandalone() ? null : item('sparkle', 'Install on this phone', () => installApp()),
     item('zoomIn', easyOn() ? 'Normal view' : 'Easy view (bigger text)', () => { toggleEasy(); render(); }),
     store.mode === 'demo' ? item('restore', 'Reset the sample', () => store.resetDemo()) : null,
     store.mode === 'live' ? item('logout', 'Sign out of this device', async () => { if (await confirmBox('Sign out?', 'You will need the family passcode to come back in on this device.', 'Sign out')) { await store.signOut(); location.hash = '#/'; location.reload(); } }) : null);
@@ -283,6 +288,7 @@ function renderHome() {
         greeting(),
         h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), undoButtons(), avatar())),
       newForYou(null),
+      installOffer(),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
         ws.length ? ws.map(emblem)
           : h('p', { class: 'muted' }, store.me.isAdmin ? h('span', {}, 'No weddings yet. ', h('a', { href: '#/settings' }, 'Add one in Settings')) : 'No weddings yet.')),
@@ -331,14 +337,14 @@ function renderSpace(id, sub, params) {
     h('img', { class: 'space-flora two', src: t.deco === 'rose' ? 'assets/sprig_rose.svg' : 'assets/sprig_blue.svg', alt: '', 'aria-hidden': 'true' }),
     h('img', { class: 'space-flora three', src: t.deco === 'rose' ? 'assets/sprig_rose.svg' : 'assets/sprig_blue.svg', alt: '', 'aria-hidden': 'true' }));
 
-  const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap sbody' });
+  const body = h('div', { class: tab === 'board' ? 'board-wrap' : 'wrap sbody', 'data-fresh': tab === 'board' ? '' : null });
   root.append(body);
   const tp = tip(sub === 'todo' ? 'plan' : tab);
   if (tp) body.prepend(tp);
   if (tab === 'board') renderBoard(body, w, params);
   else if (tab === 'choose') renderChoose(body, w);
   else if (tab === 'options') renderOptions(body, w, params.step);
-  else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step }); }
+  else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap', 'data-fresh': '' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step }); }
   else if (tab === 'decide') renderOverview(body, w, params); // the old Decisions page now lives on the Overview and in Choose
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
@@ -396,7 +402,7 @@ function renderGate() {
     }
   }, field('Admin email', email), field('Password', pw), aErr, h('button', { class: 'enter solid', type: 'submit' }, 'Sign in as admin'));
 
-  return h('div', { class: 'landing gate-page' },
+  return h('div', { class: 'landing gate-page', 'data-fresh': '' },
     frame(),
     h('img', { class: 'bq l', src: 'assets/lush_blue.svg', alt: '', 'aria-hidden': 'true' }),
     h('img', { class: 'bq r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
@@ -439,8 +445,9 @@ export function render() {
   const boardView = $('.board-view');
   const boardScroll = boardView ? [boardView.scrollLeft, boardView.scrollTop] : null;
   const pop = document.querySelector('.menu-pop'); if (pop) pop.remove();
-  app.replaceChildren(view);
-  window.scrollTo(0, keepScroll);
+  // Same page: change only what differs. A new page: put it in whole.
+  if (newPage) { app.replaceChildren(view); window.scrollTo(0, 0); }
+  else { morphInto(app, view); if (Math.abs(window.scrollY - keepScroll) > 2) window.scrollTo(0, keepScroll); }
   const nb = $('.board-view');
   if (nb && boardScroll && !params.focus) { nb.scrollLeft = boardScroll[0]; nb.scrollTop = boardScroll[1]; }
 }

@@ -1,8 +1,8 @@
-import { store } from './store.js?v=43';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=43';
-import { live, ui, render, stepVisible } from './app.js?v=43';
-import { editStep } from './pipeline.js?v=43';
-import { personInput } from './tools.js?v=43';
+import { store } from './store.js?v=44';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=44';
+import { live, ui, render, stepVisible } from './app.js?v=44';
+import { editStep } from './pipeline.js?v=44';
+import { personInput } from './tools.js?v=44';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 let showDone = false;   // the Done section starts folded
@@ -81,7 +81,7 @@ export function renderTodo(root, w, params) {
   }
 
   if (params.focus) requestAnimationFrame(() => {
-    const el = root.querySelector(`[data-id="${CSS.escape(params.focus)}"]`);
+    const el = document.querySelector(`[data-id="${CSS.escape(params.focus)}"]`);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); }
   });
 }

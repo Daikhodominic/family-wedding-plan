@@ -1,14 +1,14 @@
-import { store } from './store.js?v=43';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=43';
-import { live, ui, render } from './app.js?v=43';
-import { openStep, lockIcon } from './panel.js?v=43';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=43';
-import { personInput } from './tools.js?v=43';
-import { openIdeas, sectionFor } from './decisions.js?v=43';
-import { renderGlimpse } from './glimpse.js?v=43';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=43';
-import { planOffer } from './plans.js?v=43';
-import { areaIcon, ringSvg, roman } from './areaicons.js?v=43';
+import { store } from './store.js?v=44';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=44';
+import { live, ui, render } from './app.js?v=44';
+import { openStep, lockIcon } from './panel.js?v=44';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=44';
+import { personInput } from './tools.js?v=44';
+import { openIdeas, sectionFor } from './decisions.js?v=44';
+import { renderGlimpse } from './glimpse.js?v=44';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=44';
+import { planOffer } from './plans.js?v=44';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=44';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -240,7 +240,8 @@ function areaEl(a, steps, w, ctx = {}) {
   const open = hasFocus || (saved !== undefined ? saved : (a.id === ctx.here || late || busy || !steps.length));
   const next = steps.find(x => !isComplete(x));
   const done = steps.filter(isComplete).length;
-  const list = h('ul', { class: 'steps', dataset: { area: a.id } }, steps.map(stepEl));
+  // A folded area doesn't build its steps at all — less work on every redraw.
+  const list = h('ul', { class: 'steps', dataset: { area: a.id } }, open ? steps.map(stepEl) : []);
   const input = h('input', { placeholder: 'Add a step…', maxlength: 200, 'aria-label': `Add a step to ${a.title}` });
   const add = async () => {
     const v = input.value.trim(); if (!v) return;

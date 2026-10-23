@@ -1,4 +1,5 @@
 // Small UI helpers shared by every page.
+import { listen, onScreen } from './morph.js?v=44';
 
 export function h(tag, props = {}, ...kids) {
   const el = document.createElement(tag);
@@ -8,7 +9,7 @@ export function h(tag, props = {}, ...kids) {
     else if (k === 'text') el.textContent = v;
     else if (k === 'html') el.innerHTML = v; // only ever used with our own static markup
     else if (k === 'style' && typeof v === 'object') { for (const [sk, sv] of Object.entries(v)) { if (sv === null || sv === undefined) continue; if (sk.startsWith('--')) el.style.setProperty(sk, sv); else el.style[sk] = sv; } }
-    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k.startsWith('on') && typeof v === 'function') listen(el, k.slice(2).toLowerCase(), v);
     else if (k === 'dataset') Object.assign(el.dataset, v);
     else el.setAttribute(k, v === true ? '' : v);
   }
@@ -65,10 +66,13 @@ export function dayHeading(iso) {
 export function toast(msg, kind = 'info') {
   let box = $('#toasts');
   if (!box) { box = h('div', { id: 'toasts', 'aria-live': 'polite' }); document.body.append(box); }
-  const t = h('div', { class: 'toast ' + kind, text: msg });
+  // Small and out of the way at the top corner; quick for "Saved", longer for problems. At most three at once.
+  const t = h('div', { class: 'toast ' + kind, text: msg, role: kind === 'error' ? 'alert' : null });
   box.append(t);
-  setTimeout(() => t.classList.add('out'), 3600);
-  setTimeout(() => t.remove(), 4200);
+  while (box.children.length > 3) box.firstChild.remove();
+  const stay = kind === 'error' ? 5200 : Math.min(4200, 1600 + String(msg).length * 28);
+  setTimeout(() => t.classList.add('out'), stay);
+  setTimeout(() => t.remove(), stay + 400);
 }
 
 /* ---------- Modal ---------- */
@@ -145,6 +149,24 @@ export async function compressImage(file, max = 1800, quality = 0.82) {
   c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
   const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', quality));
   return blob && blob.size < file.size ? blob : file;
+}
+
+// A photo goes up twice: the full picture (for opening and swiping) and a small copy for grids and tiles,
+// so lists of photos load quickly on phones. Returns the full picture's path.
+export async function uploadPhoto(store, file) {
+  const [full, small] = await Promise.all([compressImage(file), compressImage(file, 520, 0.74)]);
+  const ext = full === file ? ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg' : 'jpg';
+  return store.uploadPhotoPair(full, small !== file ? small : null, ext);
+}
+
+// Instagram posts and reels can be shown in place (public posts only — Instagram's own embed).
+// A profile link (instagram.com/name) can't be embedded and stays a link.
+export const instaPost = (u) => { const m = /instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/i.exec(u || ''); return m ? { type: /^reel/i.test(m[1]) ? 'reel' : 'p', id: m[2] } : null; };
+export function instaEmbed(u, { tall = false } = {}) {
+  const x = instaPost(u); if (!x) return null;
+  return h('div', { class: 'ig-embed' + (tall ? ' tall' : '') },
+    h('iframe', { src: `https://www.instagram.com/${x.type}/${x.id}/embed/captioned/`, loading: 'lazy', title: 'Instagram post', allow: 'encrypted-media; picture-in-picture', allowfullscreen: true, frameborder: '0', scrolling: 'no', referrerpolicy: 'strict-origin-when-cross-origin' }),
+    h('a', { class: 'ig-open', href: u, target: '_blank', rel: 'noopener' }, 'Open in Instagram ↗'));
 }
 
 export async function videoThumb(file) {
@@ -260,6 +282,7 @@ export const ICONS = {
 
 // A small pop-up menu under a button. items: [{ icon, label, onClick }] (nulls are skipped).
 export function popMenu(btn, items, head) {
+  btn = onScreen(btn);
   const old = document.querySelector('.menu-pop');
   if (old) { old.remove(); if (old._owner === btn) return; }
   const close = () => { pop.remove(); document.removeEventListener('pointerdown', outside, true); };
