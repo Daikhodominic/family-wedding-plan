@@ -29,7 +29,8 @@ body[data-page=space], body[data-page=home], body[data-page=page] {
     linear-gradient(170deg, var(--g-a) 0%, var(--g-b) 45%, var(--g-c) 100%) fixed !important;
   color: var(--w-ink);
 }
-body[data-page=space][data-theme=rose] { --g-a: #5A2536; --g-b: #3A1623; --g-c: #220C15; --glow1: rgba(176, 96, 124, .42); --glow2: rgba(201, 162, 90, .16); --tint: #D9AFA6; }
+/* Elow & Maniziia: Emerald garden (5% lighter), with a rose glow — greenery and roses for an outdoor wedding by the church */
+body[data-page=space][data-theme=rose] { --g-a: #284E44; --g-b: #1B3C32; --g-c: #122A21; --glow1: rgba(222, 150, 168, .34); --glow2: rgba(201, 162, 90, .16); --tint: #D9AFA6; }
 body[data-page=home], body[data-page=page] {
   background:
     radial-gradient(800px 600px at 0% 0%, rgba(88, 126, 170, .42), transparent 68%),
@@ -171,7 +172,7 @@ input[type=checkbox], input[type=radio] { accent-color: #D4AE66; }
   border: 1px solid rgba(255, 255, 255, .12) !important; border-top-color: rgba(217, 180, 112, .42) !important; outline: 0 !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 40px 90px -40px rgba(0, 0, 0, .9) !important; color: #F3ECE0;
 }
-body[data-theme=rose] :is(.modal, .drawer, .menu-pop) { background: linear-gradient(165deg, rgba(78, 36, 52, .86), rgba(32, 14, 22, .9)) !important; }
+body[data-theme=rose] :is(.modal, .drawer, .menu-pop) { background: linear-gradient(165deg, rgba(44, 84, 72, .86), rgba(16, 38, 30, .9)) !important; }
 .modal { border-radius: 30px !important; }
 .menu-pop { border-radius: 22px !important; }
 .modal-head h2, .drawer h1, .drawer h2, .drawer .d-title, .mp-head b { color: #F1E3C2 !important; }
@@ -185,7 +186,7 @@ body[data-theme=rose] :is(.modal, .drawer, .menu-pop) { background: linear-gradi
 @media (max-width: 760px) {
   .modal-wrap .modal { border-radius: 28px 28px 0 0 !important; }
   .drawer { border-radius: 28px 28px 0 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: linear-gradient(165deg, #2A3650, #141B2B) !important; }
-  body[data-theme=rose] .drawer { background: linear-gradient(165deg, #4E2434, #200E16) !important; }
+  body[data-theme=rose] .drawer { background: linear-gradient(165deg, #2C5448, #10261E) !important; }
 }
 
 /* ---------- Swipe & options ---------- */
@@ -242,7 +243,16 @@ body[data-theme=rose] :is(.modal, .drawer, .menu-pop) { background: linear-gradi
 .home, .home-stage { background: transparent !important; }
 .nfy-card { background: linear-gradient(160deg, #34425F, #1E2638) !important; border: 1px solid rgba(217, 180, 112, .35) !important; box-shadow: 0 10px 20px -10px rgba(0, 0, 0, .8) !important; }
 .nfy-card .ph, .nfy-ph { background: transparent !important; color: #E9D29A !important; }
-body[data-theme=rose] .nfy-card { background: linear-gradient(160deg, #5E2E40, #2E1420) !important; }
+body[data-theme=rose] .nfy-card { background: linear-gradient(160deg, #2F5A4D, #143128) !important; }
 .greet { background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .14) !important; color: #E6DCCB !important; box-shadow: none !important; }
 .greet b { color: #F1E3C2 !important; }
 .hrow { border-top-color: rgba(255, 255, 255, .08) !important; }
+
+/* Swipe card details on the dark grounds */
+.sw-cat { background: rgba(10, 14, 24, .55) !important; color: #F3ECE0 !important; border: 1px solid rgba(255, 255, 255, .25) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.sw-rate { background: linear-gradient(180deg, #E8C988, #C99B45) !important; color: #1A1408 !important; }
+.sw-w { background: rgba(10, 14, 24, .55) !important; color: #F1E3C2 !important; border: 1px solid rgba(217, 180, 112, .4) !important; }
+.sw-back { background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .18) !important; color: #F3ECE0 !important; }
+.sw-sofar, .sw-meta { background: rgba(255, 255, 255, .08) !important; color: #E6DCCB !important; }
+body[data-theme=rose] .sw-card { background: #163429 !important; }
+.sw-count { padding: 3px 10px; border-radius: 999px; font-weight: 600; }

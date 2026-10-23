@@ -1,14 +1,15 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=35';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=35';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=35';
-import { isDecider } from './tools.js?v=35';
-import { addVendor } from './decisions.js?v=35';
-import { pickFiles, fetchPreview } from './board.js?v=35';
-import { planOf } from './map.js?v=35';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=35';
+import { store } from './store.js?v=36';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=36';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=36';
+import { isDecider } from './tools.js?v=36';
+import { addVendor } from './decisions.js?v=36';
+import { pickFiles, fetchPreview } from './board.js?v=36';
+import { planOf } from './map.js?v=36';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=36';
+import { sampleRows, isSample } from './samples.js?v=36';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -329,6 +330,21 @@ export function newForYou(weddingId) {
     h('span', { class: 'btn nfy-go' }, 'Start swiping'));
 }
 
+/* ---------- Sample options (placeholder pictures) to try swiping ---------- */
+function sampleButton(w) {
+  const mine = live(store.rows('board_items')).filter(o => o.wedding_id === w.id && isSample(o));
+  if (mine.length) return h('button', { type: 'button', class: 'btn ghost', title: 'Moves the sample options to the Bin', onclick: async () => {
+    if (!(await confirmBox('Remove the samples?', `${mine.length} sample options move to the Bin. Real options stay.`, 'Remove samples'))) return;
+    await store.batch(() => store.removeMany('board_items', mine.map(o => o.id), new Date().toISOString())).then(() => toast('Samples removed')).catch(fail);
+  } }, `Remove samples (${mine.length})`);
+  return h('button', { type: 'button', class: 'btn ghost', title: 'Adds example options with pictures so everyone can try swiping', onclick: async () => {
+    const steps = live(store.rows('steps')).filter(s => s.wedding_id === w.id && stepVisible(s));
+    const rows = sampleRows(w.id, steps, {});
+    if (!rows.length) return toast('No matching steps yet — load the checklist first', 'error');
+    await store.batch(() => store.insertMany('board_items', rows)).then(() => toast(`${rows.length} sample options added — try swiping`)).catch(fail);
+  } }, '+ Sample options to try');
+}
+
 /* ---------- Choose: every category of a wedding ---------- */
 export function renderChoose(root, w) {
   root.append(h('div', { class: 'ph-row' },
@@ -336,7 +352,8 @@ export function renderChoose(root, w) {
     h('div', { class: 'ph-right' },
       h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
       (() => { const n = optionsOf(w.id).filter(isOpen).length; return n ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, n) }) : null; })(),
-      h('a', { class: 'btn ghost', href: `#/w/${w.id}/board` }, 'Mood board'))));
+      h('a', { class: 'btn ghost', href: `#/w/${w.id}/board` }, 'Mood board'),
+      store.me.isAdmin ? sampleButton(w) : null)));
   const nfy = newForYou(w.id); if (nfy) root.append(nfy);
   const cats = categoriesOf(w);
   if (!cats.length) { root.append(h('p', { class: 'muted' }, 'No categories yet. Mark a step in the plan as a big decision, or add an option to any step.')); return; }

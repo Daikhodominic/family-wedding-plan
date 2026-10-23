@@ -1,13 +1,13 @@
-import { store } from './store.js?v=35';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=35';
-import { live, ui, render } from './app.js?v=35';
-import { openStep, lockIcon } from './panel.js?v=35';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=35';
-import { personInput } from './tools.js?v=35';
-import { openIdeas, sectionFor } from './decisions.js?v=35';
-import { renderGlimpse } from './glimpse.js?v=35';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=35';
-import { planOffer } from './plans.js?v=35';
+import { store } from './store.js?v=36';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=36';
+import { live, ui, render } from './app.js?v=36';
+import { openStep, lockIcon } from './panel.js?v=36';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=36';
+import { personInput } from './tools.js?v=36';
+import { openIdeas, sectionFor } from './decisions.js?v=36';
+import { renderGlimpse } from './glimpse.js?v=36';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=36';
+import { planOffer } from './plans.js?v=36';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

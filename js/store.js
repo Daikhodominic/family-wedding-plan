@@ -1,7 +1,8 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=35';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=36';
+import { sampleRows } from './samples.js?v=36';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates
@@ -270,6 +271,7 @@ class LiveStore extends BaseStore {
 
   async url(path) {
     if (!path) return '';
+    if (/^assets\//.test(path)) return path; // pictures that ship with the site (samples)
     const hit = this.urlCache.get(path);
     if (hit && hit.until > Date.now()) return hit.url;
     const { data, error } = await this.sb.storage.from('media').createSignedUrl(path, 60 * 60 * 6);
@@ -315,7 +317,7 @@ window.addEventListener('offline', () => syncStatus(store));
 /* ------------------------------------------------------------------ */
 /*  Demo: sample data kept in this browser                             */
 /* ------------------------------------------------------------------ */
-const DEMO_KEY = 'fwp-demo-v6';
+const DEMO_KEY = 'fwp-demo-v7';
 const GATES = ['Fix the wedding date and church', 'Book the reception venue for the date', 'Pay the advance', 'Finalise the menu', 'Finalise the guest list', 'Print the invitation cards', 'Buy the gifts'];
 const TEMPLATE = [
   ['Before', [
@@ -363,16 +365,9 @@ function demoSeed() {
   const photoStep = c.steps.find(s => s.wedding_id === 'charani' && s.title === 'Photography and video');
   const cakeStep = c.steps.find(s => s.wedding_id === 'elow' && /cake/i.test(s.title)) || c.steps.find(s => s.wedding_id === 'elow' && s.title === 'Finalise the menu');
   if (photoStep) photoStep.gate = true;
-  const OPT = (wid, step, title, rate, notes, links, phone) => c.board_items.push({ id: uid(), wedding_id: wid, kind: 'option', x: 0, y: 0, w: 280, z: 1, created_at: nowIso(), created_by: 'demo-elow', deleted_at: null, data: { step_id: step.id, title, rate, notes, phone, links, images: [], status: 'open' } });
-  if (photoStep) {
-    OPT('charani', photoStep, 'Example: Lens & Light Studio', '₹85,000 · church + reception', 'Candid, film-look style. 300 edited photos and a 5-minute film. Two shooters.', ['https://www.instagram.com/', 'https://example.com'], '98765 11111');
-    OPT('charani', photoStep, 'Example: Hill Frames', '₹60,000 · church only', 'Classic portraits, quick delivery (2 weeks). One shooter, drone extra.', ['https://www.instagram.com/'], '98765 22222');
-    OPT('charani', photoStep, 'Example: Pine & Petal Films', '₹1,10,000 · full day', 'Cinematic video, same-day highlights shown at the reception.', ['https://www.youtube.com/'], '98765 33333');
-  }
-  if (cakeStep) {
-    OPT('elow', cakeStep, 'Example: Sweet Crumbs', '₹3,500 / kg · sugar roses', 'Three tiers, fondant roses in blush.', [], '');
-    OPT('elow', cakeStep, 'Example: Bake House', '₹2,800 / kg · fresh berries', 'Naked cake, lighter and cheaper.', [], '');
-  }
+  // Sample options with pictures, so swiping and comparing can be tried straight away.
+  for (const w of c.weddings) c.board_items.push(...sampleRows(w.id, c.steps.filter(st => st.wedding_id === w.id), { uid, now: nowIso, by: w.id === 'elow' ? 'demo-elow' : 'demo-charani' }));
+  if (cakeStep) cakeStep.gate = true;
   const guestStep = c.steps.find(s => s.wedding_id === 'charani' && s.title === 'Finalise the guest list');
   const gl = { id: uid(), wedding_id: 'charani', step_id: guestStep && guestStep.id, title: 'Example guest list', columns: ['Name', 'Side', 'Phone', 'Count', 'Notes'], created_at: nowIso(), deleted_at: null };
   c.lists.push(gl);
@@ -535,7 +530,7 @@ class DemoStore extends BaseStore {
     this.blobs.set(path, URL.createObjectURL(blob));
     return path;
   }
-  async url(path) { return this.blobs.get(path) || ''; }
+  async url(path) { if (/^assets\//.test(path || '')) return path; return this.blobs.get(path) || ''; }
 }
 
 export const store = MODE === 'demo' ? new DemoStore() : new LiveStore();
