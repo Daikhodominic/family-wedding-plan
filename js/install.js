@@ -1,7 +1,7 @@
 // Putting the War Room on the home screen, like an app.
 // Android (Chrome, Edge, Samsung Internet): one tap, using the browser's own install prompt.
 // iPhone and iPad (Safari): Apple allows no install button, so we show the two taps — Share, then "Add to Home Screen".
-import { h, modal, ICONS } from './ui.js?v=45';
+import { h, modal, ICONS } from './ui.js?v=46';
 
 let deferred = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; document.dispatchEvent(new Event('fwp-installable')); });

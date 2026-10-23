@@ -1,27 +1,28 @@
-import { store, onStatus, syncState } from './store.js?v=45';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=45';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=45';
-import { renderBoard } from './board.js?v=45';
-import { renderTodo } from './todo.js?v=45';
-import { renderFiles } from './files.js?v=45';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=45';
-import { clearPage, clearAll } from './clear.js?v=45';
-import { undoButtons } from './history.js?v=45';
-import { downloadBackup } from './tools.js?v=45';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=45';
-import { maybeWelcome, openTour, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=45';
-import { announcementBars } from './planauto.js?v=45';
-import { renderPartner } from './partner.js?v=45';
-import { renderOverview, editDate } from './overview.js?v=45';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=45';
-import { renderLists } from './lists.js?v=45';
-import { planOf } from './map.js?v=45';
-import { openStep, closeDrawer } from './panel.js?v=45';
-import { waNumber } from './nudge.js?v=45';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=45';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=45';
-import { morphInto, onScreen } from './morph.js?v=45';
-import { installApp, installOffer, isStandalone } from './install.js?v=45';
+import { store, onStatus, syncState } from './store.js?v=46';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=46';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=46';
+import { renderBoard } from './board.js?v=46';
+import { renderTodo } from './todo.js?v=46';
+import { renderFiles } from './files.js?v=46';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=46';
+import { clearPage, clearAll } from './clear.js?v=46';
+import { undoButtons } from './history.js?v=46';
+import { downloadBackup } from './tools.js?v=46';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=46';
+import { maybeWelcome, openTour, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=46';
+import { announcementBars } from './planauto.js?v=46';
+import { renderPartner } from './partner.js?v=46';
+import { renderOverview, editDate } from './overview.js?v=46';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=46';
+import { renderLists } from './lists.js?v=46';
+import { planOf } from './map.js?v=46';
+import { openStep, closeDrawer } from './panel.js?v=46';
+import { waNumber } from './nudge.js?v=46';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=46';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=46';
+import { morphInto, onScreen } from './morph.js?v=46';
+import { renderShare } from './share.js?v=46';
+import { installApp, installOffer, isStandalone } from './install.js?v=46';
 
 const app = document.getElementById('app');
 
@@ -435,9 +436,10 @@ export function render() {
   else if (parts[0] === 'budget') view = familyPage(renderFamilyBudget(params));
   else if (parts[0] === 'me') view = familyPage(renderMyJobs());
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
+  else if (parts[0] === 'share') view = familyPage(renderShare());
   else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, {}); view = familyPage(el); }
   else { view = renderHome(); setTimeout(maybeWelcome, 400); }
-  document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe'].includes(parts[0]) ? 'home' : 'page';
+  document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe', 'share'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   const newPage = app.dataset.view !== key;
   app.dataset.view = key;

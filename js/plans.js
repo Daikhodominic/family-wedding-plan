@@ -2,12 +2,12 @@
 // Each step: [title, note, big decision?, suggested?]. Suggested steps came from
 // Claude's review of Catholic weddings in Nagaland and Manipur; the rest are the family's own list.
 // Each to-do: [title, due date, where it belongs].
-import { store } from './store.js?v=45';
-import { h, toast, modal , ICONS } from './ui.js?v=45';
-import { live } from './app.js?v=45';
-import { SECTIONS } from './clear.js?v=45';
-import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=45';
-import { customLists } from './customs.js?v=45';
+import { store } from './store.js?v=46';
+import { h, toast, modal , ICONS } from './ui.js?v=46';
+import { live } from './app.js?v=46';
+import { SECTIONS } from './clear.js?v=46';
+import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=46';
+import { customLists } from './customs.js?v=46';
 
 const S = (title, note = '', gate = false, sugg = false) => [title, note, gate, sugg];
 

@@ -1,10 +1,27 @@
 // Lets the site open on a weak connection and be installed on a phone.
 // Always the newest version when online; the saved copy only when offline.
-const CACHE = 'fwp-shell-v27';
+const CACHE = 'fwp-shell-v28';
+const SHARE = 'fwp-share'; // photos and links shared into the War Room from another app, waiting to be filed
 self.addEventListener('install', () => { self.skipWaiting(); });
-self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== SHARE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
   const req = e.request;
+  // Shared from WhatsApp (or the gallery): keep the files, then open the page that files them.
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/share-target')) {
+    e.respondWith((async () => {
+      try {
+        const fd = await req.formData();
+        const cc = await caches.open(SHARE);
+        for (const k of await cc.keys()) await cc.delete(k);
+        const files = fd.getAll('media').filter(f => f && f.size);
+        const meta = { at: Date.now(), title: fd.get('title') || '', text: fd.get('text') || '', url: fd.get('url') || '', files: files.map((f, i) => ({ key: `shared/${i}`, name: f.name || `photo-${i + 1}.jpg`, type: f.type || 'application/octet-stream' })) };
+        await Promise.all(files.map((f, i) => cc.put(`shared/${i}`, new Response(f, { headers: { 'Content-Type': f.type || 'application/octet-stream' } }))));
+        await cc.put('shared/meta', new Response(JSON.stringify(meta), { headers: { 'Content-Type': 'application/json' } }));
+      } catch (err) { /* fall through to the page, which says nothing arrived */ }
+      return Response.redirect(new URL('./index.html#/share', self.registration.scope).href, 303);
+    })());
+    return;
+  }
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.hostname.endsWith('supabase.co') || url.hostname.includes('microlink')) return; // live data never comes from the cache

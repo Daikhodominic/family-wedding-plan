@@ -1,6 +1,6 @@
 // Small shared helpers: roles, backup, sharing, calendar files, people.
-import { store } from './store.js?v=45';
-import { h, toast, modal } from './ui.js?v=45';
+import { store } from './store.js?v=46';
+import { h, toast, modal } from './ui.js?v=46';
 
 /* ---------- Roles ---------- */
 const routeWedding = () => { const m = /^#\/w\/([^/?]+)/.exec(location.hash || ''); return m ? decodeURIComponent(m[1]) : null; };
@@ -77,7 +77,7 @@ export function downloadBackup() {
   const json = JSON.stringify({ made: new Date().toISOString(), by: store.me && store.me.name, data }, null, 1);
   modal({ title: 'Download a backup', body: h('p', { class: 'muted', style: { margin: 0 } }, 'The plan, lists, votes, budget and comments — on their own (small), or with every photo and file too (bigger, takes a while).'),
     actions: [{ label: 'Just the data', kind: 'ghost', onClick: () => { downloadText(`wedding-war-room-backup-${stamp}.json`, json, 'application/json'); toast('Backup downloaded — keep it somewhere safe'); } },
-      { label: 'With all photos (.zip)', onClick: () => { import('./downloads.js?v=45').then(m => m.backupWithPhotos(json, stamp)); } }] });
+      { label: 'With all photos (.zip)', onClick: () => { import('./downloads.js?v=46').then(m => m.backupWithPhotos(json, stamp)); } }] });
 }
 
 /* ---------- Sharing ---------- */

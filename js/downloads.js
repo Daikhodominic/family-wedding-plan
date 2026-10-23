@@ -1,7 +1,7 @@
 // Downloading photos and files: one at a time, or a whole category / board / the files as one .zip.
-import { store } from './store.js?v=45';
-import { toast } from './ui.js?v=45';
-import { makeZip } from './zip.js?v=45';
+import { store } from './store.js?v=46';
+import { toast } from './ui.js?v=46';
+import { makeZip } from './zip.js?v=46';
 
 const extOf = (p) => (/\.(\w{2,5})$/.exec(p || '') || [, 'jpg'])[1].toLowerCase();
 const safeName = (s) => String(s || 'photo').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 60) || 'photo';

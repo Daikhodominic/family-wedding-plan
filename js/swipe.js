@@ -1,17 +1,17 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=45';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=45';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=45';
-import { isDecider, personInput } from './tools.js?v=45';
-import { suggestDue } from './planauto.js?v=45';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=45';
-import { addVendor } from './decisions.js?v=45';
-import { pickFiles, fetchPreview } from './board.js?v=45';
-import { planOf } from './map.js?v=45';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=45';
-import { sampleRows, isSample } from './samples.js?v=45';
+import { store } from './store.js?v=46';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=46';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=46';
+import { isDecider, personInput } from './tools.js?v=46';
+import { suggestDue } from './planauto.js?v=46';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=46';
+import { addVendor } from './decisions.js?v=46';
+import { pickFiles, fetchPreview } from './board.js?v=46';
+import { planOf } from './map.js?v=46';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=46';
+import { sampleRows, isSample } from './samples.js?v=46';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -189,11 +189,9 @@ export function categoryFields(w, stepId) {
   when.addEventListener('change', () => sync(false));
   if (cur) { const st = stageOfStep(cur); if (st) when.value = st.id; }
   sync(false);
-  const el = h('div', { class: 'cf' },
-    field('Category', cat), note,
-    h('div', { class: 'cf-row' }, field('When', when), field('In charge', who), h('div', { class: 'field' }, field('Due by', due), sugg)),
-    areaField,
-    h('datalist', { id: 'cf-cats-' + n }, steps.map(x => h('option', { value: x.title }))));
+  const mainEl = h('div', { class: 'cf' }, field('Category', cat), note, h('datalist', { id: 'cf-cats-' + n }, steps.map(x => h('option', { value: x.title }))));
+  const extraEl = h('div', { class: 'cf' }, h('div', { class: 'cf-row' }, field('When', when), field('In charge', who), h('div', { class: 'field' }, field('Due by', due), sugg)), areaField);
+  const el = h('div', { class: 'cf' }, mainEl, extraEl);
   // Makes or updates the step, and gives back its id (null if the category is empty).
   const resolve = async () => {
     const title = cat.value.replace(/\s+/g, ' ').trim();
@@ -221,7 +219,7 @@ export function categoryFields(w, stepId) {
     const row = await store.insert('steps', { wedding_id: w.id, area_id: aid, title, notes: '', owner, due: dueV, status: 'todo', position: endOf(aid), gate: true });
     return row.id;
   };
-  return { el, resolve, focus: () => cat.focus() };
+  return { el, mainEl, extraEl, resolve, focus: () => cat.focus() };
 }
 
 export function pickCategory(w, title = 'Which category?', hint = '') {
@@ -259,7 +257,7 @@ export async function cardsToOptions(w, rows) {
 // A sample for ideas: a mood-board card (one photo, or a gallery of several), pinned to the category if one was given.
 async function addSampleToBoard(w, cf, { title, notes, links, images }) {
   if (!images.length) { toast('Add at least one photo for the mood board', 'error'); return false; }
-  const catTyped = cf.el.querySelector('input') && cf.el.querySelector('input').value.trim();
+  const catInput = (cf.mainEl || cf.el).querySelector('input'); const catTyped = catInput && catInput.value.trim();
   let sid = null;
   if (catTyped) { try { sid = await store.batch(() => cf.resolve()); } catch (e) { fail(e); return false; } }
   const items = live(store.rows('board_items')).filter(i => i.wedding_id === w.id && i.kind !== 'option');
@@ -287,8 +285,8 @@ function knownVendors() {
 const LAST_CAT = (wid) => 'fwp-last-cat-' + wid;
 const lastCategory = (w) => { try { const id = localStorage.getItem(LAST_CAT(w.id)); const st = id && store.find('steps', id); return st && !st.deleted_at && !st.locked_at ? st.id : null; } catch (e) { return null; } };
 
-export function editOption(w, stepId, item) {
-  const d = { links: [], images: [], ...((item && item.data) || {}) };
+export function editOption(w, stepId, item, preset = {}) {
+  const d = { links: [], images: [], ...((item && item.data) || {}), ...(item ? {} : { images: preset.images || [], links: preset.links || [], notes: preset.notes || '' }) };
   const cf = categoryFields(w, stepId || d.step_id || (!item ? lastCategory(w) : null));
   const vendors = knownVendors();
   const dlId = 'oe-vendors-' + Math.random().toString(36).slice(2, 7);
@@ -332,7 +330,7 @@ export function editOption(w, stepId, item) {
   };
   drawThumbs();
   // New items can be an option to vote on, or just a sample for ideas — that goes on the mood board, under the category.
-  let asSample = false;
+  let asSample = !!preset.sample;
   const priceF = field('Price or quote', rate), phoneF = field('Phone', phone);
   const modeBox = item ? null : h('div', { class: 'oe-mode d-seg', role: 'radiogroup', 'aria-label': 'Add as' });
   const drawMode = () => {
@@ -343,12 +341,17 @@ export function editOption(w, stepId, item) {
     priceF.hidden = phoneF.hidden = asSample; splitBox.classList.toggle('off', asSample);
     const sv = document.querySelector('.modal .modal-actions .btn:not(.ghost)'); if (sv && sv.closest('.modal') && sv.closest('.modal').contains(modeBox)) sv.textContent = asSample ? 'Add to the mood board' : 'Save option';
   };
+  // The short version first — what goes on the card; everything else folds away under "More details".
+  const more = h('details', { class: 'oe-more' }, h('summary', {}, 'More details — when, who’s in charge, links, phone, notes'),
+    cf.extraEl,
+    field('Links', links, 'Instagram, website, Facebook… one per line. A link to one Instagram post shows the post itself.'),
+    field('About them', notes), phoneF);
+  if (item || (d.links || []).length || d.notes) more.open = true;
   const body = h('div', { class: 'oe-form' },
     modeBox,
-    cf.el, field('Name', name), known, h('datalist', { id: dlId }, [...vendors.values()].map(v => h('option', { value: v.title }))), priceF,
+    cf.mainEl, field('Name', name), known, h('datalist', { id: dlId }, [...vendors.values()].map(v => h('option', { value: v.title }))), priceF,
     h('div', { class: 'field' }, h('label', {}, 'Photos — their work, samples, front and back, price lists'), thumbs, status, splitBox),
-    field('Links', links, 'Instagram posts often don’t preview — add screenshots of their best work too.'),
-    field('About them', notes), phoneF);
+    more);
   drawMode();
   body.addEventListener('paste', (e) => { const fs = [...(e.clipboardData && e.clipboardData.files || [])].filter(f => f.type.startsWith('image/')); if (fs.length) { e.preventDefault(); addPhotos(fs); } });
   body.addEventListener('dragover', (e) => e.preventDefault());
@@ -359,7 +362,7 @@ export function editOption(w, stepId, item) {
       label: item ? 'Save' : 'Save option', onClick: async () => {
         if (!name.value.trim() && !images.length) { toast('Give it a name or a photo', 'error'); name.focus(); return false; }
         const title = name.value.trim();
-        if (asSample) return addSampleToBoard(w, cf, { title, notes: notes.value.trim(), links: links.value.split(/\s*\n\s*/).map(x => x.trim()).filter(Boolean), images });
+        if (asSample) { const r = await addSampleToBoard(w, cf, { title, notes: notes.value.trim(), links: links.value.split(/\s*\n\s*/).map(x => x.trim()).filter(Boolean), images }); if (r !== false && preset.onSaved) setTimeout(preset.onSaved, 50); return r; }
         let sid; try { sid = await store.batch(() => cf.resolve()); } catch (e) { fail(e); return false; }
         if (!sid) return false;
         // Same vendor already in this category? Ask before adding a second copy.
@@ -372,6 +375,7 @@ export function editOption(w, stepId, item) {
           else if (split && images.length > 1) await store.insertMany('board_items', images.map((im, i) => ({ wedding_id: w.id, kind: 'option', x: 0, y: 0, w: 280, z: 1, data: { ...base, title: `${title || 'Option'} ${i + 1}`, images: [im] } })));
           else await store.insert('board_items', { wedding_id: w.id, kind: 'option', x: 0, y: 0, w: 280, z: 1, data: base });
           try { localStorage.setItem(LAST_CAT(w.id), sid); } catch (e) { /* ignore */ }
+          if (preset.onSaved) setTimeout(preset.onSaved, 50);
           toast(item ? 'Saved' : split && images.length > 1 ? `${images.length} options added` : 'Added — the family will see it in New for you');
         } catch (e) { fail(e); return false; }
       }
@@ -633,6 +637,7 @@ export function openProfile(o, onVote) {
       h('div', { class: 'od-acts pf-acts' },
         isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Choose this — make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
+        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=46').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,

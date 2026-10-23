@@ -2570,3 +2570,29 @@ html body .btn.wa-btn:hover, html body .btn.wa-btn:focus-visible { background: l
 .chip-link.b-whatsapp, .lt-pic.b-whatsapp { background: #25D366 !important; color: #fff !important; border-color: transparent !important; }
 .ig-open { color: #E1306C !important; font-weight: 600; }
 .ig-show { border-color: rgba(221, 42, 123, .5) !important; color: #C13584 !important; background: rgba(221, 42, 123, .06) !important; }
+
+/* ---------- Add an option: the short form, with More details folded ---------- */
+.oe-more { border-top: 1px solid rgba(255, 255, 255, .1); padding-top: 10px; }
+.oe-more > summary { cursor: pointer; list-style: none; color: #E9C98A; font-size: 14px; font-weight: 500; padding: 6px 0; }
+.oe-more > summary::-webkit-details-marker { display: none; }
+.oe-more > summary::before { content: '＋ '; }
+.oe-more[open] > summary::before { content: '－ '; }
+.oe-more[open] { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---------- Shared into the War Room ---------- */
+.share-page { padding-bottom: 60px; display: flex; flex-direction: column; gap: 14px; }
+.sh-got { padding: 14px; border-radius: 18px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
+.sh-pics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sh-pics img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+.sh-more { display: grid; place-items: center; border-radius: 10px; background: rgba(255, 255, 255, .08); font-weight: 600; }
+.sh-sum { margin: 10px 0 0; color: #E9C98A; font-weight: 600; }
+.sh-text { margin: 6px 0 0; color: #DCD2C4; font-size: 14px; white-space: pre-wrap; }
+.sh-step { display: flex; flex-direction: column; gap: 8px; }
+.sh-step > b { font-family: var(--serif); font-size: 20px; color: #F1E3C2; }
+.sh-new { display: flex; flex-wrap: wrap; gap: 8px; }
+.sh-cat h3 { margin: 8px 0 6px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #D9B470; font-family: var(--sans); }
+.sh-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.sh-opt { display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .05); color: #F3ECE0; cursor: pointer; text-align: left; font: inherit; }
+.sh-opt img, .sh-ph { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 255, 255, .06); }
+.sh-on { display: flex; flex-direction: column; font-weight: 600; font-size: 13.5px; }
+.sh-on small { font-weight: 400; color: #E9C98A; }

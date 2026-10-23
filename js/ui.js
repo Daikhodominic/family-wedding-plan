@@ -1,5 +1,5 @@
 // Small UI helpers shared by every page.
-import { listen, onScreen } from './morph.js?v=45';
+import { listen, onScreen } from './morph.js?v=46';
 
 export function h(tag, props = {}, ...kids) {
   const el = document.createElement(tag);

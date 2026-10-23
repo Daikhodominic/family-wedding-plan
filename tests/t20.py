@@ -3,7 +3,7 @@ from playwright.async_api import async_playwright
 D=''
 B='http://localhost:8765/index.html?demo'
 SETUP = """async()=>{
- const {store}=await import('./js/store.js?v=45');
+ const {store}=await import('./js/store.js?v=46');
  const mk=async(c)=>{const cv=document.createElement('canvas'); cv.width=400; cv.height=300; const x=cv.getContext('2d'); const g=x.createLinearGradient(0,0,400,300); g.addColorStop(0,c[0]); g.addColorStop(1,c[1]); x.fillStyle=g; x.fillRect(0,0,400,300); x.fillStyle='rgba(255,255,255,.7)'; x.beginPath(); x.arc(200,150,70,0,7); x.fill(); const b=await new Promise(r=>cv.toBlob(r,'image/jpeg')); return store.uploadBlob(b,'jpg');};
  const steps=(t)=>store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title===t);
  const p1=await mk(['#c9d5de','#637f99']), p2=await mk(['#efe3d3','#c9967f']), p3=await mk(['#dcc9b6','#8f9eaf']);
