@@ -1,12 +1,12 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=23';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=23';
-import { uploadFile, pickFiles } from './board.js?v=23';
-import { isDecider, deciderNames, personInput } from './tools.js?v=23';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=23';
-import { voteCounts, optionKey } from './feedback.js?v=23';
-import { suggestDue } from './planauto.js?v=23';
-import { guestCount } from './boardauto.js?v=23';
+import { store } from './store.js?v=24';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=24';
+import { uploadFile, pickFiles } from './board.js?v=24';
+import { isDecider, deciderNames, personInput } from './tools.js?v=24';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=24';
+import { voteCounts, optionKey } from './feedback.js?v=24';
+import { suggestDue } from './planauto.js?v=24';
+import { guestCount } from './boardauto.js?v=24';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
