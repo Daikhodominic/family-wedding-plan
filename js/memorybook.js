@@ -1,11 +1,11 @@
 // A memory book of one wedding: everything that was decided (with its picture), favourite ideas
 // from the mood board, the numbers, who did what, and the announcements — as a page to print or save as a PDF.
-import { store } from './store.js?v=49';
-import { toast } from './ui.js?v=49';
-import { planOf } from './map.js?v=49';
-import { stepPicture } from './decisions.js?v=49';
-import { favScore } from './boardauto.js?v=49';
-import { samePerson } from './tools.js?v=49';
+import { store } from './store.js?v=50';
+import { toast } from './ui.js?v=50';
+import { planOf } from './map.js?v=50';
+import { stepPicture } from './decisions.js?v=50';
+import { favScore } from './boardauto.js?v=50';
+import { samePerson } from './tools.js?v=50';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const live = (t) => (store.rows(t) || []).filter(r => !r.deleted_at);

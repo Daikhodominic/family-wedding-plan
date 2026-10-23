@@ -11,7 +11,7 @@ async def main():
         b=await p.chromium.launch(); ctx=await b.new_context(viewport={'width':390,'height':844}, is_mobile=True, has_touch=True, device_scale_factor=1); pg=await ctx.new_page()
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(400)
         await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off']) localStorage.setItem('fwp-once-'+k,'1')}"); await pg.reload(); await pg.wait_for_timeout(600)
-        first=await pg.evaluate("async()=>{const m=await import('./js/swipe.js?v=49'); const {store}=await import('./js/store.js?v=49'); return m.categoriesOf(store.find('weddings','charani'))[0].step.id}")
+        first=await pg.evaluate("async()=>{const m=await import('./js/swipe.js?v=50'); const {store}=await import('./js/store.js?v=50'); return m.categoriesOf(store.find('weddings','charani'))[0].step.id}")
         out={}
         for name,h in PAGES:
             h=h.replace('FIRST',first)

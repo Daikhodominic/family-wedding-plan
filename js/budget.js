@@ -4,12 +4,12 @@
 //   contingency  — set by hand (starts at ₹0); unplanned payments and overspends draw from it
 //   areas        — the total split up; removing one frees its unspent money
 //   payments     — what is owed or paid; no area = unplanned (comes out of contingency)
-import { lockChip, toggleLock } from './locks.js?v=49';
-import { store } from './store.js?v=49';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS, popMenu } from './ui.js?v=49';
-import { live, weddings, themeOf, stepVisible } from './app.js?v=49';
-import { openStep } from './panel.js?v=49';
-import { deciderOnly, isDecider, deciderNames } from './tools.js?v=49';
+import { lockChip, toggleLock } from './locks.js?v=50';
+import { store } from './store.js?v=50';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS, popMenu } from './ui.js?v=50';
+import { live, weddings, themeOf, stepVisible } from './app.js?v=50';
+import { openStep } from './panel.js?v=50';
+import { deciderOnly, isDecider, deciderNames } from './tools.js?v=50';
 
 /* ---------- Money helpers ---------- */
 // Accepts "1,20,000", "120000", "1.2 lakh", "1.2L", "50k", "₹ 45,000".

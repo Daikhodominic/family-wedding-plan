@@ -1,22 +1,22 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=49';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=49';
-import { live, stepVisible, feedList, themeOf, render } from './app.js?v=49';
-import { openStep, lockIcon } from './panel.js?v=49';
-import { planOf, journeyBar } from './map.js?v=49';
-import { listSummary } from './lists.js?v=49';
-import { budgetMath, inr } from './budget.js?v=49';
-import { editStep } from './pipeline.js?v=49';
-import { canonical } from './myjobs.js?v=49';
-import { pictureEl } from './map.js?v=49';
-import { readyToDecide, favScore } from './boardauto.js?v=49';
-import { isDecider } from './tools.js?v=49';
-import { cardTitle } from './decisions.js?v=49';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=49';
-import { share, siteLink, copyLink } from './tools.js?v=49';
-import { planOffer } from './plans.js?v=49';
-import { newForYou, pendingFor } from './swipe.js?v=49';
-import { waButton, jobsMessage } from './nudge.js?v=49';
+import { store } from './store.js?v=50';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=50';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=50';
+import { openStep, lockIcon } from './panel.js?v=50';
+import { planOf, journeyBar } from './map.js?v=50';
+import { listSummary } from './lists.js?v=50';
+import { budgetMath, inr } from './budget.js?v=50';
+import { editStep } from './pipeline.js?v=50';
+import { canonical } from './myjobs.js?v=50';
+import { pictureEl } from './map.js?v=50';
+import { readyToDecide, favScore } from './boardauto.js?v=50';
+import { isDecider } from './tools.js?v=50';
+import { cardTitle } from './decisions.js?v=50';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=50';
+import { share, siteLink, copyLink } from './tools.js?v=50';
+import { planOffer } from './plans.js?v=50';
+import { newForYou, pendingFor } from './swipe.js?v=50';
+import { waButton, jobsMessage } from './nudge.js?v=50';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -137,7 +137,7 @@ export function renderOverview(root, w, params = {}) {
   const moreBtn = h('button', { type: 'button', class: 'btn ghost small oh-more', 'aria-haspopup': 'menu', onclick: () => popMenu(moreBtn, [
     { icon: 'comment', label: 'Share this week on WhatsApp', onClick: () => shareWeek(w) },
     { icon: 'plan', label: 'Add dates to my calendar', onClick: () => calendarFor(w) },
-    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=49').then(m => m.memoryBook(w)) },
+    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=50').then(m => m.memoryBook(w)) },
     isDecider() ? { icon: 'note', label: 'Post an announcement', onClick: () => newAnnouncement(w) } : null,
     isDecider() ? { icon: 'user', label: 'Share with the partner family', onClick: () => partnerLinks(w) } : { icon: 'user', label: 'What the partner family sees', href: `#/p/preview-${w.id}` },
     store.me.isAdmin && !fw ? { icon: 'lock', label: 'Preview final-week mode', href: `#/w/${w.id}?finalweek=1` } : null]) }, 'More ', h('span', { 'aria-hidden': 'true' }, '▾'));
@@ -175,7 +175,10 @@ export function renderOverview(root, w, params = {}) {
     h('div', { class: 'ds-row' }, finals.slice(0, 6).map(s => h('button', { type: 'button', class: 'ds-item', onclick: () => openStep(s.id) },
       pictureEl(s, 'ds-pic') || h('span', { class: 'ds-pic ph' }, '✓'),
       h('b', {}, (s.lock_note && s.lock_note.choice && s.lock_note.choice.title) || s.title),
-      h('span', {}, (s.lock_note && (s.lock_note.vendor || s.lock_note.with)) || s.title))))));
+      (() => { // under it: who it's with, or the section — never the same words twice
+        const t = (s.lock_note && s.lock_note.choice && s.lock_note.choice.title) || s.title;
+        const sub = (s.lock_note && (s.lock_note.vendor || s.lock_note.with)) || ((store.find('areas', s.area_id) || {}).title || '');
+        return sub && sub.trim().toLowerCase() !== t.trim().toLowerCase() ? h('span', {}, sub) : null; })())))));
 
   // Who is doing what
   const people = new Map();
@@ -224,12 +227,13 @@ export function renderOverview(root, w, params = {}) {
   const named = ppl.filter(([k]) => k !== '~');
   const nothingUrgent = !overdue.length && !doing.length && !soon.length;
   const toVote = pendingFor(w.id).length;
-  const nobody = open.filter(x => !String(x.owner || '').trim()).length;
+  // Only what's coming up soon: a long list of far-off steps with no name yet isn't urgent.
+  const nobody = open.filter(x => !String(x.owner || '').trim() && x.due && daysUntil(x.due) <= 30).length;
   const attention = (toVote || nobody) ? h('section', { class: 'oblock attention' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Needs you')),
     h('div', { class: 'olist' },
       toVote ? h('a', { class: 'orow', href: `#/w/${w.id}/swipe` }, h('span', { class: 'o-dot doing' }), h('span', { class: 'o-main' }, h('b', {}, `${toVote} ${toVote === 1 ? 'option' : 'options'} to vote on`), h('span', {}, 'Swipe through them in Choose'))) : null,
-      nobody ? h('a', { class: 'orow', href: `#/w/${w.id}/todo` }, h('span', { class: 'o-dot' }), h('span', { class: 'o-main' }, h('b', {}, `${nobody} ${nobody === 1 ? 'job has' : 'jobs have'} nobody in charge`), h('span', {}, 'Give each one a name in Jobs'))) : null)) : null;
+      nobody ? h('a', { class: 'orow', href: `#/w/${w.id}/todo` }, h('span', { class: 'o-dot' }), h('span', { class: 'o-main' }, h('b', {}, `${nobody} ${nobody === 1 ? 'job' : 'jobs'} due in the next month ${nobody === 1 ? 'has' : 'have'} nobody in charge`), h('span', {}, 'Give each one a name in Jobs'))) : null)) : null;
   const left = [
     attention,
     overdue.length ? block('Overdue', overdue, '', { key: w.id, cls: 'warnblock', countCls: 'warn', more: `#/w/${w.id}/plan` }) : null,
