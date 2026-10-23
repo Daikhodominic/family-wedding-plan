@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=40';
-import { h, modal , ICONS } from './ui.js?v=40';
-import { once, markOnce } from './tools.js?v=40';
+import { store } from './store.js?v=41';
+import { h, modal , ICONS } from './ui.js?v=41';
+import { once, markOnce } from './tools.js?v=41';
 
 const SLIDES = [
   ['Welcome to the War Room', 'Both weddings live here. Everyone in the family can add ideas, tick off jobs and see what’s been decided — from any phone or laptop.'],
@@ -30,7 +30,7 @@ export function maybeWelcome() {
 const TIPS = {
   overview: 'This page shows what’s happening now, what’s coming up, and who is doing what. Tap anything to open it.',
   plan: 'Tap a step to see its details, add files, or make it final. Tick the circle when it’s done. Drag by the dots to move things.',
-  board: 'Drop photos and links here, or press Ctrl+V to paste. Tap “Comment” on a card to discuss it; tap ☺ to react.',
+  board: 'Drop photos and links here, or press Ctrl+V to paste. Tap “Comment” on a card to discuss it; tap ♡ if you love it.',
   lists: 'Guest list, gifts, vehicles, songs… Start one below. Tick boxes and totals fill in by themselves.',
   budget: 'Everyone can see the money. Only the Deciders can change it. Tap any payment for details.',
   choose: 'Every big decision has its options here — photographers, rings, cards. Anyone can add one with photos and links; everyone votes; the Deciders choose.',

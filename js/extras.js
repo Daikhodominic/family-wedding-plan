@@ -1,10 +1,10 @@
-import { store } from './store.js?v=40';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=40';
-import { othersSummary, bringBackOthers } from './safety.js?v=40';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=40';
-import { confirmAreaRestore, inr } from './budget.js?v=40';
-import { clearAll } from './clear.js?v=40';
-import { downloadBackup, decidesFor } from './tools.js?v=40';
+import { store } from './store.js?v=41';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=41';
+import { othersSummary, bringBackOthers } from './safety.js?v=41';
+import { weddings, wedding, feedList, render, THEMES } from './app.js?v=41';
+import { confirmAreaRestore, inr } from './budget.js?v=41';
+import { clearAll } from './clear.js?v=41';
+import { downloadBackup, decidesFor } from './tools.js?v=41';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };
@@ -231,38 +231,27 @@ async function moveWedding(w, dir) {
 export function renderSettings() {
   if (!store.me.isAdmin) return h('main', { class: 'wrap' }, h('p', {}, 'Only the admin can open settings.'));
   const cards = weddings().map(w => {
-    const t = themeOf(w);
     const couple = h('input', { value: w.couple, maxlength: 80 });
     const mono = h('input', { value: w.monogram, maxlength: 9, placeholder: 'e.g. C&A' });
     const date = h('input', { type: 'date', value: w.wedding_date || '' });
     const note = h('input', { value: w.date_note || '', placeholder: 'e.g. February – March 2027' });
-    const theme = h('select', {}, Object.keys(THEMES).map(k => h('option', { value: k, selected: w.theme === k ? true : null }, k === 'blue' ? 'Slate & Mint (blue)' : 'Peony & Pearl (rose)')));
-    const accent = h('input', { type: 'color', value: t.accent });
-    const bg = h('input', { type: 'color', value: t.bg });
-    const light = h('input', { type: 'color', value: t.light });
+    const theme = h('select', {}, Object.keys(THEMES).map(k => h('option', { value: k, selected: w.theme === k ? true : null }, k === 'blue' ? 'Navy & gold' : 'Emerald garden')));
     return h('section', { class: 'panel' },
       h('h2', { class: 'serif', style: { margin: '0 0 12px', fontWeight: 500, fontSize: '26px' } }, w.couple),
       h('div', { class: 'form-grid' },
         h('div', { class: 'full' }, field('Couple names', couple)),
         field('Monogram', mono), field('Wedding date', date, w.wedding_date ? longDate(w.wedding_date) : 'Leave empty until it’s fixed'),
         h('div', { class: 'full' }, field('When it’s roughly happening (shown until the date is set)', note)),
-        h('div', { class: 'full' }, field('Theme', theme)),
-        field('Main colour', accent), field('Background', bg), field('Soft colour', light)),
+        h('div', { class: 'full' }, field('Look', theme, 'Navy & gold: blue medallion monogram. Emerald garden: wax-seal monogram on deep green.'))),
       h('div', { style: { display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap' } },
         h('button', {
-          class: 'btn', type: 'button', style: { background: t.accent }, onclick: async () => {
-            const base = THEMES[theme.value];
-            const custom = { v: 2 };
-            if (accent.value.toLowerCase() !== base.accent.toLowerCase()) custom.accent = accent.value;
-            if (bg.value.toLowerCase() !== base.bg.toLowerCase()) custom.bg = bg.value;
-            if (light.value.toLowerCase() !== base.light.toLowerCase()) custom.light = light.value;
+          class: 'btn', type: 'button', onclick: async () => {
             try {
-              await store.update('weddings', w.id, { couple: couple.value.trim() || w.couple, monogram: mono.value.trim(), wedding_date: date.value || null, date_note: note.value.trim(), theme: theme.value, theme_custom: custom });
+              await store.update('weddings', w.id, { couple: couple.value.trim() || w.couple, monogram: mono.value.trim(), wedding_date: date.value || null, date_note: note.value.trim(), theme: theme.value, theme_custom: {} });
               toast('Saved');
             } catch (e) { toast(e.message, 'error'); }
           }
-        }, 'Save'),
-        h('button', { class: 'btn ghost', type: 'button', onclick: () => { accent.value = THEMES[theme.value].accent; bg.value = THEMES[theme.value].bg; light.value = THEMES[theme.value].light; } }, 'Use the theme’s own colours')),
+        }, 'Save')),
       h('div', { style: { display: 'flex', gap: '8px', marginTop: '18px', paddingTop: '14px', borderTop: '1px solid var(--line-soft)', flexWrap: 'wrap', alignItems: 'center' } },
         h('span', { class: 'muted', style: { fontSize: '14px', marginRight: 'auto' } }, 'Order on the home page'),
         h('button', { class: 'btn ghost small', type: 'button', 'aria-label': 'Move earlier', onclick: () => moveWedding(w, -1) }, '← Earlier'),
@@ -279,7 +268,7 @@ export function renderSettings() {
   const nCouple = h('input', { maxlength: 80, placeholder: 'e.g. Engagement of …  or  Name & Name' });
   const nMono = h('input', { maxlength: 9, placeholder: 'e.g. A&B' });
   const nDate = h('input', { type: 'date' });
-  const nTheme = h('select', {}, h('option', { value: 'blue' }, 'Slate & Mint (blue)'), h('option', { value: 'rose' }, 'Peony & Pearl (rose)'));
+  const nTheme = h('select', {}, h('option', { value: 'blue' }, 'Navy & gold'), h('option', { value: 'rose' }, 'Emerald garden'));
   const nTpl = h('input', { type: 'checkbox', checked: true, id: 'new-tpl', style: { width: 'auto' } });
   const addSpace = h('section', { class: 'panel' },
     h('h2', { class: 'serif', style: { margin: '0 0 6px', fontWeight: 500, fontSize: '26px' } }, 'Add a wedding or event'),

@@ -1,10 +1,10 @@
 // Progress tracking and the Map view of a wedding's pipeline.
-import { store } from './store.js?v=40';
-import { h, shortDate, daysUntil, ICONS } from './ui.js?v=40';
-import { openStep, lockIcon } from './panel.js?v=40';
-import { stepPicture, previewUrl } from './decisions.js?v=40';
-import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=40';
-import { areaIcon, ringSvg, roman } from './areaicons.js?v=40';
+import { store } from './store.js?v=41';
+import { h, shortDate, daysUntil, ICONS } from './ui.js?v=41';
+import { openStep, lockIcon } from './panel.js?v=41';
+import { stepPicture, previewUrl } from './decisions.js?v=41';
+import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=41';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=41';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -52,7 +52,7 @@ export function journeyBar(w, plan, { onPick } = {}) {
         h('span', {}, h('i', { class: 'jseg doing' }), 'Underway'), h('span', {}, h('i', { class: 'jseg done' }), 'Done'), h('span', {}, h('i', { class: 'jseg locked' }), 'Final'))));
 }
 
-// The map: stages left to right, areas as columns of numbered nodes, joined by lines.
+// The map: stages left to right (top to bottom on phones), areas as columns of numbered stations, joined by lines.
 export function renderMap(root, w, plan, params) {
   const map = h('div', { class: 'pmap' });
   const inner = h('div', { class: 'pmap-inner' });
@@ -98,10 +98,17 @@ export function renderMap(root, w, plan, params) {
       const next = areas[i + 1];
       if (ns.length && next) {
         const nn = next.querySelector('.mnode');
-        if (nn) {
+        const cls = ar.classList.contains('done') || ar.classList.contains('locked') ? 'done' : '';
+        // On phones the areas stack top to bottom, so the link drops from the last station to the next area's badge.
+        if (nn && next.getBoundingClientRect().top >= ar.getBoundingClientRect().bottom - 2) {
+          const last = ns[ns.length - 1].querySelector('.mnum') || ns[ns.length - 1], r1 = last.getBoundingClientRect();
+          const tgt = next.querySelector('.area-badge') || nn, r2 = tgt.getBoundingClientRect();
+          const x1 = r1.left - box.left + r1.width / 2, y1 = r1.bottom - box.top, x2 = r2.left - box.left + r2.width / 2, y2 = r2.top - box.top - 4;
+          paths.push(`<path d="M${x1} ${y1} C${x1} ${y1 + 40}, ${x2} ${y2 - 40}, ${x2} ${y2}" class="link ${cls}"/><circle cx="${x2}" cy="${y2}" r="3" class="link-dot"/>`);
+        } else if (nn) {
           const [x1, y1] = pt(ns[ns.length - 1], 'out'), [x2, y2] = pt(nn, 'in');
           const mx = (x1 + x2) / 2;
-          paths.push(`<path d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2 - 4} ${y2}" class="link ${ar.classList.contains('done') || ar.classList.contains('locked') ? 'done' : ''}"/><circle cx="${x2 - 4}" cy="${y2}" r="3" class="link-dot"/>`);
+          paths.push(`<path d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2 - 4} ${y2}" class="link ${cls}"/><circle cx="${x2 - 4}" cy="${y2}" r="3" class="link-dot"/>`);
         }
       }
     });

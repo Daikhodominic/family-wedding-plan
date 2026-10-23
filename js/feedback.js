@@ -1,7 +1,7 @@
 // Reactions, comments & suggestions, and option votes on mood board cards.
-import { store } from './store.js?v=40';
-import { h, toast, ago, ICONS } from './ui.js?v=40';
-import { live } from './app.js?v=40';
+import { store } from './store.js?v=41';
+import { h, toast, ago, ICONS } from './ui.js?v=41';
+import { live } from './app.js?v=41';
 
 export const EMOJI = ['❤️', '👍', '😍', '😂', '😮', '🙏'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -30,20 +30,19 @@ async function toggle(item, target, value, exclusive = []) {
   } catch (e) { fail(e); }
 }
 
-// The strip along the bottom of every card: reactions, and the comments button.
+// The strip along the bottom of every card: one heart (the same "love it" as the swipe deck), and comments.
+// Older emoji reactions still show their counts, but only the heart can be added now.
 export function cardFooter(item) {
   const rs = reactionsOf(item.id);
-  const counts = EMOJI.map(e => ({ e, list: rs.filter(r => r.value === e) })).filter(x => x.list.length);
+  const hearts = rs.filter(r => r.value === '❤️');
+  const older = EMOJI.slice(1).map(e => ({ e, list: rs.filter(r => r.value === e) })).filter(x => x.list.length);
   const n = commentsOf(item.id).length, fresh = newCount(item.id);
-  const picker = h('div', { class: 'rx-pick', hidden: true }, EMOJI.map(e => h('button', { type: 'button', 'aria-label': 'React ' + e, onclick: () => { picker.hidden = true; toggle(item, 'card', e); } }, e)));
+  const mine = hearts.some(r => r.created_by === store.me.id);
   return h('div', { class: 'cfoot' },
-    counts.map(({ e, list }) => h('button', {
-      type: 'button', class: 'rx' + (list.some(r => r.created_by === store.me.id) ? ' mine' : ''), title: list.map(r => r.user_name || 'Someone').join(', '),
-      onclick: () => toggle(item, 'card', e)
-    }, e, h('span', {}, String(list.length)))),
-    h('span', { class: 'rx-wrap' },
-      h('button', { type: 'button', class: 'rx add', 'aria-label': 'Add a reaction', title: 'React', onclick: () => { picker.hidden = !picker.hidden; } }, '☺', h('span', {}, '+')),
-      picker),
+    h('button', { type: 'button', class: 'rx heart' + (mine ? ' mine' : ''), 'aria-pressed': String(mine), 'aria-label': mine ? 'Remove your love' : 'Love it',
+      title: hearts.length ? hearts.map(r => r.user_name || 'Someone').join(', ') : 'Love it', onclick: () => toggle(item, 'card', '❤️') },
+      h('span', { class: 'rx-h', html: ICONS.heart }), hearts.length ? h('span', {}, String(hearts.length)) : null),
+    older.map(({ e, list }) => h('span', { class: 'rx old', title: list.map(r => r.user_name || 'Someone').join(', ') }, e, h('span', {}, String(list.length)))),
     h('button', { type: 'button', class: 'cbtn' + (fresh ? ' fresh' : ''), onclick: () => openThread(item.id), title: fresh ? `${fresh} new` : 'Comments and suggestions' },
       h('span', { html: ICONS.comment }), n ? String(n) : 'Comment', fresh ? h('i', { class: 'newdot', 'aria-label': `${fresh} new` }) : null));
 }

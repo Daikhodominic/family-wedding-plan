@@ -1,26 +1,25 @@
-import { store, onStatus, syncState } from './store.js?v=40';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=40';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=40';
-import { renderBoard } from './board.js?v=40';
-import { renderTodo } from './todo.js?v=40';
-import { renderFiles } from './files.js?v=40';
-import { renderDecide } from './decide.js?v=40';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=40';
-import { clearPage, clearAll } from './clear.js?v=40';
-import { undoButtons } from './history.js?v=40';
-import { downloadBackup } from './tools.js?v=40';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=40';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=40';
-import { announcementBars } from './planauto.js?v=40';
-import { renderPartner } from './partner.js?v=40';
-import { renderOverview, editDate } from './overview.js?v=40';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=40';
-import { renderLists } from './lists.js?v=40';
-import { planOf } from './map.js?v=40';
-import { openStep, closeDrawer } from './panel.js?v=40';
-import { waNumber } from './nudge.js?v=40';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=40';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=40';
+import { store, onStatus, syncState } from './store.js?v=41';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=41';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=41';
+import { renderBoard } from './board.js?v=41';
+import { renderTodo } from './todo.js?v=41';
+import { renderFiles } from './files.js?v=41';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=41';
+import { clearPage, clearAll } from './clear.js?v=41';
+import { undoButtons } from './history.js?v=41';
+import { downloadBackup } from './tools.js?v=41';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=41';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=41';
+import { announcementBars } from './planauto.js?v=41';
+import { renderPartner } from './partner.js?v=41';
+import { renderOverview, editDate } from './overview.js?v=41';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=41';
+import { renderLists } from './lists.js?v=41';
+import { planOf } from './map.js?v=41';
+import { openStep, closeDrawer } from './panel.js?v=41';
+import { waNumber } from './nudge.js?v=41';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=41';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=41';
 
 const app = document.getElementById('app');
 
@@ -340,7 +339,7 @@ function renderSpace(id, sub, params) {
   else if (tab === 'choose') renderChoose(body, w);
   else if (tab === 'options') renderOptions(body, w, params.step);
   else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step }); }
-  else if (tab === 'decide') renderDecide(body, w, params);
+  else if (tab === 'decide') renderOverview(body, w, params); // the old Decisions page now lives on the Overview and in Choose
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
   else if (tab === 'lists') renderLists(body, w, params);

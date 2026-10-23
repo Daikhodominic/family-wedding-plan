@@ -2,10 +2,10 @@
 // (no prices, rates or phone numbers), what's been decided (no amounts) and how far along
 // it is — and can react, vote and send suggestions, which the family sees.
 // Security lives in the database (update 9): partners only ever receive partner_data().
-import { store } from './store.js?v=40';
-import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=40';
-import { live, themeOf, monogram, applyTheme, render } from './app.js?v=40';
-import { EMOJI } from './feedback.js?v=40';
+import { store } from './store.js?v=41';
+import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=41';
+import { live, themeOf, monogram, applyTheme, render } from './app.js?v=41';
+import { EMOJI } from './feedback.js?v=41';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That didn’t work. Check your connection.', 'error'); };
 let state = { token: null, data: null, mode: null, loading: false, error: null };
@@ -96,7 +96,7 @@ function pic(path, cls = '') {
 }
 const count = (itemId, target, value) => (state.data.reactions || []).find(r => r.item_id === itemId && r.target === target && r.value === value) || { n: 0, mine: false };
 function reactBar(it) {
-  return h('div', { class: 'pv-react' }, EMOJI.slice(0, 4).map(e => { const c = count(it.id, 'card', e); return h('button', { type: 'button', class: 'rx' + (c.mine ? ' mine' : ''), 'aria-label': 'React ' + e, onclick: () => react(it.id, 'card', e) }, e, c.n ? h('span', {}, String(c.n)) : null); }),
+  return h('div', { class: 'pv-react' }, ['❤️'].map(e => { const c = count(it.id, 'card', e); return h('button', { type: 'button', class: 'rx heart' + (c.mine ? ' mine' : ''), 'aria-label': c.mine ? 'Remove your love' : 'Love it', onclick: () => react(it.id, 'card', e) }, h('span', { class: 'rx-h', html: ICONS.heart }), c.n ? h('span', {}, String(c.n)) : null); }),
     h('button', { type: 'button', class: 'cbtn', onclick: (e) => { const box = e.currentTarget.closest('.pv-card').querySelector('.pv-suggest'); box.hidden = !box.hidden; if (!box.hidden) box.querySelector('textarea').focus(); } }, h('span', { html: ICONS.comment }), 'Suggest'));
 }
 function suggestBox(itemId) {

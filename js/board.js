@@ -1,11 +1,12 @@
-import { store } from './store.js?v=40';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=40';
-import { live, ui, render } from './app.js?v=40';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=40';
-import { together } from './history.js?v=40';
-import { isDecider } from './tools.js?v=40';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=40';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=40';
+import { store } from './store.js?v=41';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=41';
+import { live, ui, render, wedding } from './app.js?v=41';
+import { cardsToOptions } from './swipe.js?v=41';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=41';
+import { together } from './history.js?v=41';
+import { isDecider } from './tools.js?v=41';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=41';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=41';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -412,6 +413,7 @@ function cardBody(item) {
         })) : h('div', { class: 'by' }, 'No options yet — tap the pencil to add them.'),
         (() => { const ins = compareInsight(item); return ins ? h('div', { class: 'cmp-ins' }, ins.text) : null; })(),
         readyToDecide(item) && isDecider() ? h('div', { class: 'ready-tag' }, '✦ Lots of votes — ready to decide?') : null,
+        h('button', { type: 'button', class: 'pill', style: { marginTop: '8px' }, title: 'Comparisons now live in Choose, where everyone can swipe and vote', onclick: (e) => { e.stopPropagation(); cardsToOptions(wedding(item.wedding_id), [item]); } }, 'Move these to Choose →'),
         byline);
     }
   }
@@ -710,7 +712,6 @@ export function renderBoard(root, w, params) {
     tool('link', 'Link', () => addThenEdit('link', { url: '', title: '' })),
     tool('file', 'Document', async () => { const fs = await pickFiles('.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf'); if (fs.length) addFiles(fs, null, 'separate'); }),
     tool('contact', 'Contact', () => addThenEdit('contact', { title: '', phone: '', role: '' })),
-    tool('compare', 'Comparison', () => addThenEdit('compare', { title: '', options: [{ title: '', rate: '', contact: '', chosen: false }, { title: '', rate: '', contact: '', chosen: false }] })),
     tool('label', 'Section', () => addThenEdit('label', { text: '' })),
     tool('palette', 'Colours', () => addThenEdit('palette', { title: 'Colours', colors: [{ name: 'Colour', hex: '#cccccc' }] })),
     tool('collage', 'Collage', async () => { const fs = (await pickFiles('image/*')).filter(f => /^image\//.test(f.type)); if (fs.length) addFiles(fs, null, 'grid'); }),
@@ -1132,16 +1133,10 @@ function groupBar() {
     board.multi.clear(); toast('Made a collage — undo if you change your mind');
   };
   const toCompare = async () => {
-    measure();
-    const src = [...rs].filter(o => !['label', 'compare', 'shape', 'connector'].includes(o.it.kind)).sort(byPosn);
-    if (src.length < 2) { toast('Pick at least two photos, links or notes to compare'); return; }
-    const opt = (o) => { const d = o.it.data || {}; return { oid: 'o' + Math.random().toString(36).slice(2, 10), title: cardTitle(o.it), rate: d.rate || '', contact: d.phone || '', notes: [d.url, d.kind === 'note' ? '' : d.caption].filter(Boolean).join(' · '), image: o.it.kind === 'image' ? d.path : o.it.kind === 'gallery' && d.images && d.images[0] ? d.images[0].path : d.thumb || null, chosen: false }; };
-    const x = Math.min(...src.map(o => o.r.x)), y = Math.min(...src.map(o => o.r.y));
-    await together(async () => {
-      await store.insert('board_items', { wedding_id: ctx.w.id, kind: 'compare', x, y, w: Math.min(1100, 260 * src.length + 40), z: topZ(ctx.w) + 1, data: { title: 'Which one?', options: src.map(opt) } });
-      await store.removeMany('board_items', src.map(o => o.id));
-    }).catch(fail);
-    board.multi.clear(); toast('Comparison made — everyone can vote now. Undo if you change your mind.');
+    measure(); const src = [...rs].filter(o => !['label', 'shape', 'connector', 'palette', 'checklist'].includes(o.it.kind));
+    if (!src.length) { toast('Pick photos, links or notes to send to Choose'); return; }
+    const n = await cardsToOptions(ctx.w, src.map(o => o.it));
+    if (n) board.multi.clear();
   };
   return h('div', { class: 'selbar groupbar', role: 'toolbar', 'aria-label': 'Selected cards' },
     h('span', { class: 'gb-n' }, `${els.length} selected`),
@@ -1152,7 +1147,7 @@ function groupBar() {
     h('button', { type: 'button', class: 'dt wide', onclick: alignTop }, 'Align top'),
     h('button', { type: 'button', class: 'dt wide', onclick: sameWidth, title: 'Make them all as wide as the first' }, 'Same width'),
     images.length >= 2 ? h('button', { type: 'button', class: 'dt wide', onclick: toCollage }, 'Make a collage') : null,
-    els.length >= 2 ? h('button', { type: 'button', class: 'dt wide', onclick: toCompare, title: 'Put these side by side so the family can vote' }, 'Compare these') : null,
+    h('button', { type: 'button', class: 'dt wide', onclick: toCompare, title: 'Make these options in a category so the family can swipe and vote' }, 'Send to Choose'),
     h('button', { type: 'button', class: 'dt wide danger', onclick: () => { board.multi.clear(); store.removeMany('board_items', ids).then(() => toast(`Moved ${ids.length} to the Bin`)).catch(fail); } }, 'Delete'),
     h('button', { type: 'button', class: 'dt', 'aria-label': 'Clear selection', html: ICONS.close, onclick: () => { board.multi.clear(); render(); } }));
 }

@@ -1,15 +1,15 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=40';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=40';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=40';
-import { isDecider } from './tools.js?v=40';
-import { addVendor } from './decisions.js?v=40';
-import { pickFiles, fetchPreview } from './board.js?v=40';
-import { planOf } from './map.js?v=40';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=40';
-import { sampleRows, isSample } from './samples.js?v=40';
+import { store } from './store.js?v=41';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=41';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=41';
+import { isDecider } from './tools.js?v=41';
+import { addVendor } from './decisions.js?v=41';
+import { pickFiles, fetchPreview } from './board.js?v=41';
+import { planOf } from './map.js?v=41';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=41';
+import { sampleRows, isSample } from './samples.js?v=41';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -146,6 +146,45 @@ async function addPhotosTo(o) {
   if (!added.length) return;
   const cur = store.find('board_items', o.id) || o;
   await store.update('board_items', o.id, { data: { ...(cur.data || {}), images: [...((cur.data || {}).images || []), ...added] } }).then(() => toast(`${added.length} ${added.length === 1 ? 'photo' : 'photos'} added`)).catch(fail);
+}
+
+/* ---------- Mood-board cards become options ----------
+   Comparisons used to live as cards on the mood board with ▲/▼ votes. Options in Choose
+   now do that job (swipe, compare, choose), so cards are sent there instead. */
+export function pickCategory(w, title = 'Which category?', hint = '') {
+  return new Promise((resolve) => {
+    const cats = categoriesOf(w);
+    const allSteps = live(store.rows('steps')).filter(s => s.wedding_id === w.id && stepVisible(s));
+    const sel = h('select', {},
+      h('option', { value: '' }, 'Choose a category…'),
+      h('optgroup', { label: 'Big decisions' }, cats.map(c => h('option', { value: c.step.id }, c.step.title))),
+      h('optgroup', { label: 'Any other step' }, allSteps.filter(s => !cats.some(c => c.step.id === s.id)).sort((a, b) => a.title.localeCompare(b.title)).map(s => h('option', { value: s.id }, s.title))));
+    let done = false;
+    modal({ title, body: [hint ? h('p', { class: 'muted', style: { marginTop: 0 } }, hint) : null, field('Category', sel)].filter(Boolean),
+      onClose: () => { if (!done) resolve(null); },
+      actions: [{ label: 'Send to Choose', onClick: () => { if (!sel.value) { toast('Pick a category first', 'error'); return false; } done = true; resolve(sel.value); } }] });
+  });
+}
+export async function cardsToOptions(w, rows) {
+  const stepId = await pickCategory(w, 'Send to Choose as options', 'Each one becomes an option everyone can swipe, compare and vote on.');
+  if (!stepId) return 0;
+  const opts = [];
+  for (const it of rows) {
+    const d = it.data || {};
+    if (it.kind === 'compare') {
+      for (const o of d.options || []) opts.push({ title: o.title || 'Option', rate: o.rate ? (/^\s*₹/.test(o.rate) ? o.rate : '₹' + o.rate) : '', notes: o.notes || '', phone: o.contact || '', links: [], images: o.image ? [{ path: o.image }] : [], status: o.chosen ? 'chosen' : 'open' });
+    } else {
+      const images = it.kind === 'image' && d.path ? [{ path: d.path }] : it.kind === 'gallery' ? (d.images || []).map(x => ({ path: x.path })) : d.thumb ? [{ path: d.thumb }] : [];
+      opts.push({ title: d.title || d.caption || (d.text || '').split('\n')[0].slice(0, 80) || (it.kind === 'link' ? hostOf(d.url || '') : 'Option'), rate: d.rate || '', notes: it.kind === 'note' ? d.text || '' : d.caption || '', phone: d.phone || '', links: d.url ? [d.url] : [], images, status: 'open' });
+    }
+  }
+  if (!opts.length) return 0;
+  await store.batch(async () => {
+    await store.insertMany('board_items', opts.map(o => ({ wedding_id: w.id, kind: 'option', x: 0, y: 0, w: 280, z: 1, data: { step_id: stepId, ...o } })));
+    await store.removeMany('board_items', rows.map(r => r.id));
+  }).catch(fail);
+  toast(`${opts.length} ${opts.length === 1 ? 'option' : 'options'} added to Choose — the cards went to the Bin`);
+  return opts.length;
 }
 
 /* ---------- Add or edit an option ---------- */
@@ -306,7 +345,7 @@ function deckCard(o, rest, onVote) {
     if (e.target.closest('button, a') || (e.pointerType === 'mouse' && e.button !== 0)) return;
     const r = card.getBoundingClientRect();
     tilt = (e.clientY - r.top) < r.height * .5 ? 1 : -1; // grabbed low? it tips the other way
-    dragging = true; moved = false; sx = lastX = e.clientX; sy = lastY = e.clientY; lastT = e.timeStamp; dx = dy = vx = vy = 0;
+    dragging = true; ui.busy = true; moved = false; sx = lastX = e.clientX; sy = lastY = e.clientY; lastT = e.timeStamp; dx = dy = vx = vy = 0;
     card.setPointerCapture(e.pointerId);
   });
   card.addEventListener('pointermove', (e) => {
@@ -319,7 +358,7 @@ function deckCard(o, rest, onVote) {
     if (moved) { e.preventDefault(); schedule(); }
   });
   const end = (e) => {
-    if (!dragging) return; dragging = false;
+    if (!dragging) return; dragging = false; ui.busy = false;
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
     if (!moved) {
       settle();

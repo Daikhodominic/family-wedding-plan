@@ -1,6 +1,6 @@
 // Small shared helpers: roles, backup, sharing, calendar files, people.
-import { store } from './store.js?v=40';
-import { h, toast } from './ui.js?v=40';
+import { store } from './store.js?v=41';
+import { h, toast } from './ui.js?v=41';
 
 /* ---------- Roles ---------- */
 const routeWedding = () => { const m = /^#\/w\/([^/?]+)/.exec(location.hash || ''); return m ? decodeURIComponent(m[1]) : null; };
