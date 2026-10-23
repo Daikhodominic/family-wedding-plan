@@ -36,9 +36,8 @@ async def main():
                     if await pg.locator('.modal-wrap').count(): await pg.locator('.modal-wrap .modal-x, .modal-wrap [aria-label="Close"]').first.click(); await pg.wait_for_timeout(200)
                 # add an option
                 await pg.click('button:has-text("+ Add an option")'); await pg.wait_for_timeout(400)
-                ins = pg.locator('.oe-form input')
-                await ins.nth(0).fill('Test Studio'); await ins.nth(1).fill('₹70,000')
-                await pg.locator('.oe-form textarea').nth(0).fill('https://www.instagram.com/test\nhttps://example.org')
+                await pg.locator('.oe-form input[placeholder^="e.g. Lens"]').fill('Test Studio'); await pg.locator('.oe-form input[placeholder^="e.g. ₹"]').fill('₹70,000')
+                await pg.locator('.oe-form textarea[placeholder^="One link"]').fill('https://www.instagram.com/test\nhttps://example.org')
                 await pg.click('.modal-actions .btn:has-text("Add option")'); await pg.wait_for_timeout(700)
                 print('after add:', await pg.locator('.opt-card .oc-t').all_inner_texts())
                 await pg.locator('.opt-card:has-text("Lens") button:has-text("Choose")').click(); await pg.wait_for_timeout(300)

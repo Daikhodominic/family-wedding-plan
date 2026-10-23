@@ -1,15 +1,15 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=42';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=42';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=42';
-import { isDecider } from './tools.js?v=42';
-import { addVendor } from './decisions.js?v=42';
-import { pickFiles, fetchPreview } from './board.js?v=42';
-import { planOf } from './map.js?v=42';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=42';
-import { sampleRows, isSample } from './samples.js?v=42';
+import { store } from './store.js?v=43';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=43';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=43';
+import { isDecider } from './tools.js?v=43';
+import { addVendor } from './decisions.js?v=43';
+import { pickFiles, fetchPreview } from './board.js?v=43';
+import { planOf } from './map.js?v=43';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=43';
+import { sampleRows, isSample } from './samples.js?v=43';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -151,18 +151,94 @@ async function addPhotosTo(o) {
 /* ---------- Mood-board cards become options ----------
    Comparisons used to live as cards on the mood board with ▲/▼ votes. Options in Choose
    now do that job (swipe, compare, choose), so cards are sent there instead. */
+/* ---------- Category: pick one or type a new one, with when it happens and who is in charge ----------
+   Typing a name that isn't in the plan yet makes a new step there (marked a big decision so it shows in Choose).
+   Changing "When" or "In charge" for an existing category updates that step in the plan too. */
+const byPosition = (a, b) => (a.position || 0) - (b.position || 0);
+export const peopleNames = () => [...new Set([...(store.rows('members') || []).map(m => m.name), ...live(store.rows('steps')).map(x => x.owner)].map(x => String(x || '').trim()).filter(x => x && x !== 'You'))].sort((a, b) => a.localeCompare(b));
+const stageOfStep = (st) => { const a = st && store.find('areas', st.area_id); return a ? store.find('stages', a.stage_id) : null; };
+let cfN = 0;
+export function categoryFields(w, stepId) {
+  const n = ++cfN;
+  const stages = live(store.rows('stages')).filter(x => x.wedding_id === w.id).sort(byPosition);
+  const areasIn = (sid) => live(store.rows('areas')).filter(a => a.stage_id === sid).sort(byPosition);
+  const cats = categoriesOf(w).map(c => c.step);
+  const steps = [...cats, ...live(store.rows('steps')).filter(x => x.wedding_id === w.id && stepVisible(x) && !cats.some(c => c.id === x.id)).sort((a, b) => a.title.localeCompare(b.title))];
+  const cur = stepId ? store.find('steps', stepId) : null;
+  const cat = h('input', { value: cur ? cur.title : '', list: 'cf-cats-' + n, placeholder: 'Pick one, or type a new one — e.g. Make-up artist', maxlength: 120, autocomplete: 'off' });
+  const when = h('select', {}, stages.length ? stages.map(st => h('option', { value: st.id }, st.title)) : h('option', { value: '' }, 'Before'));
+  const area = h('select', {});
+  const who = h('input', { list: 'cf-people-' + n, placeholder: 'Who is handling it', maxlength: 80, autocomplete: 'off', value: cur ? cur.owner || '' : '' });
+  const due = h('input', { type: 'date', value: cur && cur.due ? cur.due : '' });
+  const note = h('p', { class: 'hint cf-note', style: { margin: '-4px 0 0' } });
+  const areaField = field('Part of the plan', area);
+  let matched = cur, startStage = cur ? stageOfStep(cur) : null;
+  const fillAreas = () => {
+    const as = areasIn(when.value);
+    const keep = matched && store.find('areas', matched.area_id);
+    area.replaceChildren(...as.map(a => h('option', { value: a.id, selected: keep && keep.id === a.id ? true : null }, a.title)), h('option', { value: '__new', selected: !as.length || (!keep && !as.some(a => /^choices$/i.test(a.title))) ? true : null }, '+ A new part called “Choices”'));
+    const ch = as.find(a => /^choices$/i.test(a.title)); if (ch && !(keep && keep.stage_id === when.value)) area.value = ch.id;
+  };
+  const sync = (fromTyping) => {
+    const t = cat.value.trim().toLowerCase();
+    const m = t ? steps.find(x => x.title.trim().toLowerCase() === t) : null;
+    if (fromTyping && m && m !== matched) { who.value = m.owner || ''; due.value = m.due || ''; }
+    matched = m;
+    if (m) { const st = stageOfStep(m); if (fromTyping && st) when.value = st.id; startStage = st; }
+    if (!m && startStage === null && stages[0] && fromTyping) { /* a new name: keep whatever stage is picked */ }
+    fillAreas();
+    const moving = m && startStage && when.value !== startStage.id;
+    areaField.hidden = !!m && !moving;
+    const st = stages.find(x => x.id === when.value);
+    note.textContent = !t ? '' : m ? (moving ? `It moves to ${st ? st.title : 'that part'} in the plan.` : `In the plan under ${st ? st.title : '—'}${store.find('areas', m.area_id) ? ' · ' + store.find('areas', m.area_id).title : ''}.`) : `New category — it is added to the plan under ${st ? st.title : 'Before'}.`;
+  };
+  cat.addEventListener('input', () => sync(true)); cat.addEventListener('change', () => sync(true));
+  when.addEventListener('change', () => sync(false));
+  if (cur) { const st = stageOfStep(cur); if (st) when.value = st.id; }
+  sync(false);
+  const el = h('div', { class: 'cf' },
+    field('Category', cat), note,
+    h('div', { class: 'cf-row' }, field('When', when), field('In charge', who), field('Due by', due)),
+    areaField,
+    h('datalist', { id: 'cf-cats-' + n }, steps.map(x => h('option', { value: x.title }))),
+    h('datalist', { id: 'cf-people-' + n }, peopleNames().map(x => h('option', { value: x }))));
+  // Makes or updates the step, and gives back its id (null if the category is empty).
+  const resolve = async () => {
+    const title = cat.value.replace(/\s+/g, ' ').trim();
+    if (!title) { toast('Pick or type a category', 'error'); cat.focus(); return null; }
+    sync(false);
+    const owner = who.value.trim(), dueV = due.value || null;
+    let stageId = when.value;
+    if (!stageId) { const st = await store.insert('stages', { wedding_id: w.id, title: 'Before', position: 1000 }); stageId = st.id; }
+    const areaFor = async () => {
+      if (area.value && area.value !== '__new') return area.value;
+      const as = areasIn(stageId); const ch = as.find(a => /^choices$/i.test(a.title)); if (ch) return ch.id;
+      const a = await store.insert('areas', { wedding_id: w.id, stage_id: stageId, title: 'Choices', position: ((as[as.length - 1] || {}).position || 0) + 1000 }); return a.id;
+    };
+    const endOf = (aid) => (live(store.rows('steps')).filter(x => x.area_id === aid).reduce((mx, x) => Math.max(mx, x.position || 0), 0)) + 1000;
+    if (matched) {
+      const patch = {};
+      if (owner !== (matched.owner || '')) patch.owner = owner;
+      if ((dueV || null) !== (matched.due || null)) patch.due = dueV;
+      const st = stageOfStep(matched);
+      if (st && st.id !== stageId) { const aid = await areaFor(); patch.area_id = aid; patch.position = endOf(aid); }
+      if (Object.keys(patch).length) await store.update('steps', matched.id, patch);
+      return matched.id;
+    }
+    const aid = await areaFor();
+    const row = await store.insert('steps', { wedding_id: w.id, area_id: aid, title, notes: '', owner, due: dueV, status: 'todo', position: endOf(aid), gate: true });
+    return row.id;
+  };
+  return { el, resolve, focus: () => cat.focus() };
+}
+
 export function pickCategory(w, title = 'Which category?', hint = '') {
   return new Promise((resolve) => {
-    const cats = categoriesOf(w);
-    const allSteps = live(store.rows('steps')).filter(s => s.wedding_id === w.id && stepVisible(s));
-    const sel = h('select', {},
-      h('option', { value: '' }, 'Choose a category…'),
-      h('optgroup', { label: 'Big decisions' }, cats.map(c => h('option', { value: c.step.id }, c.step.title))),
-      h('optgroup', { label: 'Any other step' }, allSteps.filter(s => !cats.some(c => c.step.id === s.id)).sort((a, b) => a.title.localeCompare(b.title)).map(s => h('option', { value: s.id }, s.title))));
+    const cf = categoryFields(w);
     let done = false;
-    modal({ title, body: [hint ? h('p', { class: 'muted', style: { marginTop: 0 } }, hint) : null, field('Category', sel)].filter(Boolean),
+    modal({ title, body: [hint ? h('p', { class: 'muted', style: { marginTop: 0 } }, hint) : null, cf.el].filter(Boolean),
       onClose: () => { if (!done) resolve(null); },
-      actions: [{ label: 'Send to Choose', onClick: () => { if (!sel.value) { toast('Pick a category first', 'error'); return false; } done = true; resolve(sel.value); } }] });
+      actions: [{ label: 'Send to Choose', onClick: async () => { let id; try { id = await cf.resolve(); } catch (e) { fail(e); return false; } if (!id) return false; done = true; resolve(id); } }] });
   });
 }
 export async function cardsToOptions(w, rows) {
@@ -190,12 +266,7 @@ export async function cardsToOptions(w, rows) {
 /* ---------- Add or edit an option ---------- */
 export function editOption(w, stepId, item) {
   const d = { links: [], images: [], ...((item && item.data) || {}) };
-  const cats = categoriesOf(w);
-  const allSteps = live(store.rows('steps')).filter(s => s.wedding_id === w.id && stepVisible(s));
-  const cat = h('select', {},
-    h('option', { value: '' }, 'Choose a category…'),
-    h('optgroup', { label: 'Big decisions' }, cats.map(c => h('option', { value: c.step.id, selected: c.step.id === (stepId || d.step_id) ? true : null }, c.step.title))),
-    h('optgroup', { label: 'Any other step' }, allSteps.filter(s => !cats.some(c => c.step.id === s.id)).sort((a, b) => a.title.localeCompare(b.title)).map(s => h('option', { value: s.id, selected: s.id === (stepId || d.step_id) ? true : null }, s.title))));
+  const cf = categoryFields(w, stepId || d.step_id);
   const name = h('input', { value: d.title || '', placeholder: 'e.g. Lens & Light Studio', maxlength: 120 });
   const rate = h('input', { value: d.rate || '', placeholder: 'e.g. ₹85,000 · church + reception', maxlength: 160 });
   const notes = h('textarea', { placeholder: 'Who they are, their style, what’s included…' }, d.notes || '');
@@ -219,7 +290,7 @@ export function editOption(w, stepId, item) {
   };
   drawThumbs();
   const body = h('div', { class: 'oe-form' },
-    field('Category', cat), field('Name', name), field('Price or quote', rate),
+    cf.el, field('Name', name), field('Price or quote', rate),
     h('div', { class: 'field' }, h('label', {}, 'Photos — their work, samples, price lists, screenshots'), thumbs, status),
     field('Links', links, 'Instagram posts often don’t preview — add screenshots of their best work too.'),
     field('About them', notes), field('Phone', phone));
@@ -230,9 +301,10 @@ export function editOption(w, stepId, item) {
     title: item ? 'Edit option' : 'Add an option', wide: true, body,
     actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, {
       label: item ? 'Save' : 'Add option', onClick: async () => {
-        if (!cat.value) { toast('Choose a category first', 'error'); cat.focus(); return false; }
         if (!name.value.trim() && !images.length) { toast('Give it a name or a photo', 'error'); name.focus(); return false; }
-        const data = { ...d, step_id: cat.value, title: name.value.trim(), rate: rate.value.trim(), notes: notes.value.trim(), phone: phone.value.trim(),
+        let sid; try { sid = await store.batch(() => cf.resolve()); } catch (e) { fail(e); return false; }
+        if (!sid) return false;
+        const data = { ...d, step_id: sid, title: name.value.trim(), rate: rate.value.trim(), notes: notes.value.trim(), phone: phone.value.trim(),
           links: links.value.split(/\s*\n\s*/).map(x => x.trim()).filter(Boolean), images, status: d.status || 'open' };
         try {
           if (item) await store.update('board_items', item.id, { data });
@@ -474,7 +546,7 @@ export function renderChoose(root, w) {
   const nfy = newForYou(w.id); if (nfy) root.append(nfy);
   const cats = categoriesOf(w);
   if (!cats.length) { root.append(h('p', { class: 'muted' }, 'No categories yet. Mark a step in the plan as a big decision, or add an option to any step.')); return; }
-  const tile = ({ step, area, n }) => {
+  const tile = ({ step, area, stage, n }) => {
     const opts = optionsOf(w.id, step.id);
     const chosen = opts.find(o => (o.data || {}).status === 'chosen');
     const ranked = opts.filter(isOpen).sort((a, b) => votesOf(b).score - votesOf(a).score);
@@ -485,8 +557,9 @@ export function renderChoose(root, w) {
       h('span', { class: 'ct-pic' }, show && firstPic(show) ? img(firstPic(show), '') : h('span', { class: 'ct-ph' }, step.locked_at ? '✓' : n ? initials(step.title) : '+')),
       fresh ? h('span', { class: 'ct-new' }, `${fresh} new`) : null,
       h('span', { class: 'ct-body' },
-        h('span', { class: 'ct-area' }, area.title),
+        h('span', { class: 'ct-area' }, [stage && stage.title, area.title].filter(Boolean).join(' · ')),
         h('b', {}, step.title),
+        step.owner ? h('span', { class: 'ct-who' }, 'In charge: ' + step.owner) : null,
         h('span', { class: 'ct-sub' }, step.locked_at ? '✓ ' + ((step.lock_note && (step.lock_note.with || step.lock_note.vendor)) || 'Final') : n ? `${n} ${n === 1 ? 'option' : 'options'}${lead ? ' · leading: ' + (lead.data || {}).title : ''}` : 'No options yet — add one')));
   };
   const open = cats.filter(c => !c.step.locked_at && c.n), empty = cats.filter(c => !c.step.locked_at && !c.n), done = cats.filter(c => c.step.locked_at);
@@ -499,6 +572,35 @@ export function renderChoose(root, w) {
 
 /* ---------- One category: its options, votes, compare, inspiration ---------- */
 const picking = new Set();
+// The line under a category's name: when it happens, who is in charge, when it's due — tap to change.
+function catMeta(w, step) {
+  const st = stageOfStep(step);
+  const bits = [st ? st.title : null, step.owner ? 'In charge: ' + step.owner : 'Nobody in charge yet', step.due ? 'Due ' + new Date(step.due + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : null].filter(Boolean);
+  return h('div', { class: 'cat-meta' }, bits.map((b, i) => h('span', { class: 'cm-bit' + (i === 1 && !step.owner ? ' none' : '') }, b)),
+    h('button', { type: 'button', class: 'link-btn cm-edit', onclick: () => editCategory(w, step) }, 'Change'));
+}
+export function editCategory(w, step) {
+  const cf = categoryFields(w, step.id);
+  const title = cf.el.querySelector('input');
+  modal({ title: 'This category', body: [cf.el, h('p', { class: 'hint', style: { margin: 0 } }, 'Renaming here renames the step in the plan. Changes show for everyone straight away.')],
+    actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, { label: 'Save', onClick: async () => {
+      const newTitle = title.value.replace(/\s+/g, ' ').trim();
+      if (!newTitle) { toast('Give the category a name', 'error'); return false; }
+      try {
+        await store.batch(async () => {
+          // A new name for this same category renames the step rather than making another one.
+          if (newTitle.toLowerCase() !== step.title.trim().toLowerCase()) {
+            if (live(store.rows('steps')).some(x => x.wedding_id === w.id && x.id !== step.id && x.title.trim().toLowerCase() === newTitle.toLowerCase())) throw new Error('Another step already has that name — pick a different one.');
+            await store.update('steps', step.id, { title: newTitle });
+            title.value = step.title; // so the rest below updates this same step
+          }
+          await cf.resolve();
+        });
+        toast('Saved');
+      } catch (e) { fail(e); return false; }
+    } }] });
+}
+
 export function renderOptions(root, w, stepId) {
   const step = store.find('steps', stepId);
   if (!step || step.deleted_at) { root.append(h('p', {}, 'That category was not found. ', h('a', { href: `#/w/${w.id}/choose` }, 'Back to Choose'))); return; }
@@ -508,7 +610,8 @@ export function renderOptions(root, w, stepId) {
   for (const id of [...picking]) if (!opts.some(o => o.id === id)) picking.delete(id);
   root.append(h('div', { class: 'ph-row' },
     h('div', {}, h('a', { class: 'back-link', href: `#/w/${w.id}/choose` }, '‹ Choose'), h('div', { class: 'eyebrow' }, area ? area.title : 'Category'), h('h1', { class: 'page-title' }, step.title),
-      step.locked_at ? h('p', { class: 'final-line' }, '✓ Final — ' + ((step.lock_note && (step.lock_note.with || step.lock_note.vendor)) || 'decided')) : null),
+      step.locked_at ? h('p', { class: 'final-line' }, '✓ Final — ' + ((step.lock_note && (step.lock_note.with || step.lock_note.vendor)) || 'decided')) : null,
+      catMeta(w, step)),
     h('div', { class: 'ph-right' },
       fresh ? h('a', { class: 'btn', href: `#/w/${w.id}/swipe?step=${step.id}` }, `Swipe · ${fresh} new`) : null,
       h('button', { type: 'button', class: fresh ? 'btn ghost' : 'btn', onclick: () => editOption(w, step.id) }, '+ Add an option'),

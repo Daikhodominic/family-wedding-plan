@@ -2322,3 +2322,24 @@ textarea.ltitle.lt-page:focus { border-bottom-color: rgba(217, 180, 112, .5) !im
   body[data-theme=rose] .ltable.big th:nth-child(2), body[data-theme=rose] .ltable.big td:nth-child(2) { background: #1D3A30 !important; }
   .ltable.big td:nth-child(2) input { min-width: 140px; font-weight: 500; }
 }
+
+/* ---------- Category fields (Add an option, Send to Choose, Change category) ---------- */
+.cf { display: flex; flex-direction: column; gap: 12px; }
+.cf-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; }
+.cf-row .field { margin: 0; }
+@media (max-width: 560px) { .cf-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); } .cf-row .field:last-child { grid-column: 1 / -1; } }
+.cf-note:empty { display: none; }
+.cf-note { color: #D9B470 !important; font-size: 12.5px; }
+.cat-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.cm-bit { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); color: #DCD2C4; }
+.cm-bit:first-child { color: #E9C98A; border-color: rgba(217, 180, 112, .4); }
+.cm-bit.none { color: #F0A58A; border-color: rgba(240, 154, 122, .35); }
+.cm-edit { font-size: 13px; color: #E9C98A !important; margin-left: 2px; }
+.ct-who { font-size: 12px; color: #D9B470; }
+/* Phone pop-ups: the button bar gets a solid base so the form never shows through behind it */
+@media (max-width: 760px) {
+  .modal-actions { background: linear-gradient(180deg, rgba(20, 26, 40, 0), rgba(20, 26, 40, .96) 34%) !important; z-index: 5; }
+  body[data-theme=rose] .modal-actions { background: linear-gradient(180deg, rgba(18, 38, 31, 0), rgba(18, 38, 31, .96) 34%) !important; }
+}
+/* Touch screens keep a "hover" on the last thing tapped — don't light up the bottom bar for it */
+@media (hover: none) { .snav a:hover { background: transparent !important; color: inherit !important; } }
