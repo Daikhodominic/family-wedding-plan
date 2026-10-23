@@ -1,17 +1,17 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=46';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=46';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=46';
-import { isDecider, personInput } from './tools.js?v=46';
-import { suggestDue } from './planauto.js?v=46';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=46';
-import { addVendor } from './decisions.js?v=46';
-import { pickFiles, fetchPreview } from './board.js?v=46';
-import { planOf } from './map.js?v=46';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=46';
-import { sampleRows, isSample } from './samples.js?v=46';
+import { store } from './store.js?v=47';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=47';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=47';
+import { isDecider, personInput } from './tools.js?v=47';
+import { suggestDue } from './planauto.js?v=47';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=47';
+import { addVendor } from './decisions.js?v=47';
+import { pickFiles, fetchPreview } from './board.js?v=47';
+import { planOf } from './map.js?v=47';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=47';
+import { sampleRows, isSample } from './samples.js?v=47';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -163,12 +163,13 @@ export function categoryFields(w, stepId) {
   };
   due.addEventListener('change', showSugg);
   const note = h('p', { class: 'hint cf-note', style: { margin: '-4px 0 0' } });
-  const areaField = field('Part of the plan', area);
+  const areaField = field('Section', area, 'Where it sits in the plan, inside the stage chosen in “When”.');
   let matched = cur, startStage = cur ? stageOfStep(cur) : null;
   const fillAreas = () => {
     const as = areasIn(when.value);
     const keep = matched && store.find('areas', matched.area_id);
-    area.replaceChildren(...as.map(a => h('option', { value: a.id, selected: keep && keep.id === a.id ? true : null }, a.title)), h('option', { value: '__new', selected: !as.length || (!keep && !as.some(a => /^choices$/i.test(a.title))) ? true : null }, '+ A new part called “Choices”'));
+    const stName = (stages.find(x => x.id === when.value) || {}).title || 'Before';
+    area.replaceChildren(...as.map(a => h('option', { value: a.id, selected: keep && keep.id === a.id ? true : null }, `${stName} › ${a.title}`)), h('option', { value: '__new', selected: !as.length || (!keep && !as.some(a => /^choices$/i.test(a.title))) ? true : null }, `${stName} › + a new section called “Choices”`));
     const ch = as.find(a => /^choices$/i.test(a.title)); if (ch && !(keep && keep.stage_id === when.value)) area.value = ch.id;
   };
   const sync = (fromTyping) => {
@@ -183,7 +184,7 @@ export function categoryFields(w, stepId) {
     areaField.hidden = !!m && !moving;
     const st = stages.find(x => x.id === when.value);
     showSugg();
-    note.textContent = !t ? '' : m ? (moving ? `It moves to ${st ? st.title : 'that part'} in the plan.` : `In the plan under ${st ? st.title : '—'}${store.find('areas', m.area_id) ? ' · ' + store.find('areas', m.area_id).title : ''}.`) : `New category — it is added to the plan under ${st ? st.title : 'Before'}.`;
+    note.textContent = !t ? '' : m ? (moving ? `It moves to ${st ? st.title : 'that stage'} in the plan.` : `In the plan under ${st ? st.title : '—'}${store.find('areas', m.area_id) ? ' · ' + store.find('areas', m.area_id).title : ''}.`) : `New category — it is added to the plan under ${st ? st.title : 'Before'}.`;
   };
   cat.addEventListener('input', () => sync(true)); cat.addEventListener('change', () => sync(true));
   when.addEventListener('change', () => sync(false));
@@ -637,7 +638,7 @@ export function openProfile(o, onVote) {
       h('div', { class: 'od-acts pf-acts' },
         isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Choose this — make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
-        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=46').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
+        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=47').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,

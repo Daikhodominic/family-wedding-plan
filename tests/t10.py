@@ -28,9 +28,9 @@ async def main():
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(400)
         print('after close cbtn', await pg.locator('.card.compare .cbtn').inner_text(), await pg.locator('.card.compare').get_attribute('class'))
         # non-admin view of chosen
-        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=46'); store.me.isAdmin=false; store.emit({});}"); await pg.wait_for_timeout(500)
+        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=47'); store.me.isAdmin=false; store.emit({});}"); await pg.wait_for_timeout(500)
         print('non-admin choose buttons', await pg.locator('.card.compare button.pill').count(), 'chosen tags', await pg.locator('.card.compare span.pill.on').count())
-        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=46'); store.me.isAdmin=true; store.emit({});}"); await pg.wait_for_timeout(300)
+        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=47'); store.me.isAdmin=true; store.emit({});}"); await pg.wait_for_timeout(300)
         # clear this page via menu
         await pg.click('.avatar'); await pg.click('.mi:has-text("Clear the mood board")'); await pg.wait_for_timeout(200)
         await pg.click('.modal-actions .btn:has-text("Clear this page")'); await pg.wait_for_timeout(500)

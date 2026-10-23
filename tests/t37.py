@@ -45,7 +45,7 @@ async def main():
             await (await fc.value).set_files('sample.jpg'); await pg.wait_for_timeout(400)
         print('save label', await m.locator('.modal-actions .btn:not(.ghost)').inner_text())
         await m.locator('.modal-actions .btn:not(.ghost)').click(); await pg.wait_for_timeout(800)
-        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=46'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
+        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=47'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
         print('sample on board', r); assert r==[True, True, 2]
         print('errors', errs); assert not errs
         await b.close()
