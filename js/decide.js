@@ -1,10 +1,10 @@
 // Decide and Budget pages. Both read the same data as the plan, so they update live.
-import { store } from './store.js?v=38';
-import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=38';
-import { live, stepVisible } from './app.js?v=38';
-import { openStep, lockIcon } from './panel.js?v=38';
-import { cardsForStep } from './decisions.js?v=38';
-import { voteCounts, optionKey } from './feedback.js?v=38';
+import { store } from './store.js?v=39';
+import { h, secHead, shortDate, daysUntil, ICONS } from './ui.js?v=39';
+import { live, stepVisible } from './app.js?v=39';
+import { openStep, lockIcon } from './panel.js?v=39';
+import { cardsForStep } from './decisions.js?v=39';
+import { voteCounts, optionKey } from './feedback.js?v=39';
 
 const where = (s) => {
   const a = store.find('areas', s.area_id); const st = a && store.find('stages', a.stage_id);

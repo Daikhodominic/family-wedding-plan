@@ -1,11 +1,11 @@
-import { store } from './store.js?v=38';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=38';
-import { live, ui, render } from './app.js?v=38';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=38';
-import { together } from './history.js?v=38';
-import { isDecider } from './tools.js?v=38';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=38';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=38';
+import { store } from './store.js?v=39';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=39';
+import { live, ui, render } from './app.js?v=39';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=39';
+import { together } from './history.js?v=39';
+import { isDecider } from './tools.js?v=39';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=39';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=39';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },

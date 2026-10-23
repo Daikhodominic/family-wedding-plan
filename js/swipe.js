@@ -1,15 +1,15 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=38';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=38';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=38';
-import { isDecider } from './tools.js?v=38';
-import { addVendor } from './decisions.js?v=38';
-import { pickFiles, fetchPreview } from './board.js?v=38';
-import { planOf } from './map.js?v=38';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=38';
-import { sampleRows, isSample } from './samples.js?v=38';
+import { store } from './store.js?v=39';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=39';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=39';
+import { isDecider } from './tools.js?v=39';
+import { addVendor } from './decisions.js?v=39';
+import { pickFiles, fetchPreview } from './board.js?v=39';
+import { planOf } from './map.js?v=39';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=39';
+import { sampleRows, isSample } from './samples.js?v=39';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -127,6 +127,7 @@ export function openOption(o) {
         h('div', { class: 'od-acts' },
           can ? h('button', { type: 'button', class: 'btn', onclick: () => { closeAll(); chooseOption(cur); } }, 'Choose this — make it final') : null,
           isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
+          h('button', { type: 'button', class: 'btn ghost small', onclick: () => addPhotosTo(cur) }, '+ Add photos'),
           h('button', { type: 'button', class: 'btn ghost small', onclick: () => { closeAll(); editOption(w, dd.step_id, cur); } }, 'Edit'),
           (cur.created_by === store.me.id || store.me.isAdmin) ? h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { closeAll(); store.remove('board_items', cur.id).then(() => toast('Moved to the Bin')).catch(fail); } }, 'Remove') : null))];
   };
@@ -135,6 +136,17 @@ export function openOption(o) {
   modal({ title: d.title || 'Option', wide: true, body, onClose: off });
 }
 const closeAll = () => document.querySelectorAll('.modal-wrap').forEach(m => m.remove());
+
+// Add more photos to a vendor straight from its card (pick many at once from the phone's gallery).
+async function addPhotosTo(o) {
+  const files = await pickFiles('image/*', true); if (!files.length) return;
+  toast(`Adding ${files.length} ${files.length === 1 ? 'photo' : 'photos'}…`);
+  const added = [];
+  for (const f of files) { try { const blob = await compressImage(f); added.push({ path: await store.uploadBlob(blob, 'jpg') }); } catch (e) { fail(e); } }
+  if (!added.length) return;
+  const cur = store.find('board_items', o.id) || o;
+  await store.update('board_items', o.id, { data: { ...(cur.data || {}), images: [...((cur.data || {}).images || []), ...added] } }).then(() => toast(`${added.length} ${added.length === 1 ? 'photo' : 'photos'} added`)).catch(fail);
+}
 
 /* ---------- Add or edit an option ---------- */
 export function editOption(w, stepId, item) {
@@ -236,14 +248,17 @@ function deckCard(o, rest, onVote) {
   let pi = 0;
   const photo = h('div', { class: 'sw-photo' });
   const dots = h('div', { class: 'sw-dots' });
+  const count = h('span', { class: 'sw-count-pic' });
   const showPic = () => {
     photo.replaceChildren(pics.length ? img(pics[pi], 'sw-img', d.title || '') : placeholder(o, 'sw-img'));
-    dots.replaceChildren(...(pics.length > 1 ? pics.map((_, i) => h('span', { class: i === pi ? 'on' : '' })) : []));
+    dots.replaceChildren(...(pics.length > 1 ? pics.map((_, i) => h('span', { class: i === pi ? 'on' : i < pi ? 'seen' : '' })) : []));
+    count.textContent = pics.length > 1 ? `${pi + 1} / ${pics.length}` : '';
+    if (pics[pi + 1]) store.url(pics[pi + 1]).then(u => { if (u) { const im = new Image(); im.src = u; } }); // next photo ready before the tap
   };
   showPic();
   const v = votesOf(o);
   const card = h('article', { class: 'sw-card', tabindex: '0', 'aria-label': `${d.title || 'Option'}${s ? ' for ' + s.title : ''}` },
-    h('div', { class: 'sw-top' }, photo, dots,
+    h('div', { class: 'sw-top' }, photo, dots, count,
       h('span', { class: 'sw-cat' }, s ? s.title : 'Option'),
       w ? h('span', { class: 'sw-w', style: { '--wc': themeOf(w).accent } }, w.monogram || w.couple) : null,
       d.rate ? h('span', { class: 'sw-rate' }, d.rate) : null,
@@ -256,21 +271,69 @@ function deckCard(o, rest, onVote) {
         pics.length > 1 ? h('span', { class: 'chip-link' }, `${pics.length} photos`) : null,
         v.total ? h('span', { class: 'sw-sofar' }, `♥ ${v.love.length} · ? ${v.maybe.length} · ✕ ${v.no.length} so far`) : null),
       h('button', { type: 'button', class: 'link-btn sw-more', onclick: (e) => { e.stopPropagation(); openOption(o); } }, 'See everything — photos, links, bio →')));
-  // Drag to vote; tap the sides of the photo to flip photos, the middle to open it.
-  let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, moved = false;
-  const setT = () => { card.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx / 18}deg)`; card.dataset.lean = dx > 40 ? 'love' : dx < -40 ? 'no' : dy < -50 ? 'maybe' : ''; };
-  card.addEventListener('pointerdown', (e) => { if (e.target.closest('button, a')) return; dragging = true; moved = false; sx = e.clientX; sy = e.clientY; dx = dy = 0; card.setPointerCapture(e.pointerId); card.classList.add('dragging'); });
-  card.addEventListener('pointermove', (e) => { if (!dragging) return; dx = e.clientX - sx; dy = e.clientY - sy; if (Math.abs(dx) + Math.abs(dy) > 8) moved = true; setT(); });
+  // Swiping, the way Tinder does it: the card stays glued to the finger, tilts from where
+  // you grabbed it, and the stamp fades in as you go. Sideways = love it / not this, up = maybe.
+  // Past the line (or a quick flick) it flies off; let go early and it springs back.
+  // Tap the left or right of the photo to see the vendor's other photos.
+  const W = () => card.offsetWidth || 340;
+  let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false, moved = false, raf = 0, lastX = 0, lastY = 0, lastT = 0, vx = 0, vy = 0, tilt = 1, crossed = '';
+  const under = () => card.parentElement && card.parentElement.querySelector('.sw-under:not(.two)');
+  const decide = () => {
+    const far = W() * .38;
+    if (-dy > Math.abs(dx) * 1.1 && -dy > 120) return 'maybe';
+    if (Math.abs(dx) > far) return dx > 0 ? 'love' : 'no';
+    return '';
+  };
+  const paint = () => {
+    raf = 0;
+    card.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${(dx / W()) * 18 * tilt}deg)`;
+    const px = Math.min(1, Math.abs(dx) / (W() * .38)), py = Math.min(1, Math.max(0, -dy) / 120);
+    const up = -dy > Math.abs(dx) * 1.1;
+    card.querySelector('.sw-stamp.love').style.opacity = !up && dx > 0 ? px : 0;
+    card.querySelector('.sw-stamp.no').style.opacity = !up && dx < 0 ? px : 0;
+    card.querySelector('.sw-stamp.maybe').style.opacity = up ? py : 0;
+    const u = under(); if (u) { const k = Math.max(px, up ? py : 0); u.style.transform = `scale(${.95 + k * .05})`; u.style.opacity = String(.6 + k * .4); }
+    const d = decide(); if (d && d !== crossed) buzz(8); crossed = d;
+  };
+  const schedule = () => { if (!raf) raf = requestAnimationFrame(paint); };
+  const settle = () => {
+    card.classList.remove('dragging'); card.style.transform = '';
+    card.querySelectorAll('.sw-stamp').forEach(x => { x.style.opacity = 0; });
+    const u = under(); if (u) { u.style.transform = ''; u.style.opacity = ''; }
+    crossed = '';
+  };
+  card.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button, a') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const r = card.getBoundingClientRect();
+    tilt = (e.clientY - r.top) < r.height * .5 ? 1 : -1; // grabbed low? it tips the other way
+    dragging = true; moved = false; sx = lastX = e.clientX; sy = lastY = e.clientY; lastT = e.timeStamp; dx = dy = vx = vy = 0;
+    card.setPointerCapture(e.pointerId);
+  });
+  card.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    dx = e.clientX - sx; dy = e.clientY - sy;
+    if (dy > 0) dy *= .35; // pulling down resists
+    const dt = Math.max(1, e.timeStamp - lastT); vx = vx * .5 + ((e.clientX - lastX) / dt) * .5; vy = vy * .5 + ((e.clientY - lastY) / dt) * .5;
+    lastX = e.clientX; lastY = e.clientY; lastT = e.timeStamp;
+    if (!moved && Math.hypot(dx, dy) > 8) { moved = true; card.classList.add('dragging'); }
+    if (moved) { e.preventDefault(); schedule(); }
+  });
   const end = (e) => {
-    if (!dragging) return; dragging = false; card.classList.remove('dragging');
+    if (!dragging) return; dragging = false;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
     if (!moved) {
-      card.style.transform = ''; card.dataset.lean = '';
+      settle();
       const r = photo.getBoundingClientRect();
-      if (e.clientY <= r.bottom && pics.length > 1) { const x = (e.clientX - r.left) / r.width; if (x < .33) { pi = (pi - 1 + pics.length) % pics.length; showPic(); return; } if (x > .67) { pi = (pi + 1) % pics.length; showPic(); return; } }
+      if (e.clientY <= r.bottom && pics.length > 1) { const x = (e.clientX - r.left) / r.width; if (x < .35) { pi = (pi - 1 + pics.length) % pics.length; showPic(); return; } if (x > .65) { pi = (pi + 1) % pics.length; showPic(); return; } }
       openOption(o); return;
     }
-    if (dx > 110) onVote('love'); else if (dx < -110) onVote('no'); else if (dy < -110) onVote('maybe');
-    else { card.style.transform = ''; card.dataset.lean = ''; }
+    let d = decide();
+    const flick = .9;
+    if (!d && Math.abs(vx) > flick && Math.abs(dx) > 60 && Math.abs(vx) > Math.abs(vy)) d = vx > 0 ? 'love' : 'no';
+    if (!d && vy < -flick && dy < -60 && -vy > Math.abs(vx)) d = 'maybe';
+    card.classList.remove('dragging');
+    if (d) { onVote(d); return; }
+    settle(); // springs back with a little bounce
   };
   card.addEventListener('pointerup', end); card.addEventListener('pointercancel', end);
   card._vote = onVote;
@@ -309,7 +372,7 @@ export function renderSwipe(root, opts = {}) {
     const c = root.querySelector('.sw-card'); if (c) { c.classList.add('fly-' + value); }
     lastVote = { o, v: value };
     quickVote(o, value, redraw);
-    setTimeout(redraw, 170); // the next card appears while the vote saves
+    setTimeout(redraw, 230); // the next card appears while the vote saves
   };
   const stage = h('div', { class: 'sw-stage' },
     list[2] ? h('div', { class: 'sw-under two' }) : null,
