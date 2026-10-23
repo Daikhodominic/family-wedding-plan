@@ -2,11 +2,11 @@
 // Each step: [title, note, big decision?, suggested?]. Suggested steps came from
 // Claude's review of Catholic weddings in Nagaland and Manipur; the rest are the family's own list.
 // Each to-do: [title, due date, where it belongs].
-import { store } from './store.js?v=28';
-import { h, toast, modal } from './ui.js?v=28';
-import { live } from './app.js?v=28';
-import { SECTIONS } from './clear.js?v=28';
-import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=28';
+import { store } from './store.js?v=29';
+import { h, toast, modal , ICONS } from './ui.js?v=29';
+import { live } from './app.js?v=29';
+import { SECTIONS } from './clear.js?v=29';
+import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=29';
 
 const S = (title, note = '', gate = false, sugg = false) => [title, note, gate, sugg];
 
@@ -338,7 +338,7 @@ export function planOffer(w) {
   const fresh = !loaded(w, p);
   if (!fresh && store.mode === 'live') { autoTopUp(w, p); return null; }
   const m = fresh ? null : missingFor(w, p);
-  return h('section', { class: 'tip auto' }, h('span', { class: 'tip-i' }, '✦'),
+  return h('section', { class: 'tip auto' }, h('span', { class: 'tip-i', html: ICONS.sparkle }),
     fresh
       ? h('span', {}, h('b', {}, 'The full checklist is ready. '), `${stepCount(p)} steps${hasTodos() ? ` and ${p.todos.length} dated to-dos` : ''} — it replaces the sample content.`)
       : h('span', {}, h('b', {}, 'New items are ready. '), `${m.steps.length} steps${m.todos.length ? ` and ${m.todos.length} to-dos` : ''} to add to the plan.`),

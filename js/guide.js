@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=28';
-import { h, modal } from './ui.js?v=28';
-import { once, markOnce } from './tools.js?v=28';
+import { store } from './store.js?v=29';
+import { h, modal , ICONS } from './ui.js?v=29';
+import { once, markOnce } from './tools.js?v=29';
 
 const SLIDES = [
   ['Welcome to the War Room', 'Both weddings live here. Everyone in the family can add ideas, tick off jobs and see what’s been decided — from any phone or laptop.'],
@@ -40,7 +40,7 @@ const TIPS = {
 export function tip(key) {
   if (!TIPS[key] || !once('tip-' + key)) return null;
   const el = h('div', { class: 'tip', role: 'note' },
-    h('span', { class: 'tip-i' }, '✦'), h('span', {}, TIPS[key]),
+    h('span', { class: 'tip-i', html: ICONS.sparkle }), h('span', {}, TIPS[key]),
     h('button', { type: 'button', class: 'tip-x', onclick: () => { markOnce('tip-' + key); el.remove(); } }, 'Got it'));
   return el;
 }

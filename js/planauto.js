@@ -1,11 +1,11 @@
 // The plan helping itself: suggested due dates, "looks finished", the weekly summary,
 // calendar files, announcements, final-week mode and copying between weddings.
-import { store } from './store.js?v=28';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, fancyDate } from './ui.js?v=28';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=28';
-import { together } from './history.js?v=28';
-import { isDecider, deciderOnly, share, siteLink, icsFile } from './tools.js?v=28';
-import { openStep } from './panel.js?v=28';
+import { store } from './store.js?v=29';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, fancyDate , ICONS } from './ui.js?v=29';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=29';
+import { together } from './history.js?v=29';
+import { isDecider, deciderOnly, share, siteLink, icsFile } from './tools.js?v=29';
+import { openStep } from './panel.js?v=29';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -51,7 +51,7 @@ export function datesBanner(w) {
   if (!w.wedding_date) return null;
   const n = stepsNeedingDates(w).length;
   if (n < 3) return null;
-  return h('div', { class: 'tip auto' }, h('span', { class: 'tip-i' }, '✦'),
+  return h('div', { class: 'tip auto' }, h('span', { class: 'tip-i', html: ICONS.sparkle }),
     h('span', {}, `${n} steps have no due date. Fill them in by counting back from the wedding (${shortDate(w.wedding_date)})? You can change any of them.`),
     h('button', { type: 'button', class: 'tip-x', onclick: () => fillSuggestedDates(w) }, 'Fill in dates'));
 }

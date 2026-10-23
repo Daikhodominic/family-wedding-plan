@@ -1,14 +1,14 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=28';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=28';
-import { addStepAt } from './addhere.js?v=28';
-import { uploadFile, pickFiles } from './board.js?v=28';
-import { isDecider, deciderNames, personInput } from './tools.js?v=28';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=28';
-import { voteCounts, optionKey } from './feedback.js?v=28';
-import { suggestDue } from './planauto.js?v=28';
-import { guestCount } from './boardauto.js?v=28';
-import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=28';
+import { store } from './store.js?v=29';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=29';
+import { addStepAt } from './addhere.js?v=29';
+import { uploadFile, pickFiles } from './board.js?v=29';
+import { isDecider, deciderNames, personInput } from './tools.js?v=29';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=29';
+import { voteCounts, optionKey } from './feedback.js?v=29';
+import { suggestDue } from './planauto.js?v=29';
+import { guestCount } from './boardauto.js?v=29';
+import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=29';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -121,8 +121,10 @@ export function openStep(stepId) {
   if (current) current.close();
   const root = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': 'Step details' });
   const shade = h('div', { class: 'drawer-shade', onclick: () => close() });
+  const grab = h('div', { class: 'sheet-grab', 'aria-hidden': 'true' });
   document.body.append(shade, root);
   requestAnimationFrame(() => { root.classList.add('open'); shade.classList.add('open'); });
+  dragToClose(root, [grab], () => close());
   let lockForm = false;
 
   const draw = () => {
@@ -190,6 +192,7 @@ export function openStep(stepId) {
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('over'); if (e.dataTransfer.files.length) uploadTo(s.wedding_id, s.id, [...e.dataTransfer.files]); });
 
     root.replaceChildren(
+      grab,
       h('div', { class: 'd-top' },
         h('div', { class: 'ft-sub' }, [stage && stage.title, area && area.title].filter(Boolean).join(' › ')),
         h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', html: ICONS.close, onclick: () => close() })),
@@ -277,6 +280,7 @@ function boardSection(s, area) {
     !cards.length ? h('div', { class: 'ft-sub' }, 'Nothing pinned yet. On the board, tap ⋯ on a card → “Pin to a step” to show it here. Pin a comparison and choosing an option makes this step final.') : null);
 }
 
+export function closeDrawer() { if (current) current.close(); }
 export function lockIcon(size = 16) {
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
 }

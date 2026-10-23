@@ -1688,3 +1688,69 @@ body[data-page=page]::after { right: -4vh; width: 42vw; background-image: url('.
   .snav a[aria-current] { background: none !important; box-shadow: none !important; color: var(--w-accent) !important; }
   .snav a[aria-current] .snav-ic { background: radial-gradient(120% 90% at 50% -20%, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 60%), color-mix(in srgb, var(--w-accent) 16%, #fff); box-shadow: inset 0 1px 0 #fff, 0 2px 6px -3px color-mix(in srgb, var(--w-accent) 60%, transparent); color: var(--w-accent); }
 }
+
+/* =====================================================================
+   Design system — one type scale, one spacing scale, one set of pieces.
+   Depth with discipline: sheets sit lightly on the page; only things you
+   tap (buttons, the active tab, ticks, votes) are glossy and domed.
+   ===================================================================== */
+:root {
+  --t-xs: 12px; --t-sm: 13.5px; --t-md: 15.5px; --t-lg: 18px; --t-xl: 24px; --t-2xl: 32px; --t-3xl: clamp(34px, 4.6vw, 46px);
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px;
+  --sheet: linear-gradient(180deg, rgba(255, 255, 255, .97), rgba(255, 255, 255, .9));
+  --depth-2: inset 0 1px 0 rgba(255, 255, 255, .9), 0 1px 2px rgba(30, 22, 34, .05), 0 10px 24px -16px rgba(30, 22, 34, .28);
+}
+/* Type: page titles, section titles, body, meta */
+.page-title, .plan-head h1, .ph-title h1, .sw-title, .sec-head h1, .secHead h1 { font-family: var(--serif); font-weight: 500; font-size: var(--t-3xl); line-height: 1.04; letter-spacing: -.01em; color: var(--w-deep); margin: 0; }
+.sw-title { font-size: var(--t-2xl); }
+.ob-h h2, .cat-h, .insp-h h2, .dsec-h h2, .stage-h h3 { font-family: var(--serif); font-weight: 500; font-size: var(--t-xl); letter-spacing: -.005em; }
+.stage-h h3 { font-size: 28px; }
+.meta, .ft-sub, .ob-sub, .oc-who, .ct-sub, .o-row-sub, .orow .o-main span { font-size: var(--t-sm); }
+.ph-row, .plan-head { margin-bottom: var(--s-5); }
+
+/* One button size set */
+.btn { min-height: 44px; padding: 10px 20px; font-size: var(--t-md); font-weight: 500; letter-spacing: .005em; }
+.btn.small { min-height: 36px; padding: 6px 14px; font-size: var(--t-sm); }
+
+/* Sheets: quiet. Things you tap: glossy. */
+.area, .oblock, .panel, .ohero, .stat, .bcard, .barea, .lcard, .dcard, .gl-tile, .money-table, .locked-list, .cat-tile, .opt-card, .journey, .hcard { background: var(--sheet); box-shadow: var(--depth-2); }
+.lcard:hover, .dcard:hover, .gl-tile:hover, .cat-tile:hover, .opt-card:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 2px 4px rgba(30, 22, 34, .06), 0 18px 34px -18px rgba(30, 22, 34, .36); }
+
+/* Icons drawn, one family */
+.sw-btn svg { width: 26px; height: 26px; }
+.sw-btn.love svg { width: 32px; height: 32px; }
+.sw-btn.maybe svg { width: 22px; height: 22px; }
+.mini-vote { display: inline-flex; align-items: center; justify-content: center; }
+.mini-vote svg { width: 16px; height: 16px; }
+.vote-btn .vb-ic { display: inline-flex; } .vote-btn .vb-ic svg { width: 16px; height: 16px; }
+.tip-i { display: inline-flex; color: var(--gold); } .tip-i svg { width: 14px; height: 14px; }
+
+/* Photos shimmer softly until they arrive */
+@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+.sw-photo, .oc-pic, .ct-pic, .od-ph, .nfy-card, .insp-card, .cmp-pics button, .oe-th, .lt-pic, .gl-pic, .card .thumb {
+  background-color: var(--w-soft);
+  background-image: linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 70%);
+  background-size: 200% 100%; animation: shimmer 1.6s linear infinite;
+}
+.sw-photo:has(img[src]), .oc-pic:has(img[src]), .ct-pic:has(img[src]), .od-ph:has(img[src]), .nfy-card:has(img[src]), .insp-card:has(img[src]), .cmp-pics button:has(img[src]) { animation: none; }
+.sw-photo:has(.ph), .oc-pic:has(.ph), .ct-pic:has(.ct-ph), .nfy-card:has(.ph) { animation: none; }
+
+/* Pop-ups: fade on desktop, bottom sheets on phones */
+@keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes shadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-wrap { animation: shadeIn .18s ease-out both; }
+.modal-wrap .modal { animation: popIn .22s cubic-bezier(.2, .8, .2, 1) both; }
+.modal-wrap.closing { animation: shadeIn .14s ease-in reverse both; }
+.sheet-grab { display: none; }
+@media (max-width: 760px) {
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+  .modal-wrap { align-items: flex-end !important; padding: 0 !important; }
+  .modal-wrap .modal, .modal-wrap .modal.wide { max-width: 100%; width: 100%; max-height: 92vh; overflow-y: auto; overscroll-behavior: contain; border-radius: 24px 24px 0 0; outline: 0; margin: 0; padding-bottom: env(safe-area-inset-bottom); animation: sheetUp .3s cubic-bezier(.2, .8, .2, 1) both; transition: transform .22s ease; }
+  .modal-wrap.closing .modal { transform: translateY(100%); transition: transform .2s ease-in; animation: none; }
+  .sheet-grab { display: block; width: 42px; height: 5px; border-radius: 3px; background: rgba(0, 0, 0, .16); margin: 10px auto 2px; flex: none; }
+  .modal-actions { position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0), var(--paper) 30%); padding-top: 18px; }
+  .modal-actions .btn { flex: 1; }
+  .drawer { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 92vh; border-left: 0; border-radius: 24px 24px 0 0; transform: translateY(102%); box-shadow: 0 -20px 50px -24px rgba(0, 0, 0, .45); }
+  .drawer.open { transform: none; }
+  .drawer .sheet-grab { margin-top: 10px; }
+}

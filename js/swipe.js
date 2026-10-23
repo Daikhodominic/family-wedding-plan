@@ -1,13 +1,13 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=28';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl } from './ui.js?v=28';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=28';
-import { isDecider } from './tools.js?v=28';
-import { addVendor } from './decisions.js?v=28';
-import { pickFiles, fetchPreview } from './board.js?v=28';
-import { planOf } from './map.js?v=28';
+import { store } from './store.js?v=29';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=29';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=29';
+import { isDecider } from './tools.js?v=29';
+import { addVendor } from './decisions.js?v=29';
+import { pickFiles, fetchPreview } from './board.js?v=29';
+import { planOf } from './map.js?v=29';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -108,7 +108,7 @@ export function openOption(o) {
         dd.phone ? h('div', { class: 'od-phone' }, h('a', { class: 'btn small ghost', href: 'tel:' + dd.phone.replace(/[^\d+]/g, '') }, '☏ ' + dd.phone), waLink(dd.phone) ? h('a', { class: 'btn small ghost', href: waLink(dd.phone), target: '_blank', rel: 'noopener' }, 'WhatsApp') : null) : null,
         (dd.links || []).length ? h('div', { class: 'od-links' }, (dd.links || []).map(linkTile)) : null,
         h('div', { class: 'od-votes' },
-          VOTES.map(k => h('button', { type: 'button', class: 'vote-btn ' + k + (mine === k ? ' on' : ''), onclick: () => vote(cur, k).catch(fail) }, { love: '♥ Love it', maybe: '? Maybe', no: '✕ Not this' }[k], h('b', {}, String(v[k].length))))),
+          VOTES.map(k => h('button', { type: 'button', class: 'vote-btn ' + k + (mine === k ? ' on' : ''), onclick: () => vote(cur, k).catch(fail) }, h('span', { class: 'vb-ic', html: { love: ICONS.heart, maybe: ICONS.maybe, no: ICONS.nope }[k] }), { love: 'Love it', maybe: 'Maybe', no: 'Not this' }[k], h('b', {}, String(v[k].length))))),
         v.total ? h('p', { class: 'od-who' }, VOTES.filter(k => v[k].length).map(k => `${{ love: '♥', maybe: '?', no: '✕' }[k]} ${v[k].join(', ')}`).join('  ·  ')) : h('p', { class: 'od-who' }, 'No votes yet.'),
         h('p', { class: 'od-by' }, 'Added by ' + (store.memberName(cur.created_by) || 'someone') + (dd.status === 'chosen' ? ' · ✓ Chosen' : dd.status === 'not' ? ' · Not chosen' : '')),
         h('div', { class: 'od-acts' },
@@ -190,7 +190,7 @@ export async function chooseOption(o) {
     const note = { with: d.title || '', vendor: d.title || '', amount: d.rate || '', phone: d.phone || '', choice: { item_id: o.id, image: firstPic(o), title: d.title || '' } };
     await store.update('steps', s.id, { locked_at: new Date().toISOString(), status: 'done', lock_note: note });
     await addVendor(o.wedding_id, { name: d.title || '', forWhat: s.title, phone: d.phone || '', rate: d.rate || '' }).catch(() => { });
-    toast(`✓ ${d.title} is final for ${s.title}`);
+    buzz(30); toast(`✓ ${d.title} is final for ${s.title}`);
   } catch (e) { fail(e); }
 }
 
@@ -287,6 +287,7 @@ export function renderSwipe(root, opts = {}) {
   }
   const o = list[0];
   const doVote = (value) => {
+    buzz(value === 'love' ? 18 : 10);
     const c = root.querySelector('.sw-card'); if (c) { c.classList.add('fly-' + value); }
     lastVote = { o, v: value };
     setTimeout(() => vote(o, value).catch(fail), 180);
@@ -297,9 +298,9 @@ export function renderSwipe(root, opts = {}) {
     deckCard(o, list.length, doVote));
   root.append(stage,
     h('div', { class: 'sw-actions' },
-      h('button', { type: 'button', class: 'sw-btn no', 'aria-label': 'Not this', onclick: () => doVote('no') }, '✕'),
-      h('button', { type: 'button', class: 'sw-btn maybe', 'aria-label': 'Maybe', onclick: () => doVote('maybe') }, '?'),
-      h('button', { type: 'button', class: 'sw-btn love', 'aria-label': 'Love it', onclick: () => doVote('love') }, '♥')),
+      h('button', { type: 'button', class: 'sw-btn no', 'aria-label': 'Not this', html: ICONS.nope, onclick: () => doVote('no') }),
+      h('button', { type: 'button', class: 'sw-btn maybe', 'aria-label': 'Maybe', html: ICONS.maybe, onclick: () => doVote('maybe') }),
+      h('button', { type: 'button', class: 'sw-btn love', 'aria-label': 'Love it', html: ICONS.heart, onclick: () => doVote('love') })),
     h('p', { class: 'sw-hint' }, 'Swipe right to love it, left for not this, up for maybe — or use ← ↑ →. Tap the photo’s sides to see more photos.',
       lastVote ? h('button', { type: 'button', class: 'link-btn', style: { marginLeft: '8px' }, onclick: () => { const lv = lastVote; lastVote = null; vote(lv.o, lv.v).catch(fail); } }, '↶ Undo') : null));
 }
@@ -388,7 +389,7 @@ export function renderOptions(root, w, stepId) {
           h('span', { class: 'love', style: { width: (v.love.length / max * 100) + '%' } }), h('span', { class: 'maybe', style: { width: (v.maybe.length / max * 100) + '%' } }), h('span', { class: 'no', style: { width: (v.no.length / max * 100) + '%' } })),
         h('span', { class: 'oc-who', title: VOTES.filter(k => v[k].length).map(k => `${k}: ${v[k].join(', ')}`).join(' · ') }, v.total ? `♥ ${v.love.length} · ? ${v.maybe.length} · ✕ ${v.no.length}${v.love.length ? ' — ' + v.love.slice(0, 3).join(', ') : ''}` : 'No votes yet'),
         h('div', { class: 'oc-acts' },
-          VOTES.map(k => h('button', { type: 'button', class: 'mini-vote ' + k + (mine === k ? ' on' : ''), 'aria-label': { love: 'Love it', maybe: 'Maybe', no: 'Not this' }[k], 'aria-pressed': mine === k ? 'true' : 'false', onclick: () => vote(o, k).catch(fail) }, { love: '♥', maybe: '?', no: '✕' }[k])),
+          VOTES.map(k => h('button', { type: 'button', class: 'mini-vote ' + k + (mine === k ? ' on' : ''), 'aria-label': { love: 'Love it', maybe: 'Maybe', no: 'Not this' }[k], 'aria-pressed': mine === k ? 'true' : 'false', html: { love: ICONS.heart, maybe: ICONS.maybe, no: ICONS.nope }[k], onclick: () => vote(o, k).catch(fail) })),
           isDecider(w.id) && isOpen(o) && !step.locked_at ? h('button', { type: 'button', class: 'btn small', onclick: () => chooseOption(o) }, 'Choose') : null)));
   })));
   // Inspiration: mood-board cards pinned to this step.

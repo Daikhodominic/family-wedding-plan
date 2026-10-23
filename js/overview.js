@@ -1,21 +1,21 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=28';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=28';
-import { live, stepVisible, feedList, themeOf, render } from './app.js?v=28';
-import { openStep, lockIcon } from './panel.js?v=28';
-import { planOf, journeyBar } from './map.js?v=28';
-import { listSummary } from './lists.js?v=28';
-import { budgetMath, inr } from './budget.js?v=28';
-import { editStep } from './pipeline.js?v=28';
-import { canonical } from './myjobs.js?v=28';
-import { pictureEl } from './map.js?v=28';
-import { readyToDecide, favScore } from './boardauto.js?v=28';
-import { isDecider } from './tools.js?v=28';
-import { cardTitle } from './decisions.js?v=28';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=28';
-import { share, siteLink, copyLink } from './tools.js?v=28';
-import { planOffer } from './plans.js?v=28';
-import { newForYou } from './swipe.js?v=28';
+import { store } from './store.js?v=29';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=29';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=29';
+import { openStep, lockIcon } from './panel.js?v=29';
+import { planOf, journeyBar } from './map.js?v=29';
+import { listSummary } from './lists.js?v=29';
+import { budgetMath, inr } from './budget.js?v=29';
+import { editStep } from './pipeline.js?v=29';
+import { canonical } from './myjobs.js?v=29';
+import { pictureEl } from './map.js?v=29';
+import { readyToDecide, favScore } from './boardauto.js?v=29';
+import { isDecider } from './tools.js?v=29';
+import { cardTitle } from './decisions.js?v=29';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=29';
+import { share, siteLink, copyLink } from './tools.js?v=29';
+import { planOffer } from './plans.js?v=29';
+import { newForYou } from './swipe.js?v=29';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -151,7 +151,7 @@ export function renderOverview(root, w, params = {}) {
       h('button', { type: 'button', class: 'btn small', onclick: () => store.update('steps', s.id, { status: 'done' }).then(() => toast('Done ✓')).catch(fail) }, 'Mark done'))))));
   const boardItems = live(store.rows('board_items')).filter(i => i.wedding_id === w.id && !['shape', 'connector', 'label', 'option'].includes(i.kind));
   const ready = isDecider() ? boardItems.filter(readyToDecide) : [];
-  if (ready.length) root.append(h('section', { class: 'tip ready' }, h('span', { class: 'tip-i' }, '✦'),
+  if (ready.length) root.append(h('section', { class: 'tip ready' }, h('span', { class: 'tip-i', html: ICONS.sparkle }),
     h('span', {}, h('b', {}, `Ready to decide: `), ready.map(r => cardTitle(r)).join(', '), ' — the family has voted.'),
     h('a', { class: 'tip-x', href: `#/w/${w.id}/board?focus=${ready[0].id}` }, 'Have a look')));
   const favs = boardItems.map(i => ({ i, s: favScore(i) })).filter(x => x.s >= 2).sort((a, b) => b.s - a.s).slice(0, 6);

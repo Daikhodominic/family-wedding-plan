@@ -1,13 +1,13 @@
-import { store } from './store.js?v=28';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS } from './ui.js?v=28';
-import { live, ui, render } from './app.js?v=28';
-import { openStep, lockIcon } from './panel.js?v=28';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=28';
-import { personInput } from './tools.js?v=28';
-import { openIdeas, sectionFor } from './decisions.js?v=28';
-import { renderGlimpse } from './glimpse.js?v=28';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=28';
-import { planOffer } from './plans.js?v=28';
+import { store } from './store.js?v=29';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=29';
+import { live, ui, render } from './app.js?v=29';
+import { openStep, lockIcon } from './panel.js?v=29';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=29';
+import { personInput } from './tools.js?v=29';
+import { openIdeas, sectionFor } from './decisions.js?v=29';
+import { renderGlimpse } from './glimpse.js?v=29';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=29';
+import { planOffer } from './plans.js?v=29';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -283,7 +283,7 @@ function stepEl(s) {
       class: 'tick ' + s.status, type: 'button',
       'aria-label': s.status === 'done' ? `Mark “${s.title}” as not done` : `Mark “${s.title}” as done`,
       html: s.status === 'done' ? ICONS.check : '',
-      onclick: () => store.update('steps', s.id, { status: s.status === 'done' ? 'todo' : 'done' }).catch(fail)
+      onclick: () => { if (s.status !== 'done') buzz(); store.update('steps', s.id, { status: s.status === 'done' ? 'todo' : 'done' }).catch(fail); }
     }),
     h('button', { class: 'txt', type: 'button', onclick: () => openStep(s.id) },
       h('span', { class: 't' }, s.title),

@@ -72,10 +72,32 @@ export function toast(msg, kind = 'info') {
 }
 
 /* ---------- Modal ---------- */
+// Small vibration on phones that support it (Android) — confirms a swipe, a tick, a choice.
+export const buzz = (ms = 12) => { try { if (navigator.vibrate && !matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate(ms); } catch (e) { } };
+const isPhone = () => matchMedia('(max-width: 760px)').matches;
+
+// Pull a bottom sheet down to close it (phones).
+export function dragToClose(sheet, handleEls, close) {
+  let y0 = null, dy = 0;
+  const down = (e) => { if (!isPhone() || e.target.closest('button, a, input, textarea, select')) return; y0 = e.clientY; dy = 0; sheet.style.transition = 'none'; };
+  const move = (e) => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)`; };
+  const up = () => { if (y0 === null) return; y0 = null; sheet.style.transition = ''; if (dy > 90) close(); else sheet.style.transform = ''; };
+  for (const el of handleEls) { el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.style.touchAction = 'none'; }
+}
+
 export function modal({ title, body, actions = [], wide = false, onClose }) {
-  const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey); onClose && onClose(); };
+  let closed = false;
+  const close = () => {
+    if (closed) return; closed = true;
+    document.removeEventListener('keydown', onKey);
+    wrap.classList.add('closing');
+    setTimeout(() => wrap.remove(), isPhone() ? 220 : 140);
+    onClose && onClose();
+  };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const grab = h('div', { class: 'sheet-grab', 'aria-hidden': 'true' });
   const panel = h('div', { class: 'modal' + (wide ? ' wide' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    grab,
     h('div', { class: 'modal-head' },
       h('h2', { text: title }),
       h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close, html: ICONS.close })),
@@ -86,6 +108,7 @@ export function modal({ title, body, actions = [], wide = false, onClose }) {
     }))) : null);
   const wrap = h('div', { class: 'modal-wrap', onmousedown: (e) => { if (e.target === wrap) close(); } }, panel);
   document.body.append(wrap);
+  dragToClose(panel, [grab, panel.querySelector('.modal-head')], close);
   document.addEventListener('keydown', onKey);
   setTimeout(() => { const f = panel.querySelector('input, textarea, select'); if (f) f.focus(); }, 30);
   return { close, panel };
@@ -185,6 +208,10 @@ export function secHead(eyebrow, title, ...right) {
 const sv = (p, extra = '') => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${p}</svg>`;
 export const ICONS = {
   close: sv('<path d="M6 6l12 12M18 6L6 18"/>'),
+  heart: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.6A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.6c0 6-7.5 10.6-7.5 10.6z"/></svg>',
+  nope: sv('<path d="M7 7l10 10M17 7L7 17"/>'),
+  maybe: sv('<path d="M9.2 9a2.9 2.9 0 1 1 4.1 2.6c-.8.4-1.3 1-1.3 1.9v.5M12 17.5v.01"/>'),
+  sparkle: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 6.4 6.6 2.1-6.6 2.1L12 19.5l-1.9-6.4L3.5 11l6.6-2.1z"/></svg>',
   plus: sv('<path d="M12 5v14M5 12h14"/>'),
   grip: sv('<circle cx="9" cy="6" r="1.2" fill="currentColor"/><circle cx="15" cy="6" r="1.2" fill="currentColor"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><circle cx="9" cy="18" r="1.2" fill="currentColor"/><circle cx="15" cy="18" r="1.2" fill="currentColor"/>'),
   check: sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
