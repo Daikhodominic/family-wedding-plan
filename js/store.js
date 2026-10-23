@@ -1,7 +1,7 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=27';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=28';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates
@@ -19,7 +19,19 @@ class BaseStore {
     this.missing = {};
   }
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
-  emit(info) { for (const fn of this.listeners) { try { fn(info); } catch (e) { console.error(e); } } }
+  // Change notices. During a big action (batch) they wait and fire once at the end;
+  // a burst of changes arriving from other devices is gathered into one notice.
+  emit(info) {
+    if (this._hold) { this._held = info || {}; return; }
+    if (info && info.remote) { this._remote = info; clearTimeout(this._remT); this._remT = setTimeout(() => { const i = this._remote; this._remote = null; this._fire(i); }, 160); return; }
+    this._fire(info);
+  }
+  _fire(info) { for (const fn of this.listeners) { try { fn(info); } catch (e) { console.error(e); } } }
+  async batch(fn) {
+    this._hold = (this._hold || 0) + 1;
+    try { return await fn(); }
+    finally { this._hold--; if (!this._hold && this._held) { const i = this._held; this._held = null; this._fire(i); } }
+  }
   rows(table) { return this.cache[table]; }
   find(table, id) { return this.cache[table].find(r => r.id === id); }
   memberName(id) { const m = this.cache.members.find(r => r.user_id === id); return m ? m.name : ''; }

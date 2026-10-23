@@ -2,8 +2,8 @@
 // Every write goes through the store, so we wrap its write methods and keep
 // a list of what to reverse. Several writes made together (moving a group,
 // clearing a page) are undone as one step.
-import { store, nowIso } from './store.js?v=27';
-import { h, toast, ICONS } from './ui.js?v=27';
+import { store, nowIso } from './store.js?v=28';
+import { h, toast, ICONS } from './ui.js?v=28';
 
 const MAX = 80;
 const SKIP = new Set(['activity', 'members', 'reactions']); // reactions and votes toggle on their own
@@ -49,7 +49,7 @@ store.del = async (t, id) => {
 export async function together(fn) {
   if (grouping) return fn();
   grouping = [];
-  try { await fn(); }
+  try { await store.batch(fn); }   // one redraw at the end, not one per change
   finally {
     const ops = grouping; grouping = null;
     if (ops.length && !replaying) { undoS.push(ops); if (undoS.length > MAX) undoS.shift(); redoS.length = 0; notify(); }

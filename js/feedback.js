@@ -1,7 +1,7 @@
 // Reactions, comments & suggestions, and option votes on mood board cards.
-import { store } from './store.js?v=27';
-import { h, toast, ago, ICONS } from './ui.js?v=27';
-import { live } from './app.js?v=27';
+import { store } from './store.js?v=28';
+import { h, toast, ago, ICONS } from './ui.js?v=28';
+import { live } from './app.js?v=28';
 
 export const EMOJI = ['❤️', '👍', '😍', '😂', '😮', '🙏'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -22,9 +22,11 @@ async function toggle(item, target, value, exclusive = []) {
   const mine = reactionsOf(item.id, target).filter(r => r.created_by === store.me.id);
   const same = mine.find(r => r.value === value);
   try {
-    for (const r of mine.filter(r => exclusive.includes(r.value) && r.value !== value)) await store.del('reactions', r.id);
-    if (same) await store.del('reactions', same.id);
-    else await store.insert('reactions', { wedding_id: item.wedding_id, item_id: item.id, target, value, user_name: store.me.name });
+    await store.batch(async () => {
+      for (const r of mine.filter(r => exclusive.includes(r.value) && r.value !== value)) await store.del('reactions', r.id);
+      if (same) await store.del('reactions', same.id);
+      else await store.insert('reactions', { wedding_id: item.wedding_id, item_id: item.id, target, value, user_name: store.me.name });
+    });
   } catch (e) { fail(e); }
 }
 

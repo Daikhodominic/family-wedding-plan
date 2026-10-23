@@ -1,24 +1,24 @@
-import { store, onStatus, syncState } from './store.js?v=27';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=27';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=27';
-import { renderBoard } from './board.js?v=27';
-import { renderTodo } from './todo.js?v=27';
-import { renderFiles } from './files.js?v=27';
-import { renderDecide } from './decide.js?v=27';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=27';
-import { clearPage, clearAll } from './clear.js?v=27';
-import { undoButtons } from './history.js?v=27';
-import { downloadBackup } from './tools.js?v=27';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=27';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=27';
-import { announcementBars } from './planauto.js?v=27';
-import { renderPartner } from './partner.js?v=27';
-import { renderOverview, editDate } from './overview.js?v=27';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=27';
-import { renderLists } from './lists.js?v=27';
-import { planOf } from './map.js?v=27';
-import { openStep } from './panel.js?v=27';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=27';
+import { store, onStatus, syncState } from './store.js?v=28';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=28';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=28';
+import { renderBoard } from './board.js?v=28';
+import { renderTodo } from './todo.js?v=28';
+import { renderFiles } from './files.js?v=28';
+import { renderDecide } from './decide.js?v=28';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=28';
+import { clearPage, clearAll } from './clear.js?v=28';
+import { undoButtons } from './history.js?v=28';
+import { downloadBackup } from './tools.js?v=28';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=28';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=28';
+import { announcementBars } from './planauto.js?v=28';
+import { renderPartner } from './partner.js?v=28';
+import { renderOverview, editDate } from './overview.js?v=28';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=28';
+import { renderLists } from './lists.js?v=28';
+import { planOf } from './map.js?v=28';
+import { openStep } from './panel.js?v=28';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=28';
 
 const app = document.getElementById('app');
 
@@ -472,6 +472,17 @@ async function boot() {
 
 applyEasy();
 store.onChange(() => scheduleRender());
-if (store.mode === 'live' && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => { });
+if (store.mode === 'live' && 'serviceWorker' in navigator && location.protocol === 'https:') {
+  // When a new version of the site is published, refresh once so everyone sees it — but never while typing or in a pop-up.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    const safe = () => { const a = document.activeElement; return !document.querySelector('.modal-wrap') && !(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
+    const go = () => { if (safe()) { reloaded = true; location.reload(); } else setTimeout(go, 2000); };
+    go();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update().catch(() => { }); setInterval(() => reg.update().catch(() => { }), 30 * 60 * 1000); }).catch(() => { });
+}
 window.addEventListener('hashchange', () => { document.querySelectorAll('.modal-wrap').forEach(m => m.remove()); render(); });
 boot();

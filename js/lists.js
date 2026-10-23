@@ -1,11 +1,11 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { store } from './store.js?v=27';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=27';
-import { live } from './app.js?v=27';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=27';
-import { renderFiles } from './files.js?v=27';
-import { copyList, otherWeddings } from './planauto.js?v=27';
+import { store } from './store.js?v=28';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=28';
+import { live } from './app.js?v=28';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=28';
+import { renderFiles } from './files.js?v=28';
+import { copyList, otherWeddings } from './planauto.js?v=28';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

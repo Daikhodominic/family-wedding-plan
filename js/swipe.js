@@ -1,13 +1,13 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=27';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl } from './ui.js?v=27';
-import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=27';
-import { isDecider } from './tools.js?v=27';
-import { addVendor } from './decisions.js?v=27';
-import { pickFiles, fetchPreview } from './board.js?v=27';
-import { planOf } from './map.js?v=27';
+import { store } from './store.js?v=28';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl } from './ui.js?v=28';
+import { live, wedding, weddings, themeOf, stepVisible, render } from './app.js?v=28';
+import { isDecider } from './tools.js?v=28';
+import { addVendor } from './decisions.js?v=28';
+import { pickFiles, fetchPreview } from './board.js?v=28';
+import { planOf } from './map.js?v=28';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -33,8 +33,10 @@ export const pendingFor = (wid, stepId) => (store.missing && store.missing.react
 export async function vote(o, value) {
   if (store.missing && store.missing.reactions) { toast('Voting needs database update 6.', 'error'); return; }
   const mine = reactions(o).filter(r => r.created_by === store.me.id);
-  for (const r of mine) await store.del('reactions', r.id);
-  if (!mine.some(r => r.value === value)) await store.insert('reactions', { wedding_id: o.wedding_id, item_id: o.id, target: 'swipe', value, user_name: store.me.name });
+  await store.batch(async () => {
+    for (const r of mine) await store.del('reactions', r.id);
+    if (!mine.some(r => r.value === value)) await store.insert('reactions', { wedding_id: o.wedding_id, item_id: o.id, target: 'swipe', value, user_name: store.me.name });
+  });
 }
 
 // The categories of a wedding: big decisions, plus any step that has options, in plan order.
@@ -184,7 +186,7 @@ export async function chooseOption(o) {
   if (!s) { toast('This option isn’t in a category', 'error'); return; }
   if (!(await confirmBox(`Choose “${d.title || 'this option'}” for ${s.title}?`, 'The step becomes final, the other options are marked “not chosen” (they stay visible), and it’s added to the vendor list.', 'Choose it', ''))) return;
   try {
-    for (const x of optionsOf(o.wedding_id, s.id)) await store.update('board_items', x.id, { data: { ...(x.data || {}), status: x.id === o.id ? 'chosen' : 'not' } });
+    await store.batch(async () => { for (const x of optionsOf(o.wedding_id, s.id)) await store.update('board_items', x.id, { data: { ...(x.data || {}), status: x.id === o.id ? 'chosen' : 'not' } }); });
     const note = { with: d.title || '', vendor: d.title || '', amount: d.rate || '', phone: d.phone || '', choice: { item_id: o.id, image: firstPic(o), title: d.title || '' } };
     await store.update('steps', s.id, { locked_at: new Date().toISOString(), status: 'done', lock_note: note });
     await addVendor(o.wedding_id, { name: d.title || '', forWhat: s.title, phone: d.phone || '', rate: d.rate || '' }).catch(() => { });

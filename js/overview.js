@@ -1,21 +1,21 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=27';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=27';
-import { live, stepVisible, feedList, themeOf, render } from './app.js?v=27';
-import { openStep, lockIcon } from './panel.js?v=27';
-import { planOf, journeyBar } from './map.js?v=27';
-import { listSummary } from './lists.js?v=27';
-import { budgetMath, inr } from './budget.js?v=27';
-import { editStep } from './pipeline.js?v=27';
-import { canonical } from './myjobs.js?v=27';
-import { pictureEl } from './map.js?v=27';
-import { readyToDecide, favScore } from './boardauto.js?v=27';
-import { isDecider } from './tools.js?v=27';
-import { cardTitle } from './decisions.js?v=27';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=27';
-import { share, siteLink, copyLink } from './tools.js?v=27';
-import { planOffer } from './plans.js?v=27';
-import { newForYou } from './swipe.js?v=27';
+import { store } from './store.js?v=28';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=28';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=28';
+import { openStep, lockIcon } from './panel.js?v=28';
+import { planOf, journeyBar } from './map.js?v=28';
+import { listSummary } from './lists.js?v=28';
+import { budgetMath, inr } from './budget.js?v=28';
+import { editStep } from './pipeline.js?v=28';
+import { canonical } from './myjobs.js?v=28';
+import { pictureEl } from './map.js?v=28';
+import { readyToDecide, favScore } from './boardauto.js?v=28';
+import { isDecider } from './tools.js?v=28';
+import { cardTitle } from './decisions.js?v=28';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=28';
+import { share, siteLink, copyLink } from './tools.js?v=28';
+import { planOffer } from './plans.js?v=28';
+import { newForYou } from './swipe.js?v=28';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;

@@ -1,11 +1,11 @@
 // The plan helping itself: suggested due dates, "looks finished", the weekly summary,
 // calendar files, announcements, final-week mode and copying between weddings.
-import { store } from './store.js?v=27';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, fancyDate } from './ui.js?v=27';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=27';
-import { together } from './history.js?v=27';
-import { isDecider, deciderOnly, share, siteLink, icsFile } from './tools.js?v=27';
-import { openStep } from './panel.js?v=27';
+import { store } from './store.js?v=28';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, fancyDate } from './ui.js?v=28';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=28';
+import { together } from './history.js?v=28';
+import { isDecider, deciderOnly, share, siteLink, icsFile } from './tools.js?v=28';
+import { openStep } from './panel.js?v=28';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -39,8 +39,13 @@ export function stepsNeedingDates(w) {
 export async function fillSuggestedDates(w) {
   const list = stepsNeedingDates(w);
   if (!list.length) return;
-  await together(async () => { for (const s of list) { const d = suggestDue(s, w); if (d) await store.update('steps', s.id, { due: d }); } })
-    .then(() => toast(`Suggested dates added to ${list.length} steps — change any of them in the step`)).catch(fail);
+  // Steps sharing a date are saved together — a handful of requests instead of one per step —
+  // and the page redraws once, at the end.
+  const byDate = new Map();
+  for (const st of list) { const d = suggestDue(st, w); if (!d) continue; if (!byDate.has(d)) byDate.set(d, []); byDate.get(d).push(st.id); }
+  const n = [...byDate.values()].reduce((k, ids) => k + ids.length, 0);
+  await store.batch(() => together(async () => { for (const [due, ids] of byDate) await store.patchMany('steps', ids, { due }); }))
+    .then(() => toast(`Suggested dates added to ${n} steps — change any of them in the step`)).catch(fail);
 }
 export function datesBanner(w) {
   if (!w.wedding_date) return null;
@@ -184,7 +189,7 @@ export function finalWeek(w, force) {
 export async function copyList(l, toWid) {
   const nl = await store.insert('lists', { wedding_id: toWid, step_id: null, title: l.title, columns: l.columns }).catch(fail); if (!nl) return;
   const rows = live(store.rows('list_rows') || []).filter(r => r.list_id === l.id).sort(byPos);
-  for (const r of rows) await store.insert('list_rows', { list_id: nl.id, wedding_id: toWid, cells: [...(r.cells || [])], position: r.position }).catch(fail);
+  await store.batch(async () => { for (const r of rows) await store.insert('list_rows', { list_id: nl.id, wedding_id: toWid, cells: [...(r.cells || [])], position: r.position }).catch(fail); });
   toast(`Copied to ${(wedding(toWid) || {}).couple || 'the other wedding'}`);
 }
 export async function copyArea(a, toWid) {

@@ -2,11 +2,11 @@
 // Each step: [title, note, big decision?, suggested?]. Suggested steps came from
 // Claude's review of Catholic weddings in Nagaland and Manipur; the rest are the family's own list.
 // Each to-do: [title, due date, where it belongs].
-import { store } from './store.js?v=27';
-import { h, toast, modal } from './ui.js?v=27';
-import { live } from './app.js?v=27';
-import { SECTIONS } from './clear.js?v=27';
-import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=27';
+import { store } from './store.js?v=28';
+import { h, toast, modal } from './ui.js?v=28';
+import { live } from './app.js?v=28';
+import { SECTIONS } from './clear.js?v=28';
+import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=28';
 
 const S = (title, note = '', gate = false, sugg = false) => [title, note, gate, sugg];
 
@@ -303,7 +303,7 @@ export function loadPlan(w) {
     modal({
       title: 'Add the new items?',
       body: h('p', { class: 'muted', style: { margin: 0 } }, `${m.steps.length} new steps${m.todos.length ? ` and ${m.todos.length} dated to-dos` : ''} will be added. Nothing you’ve already done or changed is touched.`),
-      actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, { label: 'Add them', onClick: () => topUp(w, p).then(done).catch(fail) }]
+      actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, { label: 'Add them', onClick: () => store.batch(() => topUp(w, p)).then(done).catch(fail) }]
     });
     return;
   }
@@ -320,7 +320,7 @@ export function loadPlan(w) {
       gate.el,
       h('p', { class: 'hint', style: { margin: 0 } }, (gate.n ? 'Kept steps go into a “Kept from the old plan” area. ' : '') + 'Everything cleared goes to the Bin and can be brought back together. ' + p.dateNote)],
     actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, {
-      label: 'Load the checklist', onClick: () => freshLoad(w, p, boxes.filter(b => b.box.checked).map(b => b.key), gate.keep()).then(done).catch(fail)
+      label: 'Load the checklist', onClick: () => store.batch(() => freshLoad(w, p, boxes.filter(b => b.box.checked).map(b => b.key), gate.keep())).then(done).catch(fail)
     }]
   });
 }
@@ -330,7 +330,7 @@ export function loadPlan(w) {
 const autoRan = new Set();
 function autoTopUp(w, p) {
   if (autoRan.has(w.id)) return; autoRan.add(w.id);
-  setTimeout(() => topUp(w, p).then(r => { if (r.steps || r.todos) toast(`Added ${r.steps ? r.steps + ' new steps' : ''}${r.steps && r.todos ? ' and ' : ''}${r.todos ? r.todos + ' to-dos' : ''} to the plan`); }).catch(e => console.warn(e)), 600);
+  setTimeout(() => store.batch(() => topUp(w, p)).then(r => { if (r.steps || r.todos) toast(`Added ${r.steps ? r.steps + ' new steps' : ''}${r.steps && r.todos ? ' and ' : ''}${r.todos ? r.todos + ' to-dos' : ''} to the plan`); }).catch(e => console.warn(e)), 600);
 }
 export function planOffer(w) {
   const p = planFor(w);

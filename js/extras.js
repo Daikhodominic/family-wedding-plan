@@ -1,10 +1,10 @@
-import { store } from './store.js?v=27';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=27';
-import { othersSummary, bringBackOthers } from './safety.js?v=27';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=27';
-import { confirmAreaRestore, inr } from './budget.js?v=27';
-import { clearAll } from './clear.js?v=27';
-import { downloadBackup, decidesFor } from './tools.js?v=27';
+import { store } from './store.js?v=28';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=28';
+import { othersSummary, bringBackOthers } from './safety.js?v=28';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=28';
+import { confirmAreaRestore, inr } from './budget.js?v=28';
+import { clearAll } from './clear.js?v=28';
+import { downloadBackup, decidesFor } from './tools.js?v=28';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };
@@ -163,14 +163,14 @@ export function renderBin() {
           h('div', { class: 'muted', style: { fontSize: '14px' } }, [ws.join(' & ') || 'Shared home costs', tables.map(t => NOUN[t] + 's').join(', '), `removed ${who ? 'by ' + who + ' ' : ''}${ago(g[0].r.deleted_at)}`].join(' · '))),
         h('div', { class: 'acts' },
           h('button', { class: 'btn small', type: 'button', onclick: async () => {
-            try { for (const t of tables) await store.restoreMany(t, g.filter(it => it.t === t).map(it => it.r.id)); toast(`Restored ${g.length}`); } catch (e) { toast(e.message, 'error'); }
+            try { await store.batch(async () => { for (const t of tables) await store.restoreMany(t, g.filter(it => it.t === t).map(it => it.r.id)); }); toast(`Restored ${g.length}`); } catch (e) { toast(e.message, 'error'); }
           } }, 'Restore all'),
           oth.n ? h('button', { class: 'btn small', type: 'button', style: { background: 'var(--gold)' }, title: oth.people.join(' · '), onclick: async () => {
-            try { const k = await bringBackOthers(g); toast(`Brought back ${k} — steps whose area was gone are in “Brought back from the old plan”`); } catch (e) { toast(e.message, 'error'); }
+            try { const k = await store.batch(() => bringBackOthers(g)); toast(`Brought back ${k} — steps whose area was gone are in “Brought back from the old plan”`); } catch (e) { toast(e.message, 'error'); }
           } }, `Bring back what others added (${oth.n})`) : null,
           store.me.isAdmin ? h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
             if (!(await confirmBox('Delete all of these for good?', `${g.length} things will be gone for everyone and can't be restored.` + (oth.n ? ` ${oth.n} of them were added by other people (${oth.people.join('; ')}).` : ''), 'Delete for good'))) return;
-            for (const it of g) if (store.find(it.t, it.r.id)) await store.purge(it.t, it.r.id).catch(e => toast(e.message, 'error'));
+            await store.batch(async () => { for (const it of g) if (store.find(it.t, it.r.id)) await store.purge(it.t, it.r.id).catch(e => toast(e.message, 'error')); });
             toast('Deleted');
           } }, 'Delete all for good') : null)),
       oth.n ? h('p', { class: 'others-note' }, 'Includes things added by other people — ' + oth.people.join(' · ')) : null,
@@ -195,7 +195,7 @@ export function renderBin() {
     class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
       if (!(await confirmBox('Empty the Bin?', `All ${rows.length} items will be deleted for everyone and can't be restored.`, 'Delete everything in the Bin'))) return;
       const order = ['budget_items', 'budget_areas', 'files', 'lists', 'board_items', 'todos', 'steps', 'areas', 'stages', 'weddings'];
-      for (const t of order) for (const it of rows.filter(x => x.t === t)) { if (store.find(t, it.r.id)) await store.purge(t, it.r.id).catch(e => toast(e.message, 'error')); }
+      await store.batch(async () => { for (const t of order) for (const it of rows.filter(x => x.t === t)) { if (store.find(t, it.r.id)) await store.purge(t, it.r.id).catch(e => toast(e.message, 'error')); } });
       toast('The Bin is empty');
     }
   }, 'Empty the Bin') : null;
