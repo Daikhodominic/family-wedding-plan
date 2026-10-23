@@ -126,6 +126,25 @@ export function announcementBars(wid) {
     h('span', { class: 'an-meta' }, `${a.author_name || 'Someone'} · ${a.wedding_id ? (wedding(a.wedding_id) || {}).couple || '' : 'both weddings'}`),
     h('button', { type: 'button', class: 'an-ok', onclick: () => store.insert('announcement_seen', { announcement_id: a.id }).catch(fail) }, 'Got it')));
 }
+// Read receipts: for whoever sent an announcement (and the admin), who has seen it.
+export function seenBy(a) {
+  const seen = new Set((store.rows('announcement_seen') || []).filter(x => x.announcement_id === a.id).map(x => x.created_by));
+  const everyone = (store.rows('members') || []).filter(m => m.user_id !== a.created_by);
+  return { yes: everyone.filter(m => seen.has(m.user_id)), no: everyone.filter(m => !seen.has(m.user_id)) };
+}
+export function sentAnnouncements(wid) {
+  if (annMissing() || !store.me) return null;
+  const mine = live(store.rows('announcements') || []).filter(a => (a.created_by === store.me.id || store.me.isAdmin) && (!wid || !a.wedding_id || a.wedding_id === wid))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 3);
+  if (!mine.length) return null;
+  const show = (a) => { const s = seenBy(a); modal({ title: 'Who has seen it', body: [h('p', { style: { marginTop: 0 } }, a.body),
+    h('p', {}, h('b', {}, `Seen · ${s.yes.length}`), h('br'), s.yes.map(m => m.name).join(', ') || '—'),
+    h('p', {}, h('b', {}, `Not yet · ${s.no.length}`), h('br'), s.no.map(m => m.name).join(', ') || 'Everyone has seen it')], actions: [{ label: 'Close', onClick: () => { } }] }); };
+  return h('div', { class: 'ann-sent' }, mine.map(a => { const s = seenBy(a); const n = s.yes.length + s.no.length;
+    return h('button', { type: 'button', class: 'ann-row', onclick: () => show(a) },
+      h('span', { class: 'an-k' }, 'Announcement'), h('span', { class: 'ann-b' }, a.body.length > 80 ? a.body.slice(0, 78) + '…' : a.body),
+      h('span', { class: 'ann-seen' + (s.no.length ? '' : ' all') }, s.no.length ? `Seen by ${s.yes.length} of ${n}` : '✓ Seen by everyone')); }));
+}
 export function newAnnouncement(w) {
   if (annMissing()) { toast('Announcements need database update 8. Ask the admin to run it.', 'error'); return; }
   if (!deciderOnly('send announcements')) return;

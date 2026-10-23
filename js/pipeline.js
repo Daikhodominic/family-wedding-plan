@@ -1,3 +1,4 @@
+import { lockMenuItem, lockChip } from './locks.js?v=48';
 import { store } from './store.js?v=48';
 import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=48';
 import { live, ui, render } from './app.js?v=48';
@@ -261,15 +262,16 @@ function areaEl(a, steps, w, ctx = {}) {
       h('button', { class: 'icon-btn grip section-grip', type: 'button', 'aria-label': 'Drag to move section', html: ICONS.grip }),
       h('button', { type: 'button', class: 'area-toggle', 'aria-expanded': String(open), onclick: toggle },
         h('span', { class: 'area-badge', 'aria-hidden': 'true' }, h('span', { class: 'ab-ring', html: ringSvg(done, lk, steps.length, 42) }), h('span', { class: 'ab-ic', html: areaIcon(a.title) })),
-        h('span', { class: 'area-tt' }, h('h4', {}, a.title), h('span', { class: 'meta' }, steps.length ? `${done} of ${steps.length}${lk ? ` · ${lk} final` : ''}` : 'No steps yet')),
+        h('span', { class: 'area-tt' }, h('h4', {}, a.title, lockChip('areas', a.id, w.id)), h('span', { class: 'meta' }, steps.length ? `${done} of ${steps.length}${lk ? ` · ${lk} final` : ''}` : 'No steps yet')),
         h('span', { class: 'fold-ic', 'aria-hidden': 'true' })),
       menu({
         title: a.title, list: [
           { label: 'Rename', onClick: () => renameBox('Rename section', a.title, v => store.update('areas', a.id, { title: v })) },
           { label: sectionFor(a.id) ? 'See its ideas on the mood board' : 'Ideas on the mood board', onClick: () => openIdeas(w, a) },
           ...otherWeddings(w.id).map(o => ({ label: `Copy this section to ${o.couple}`, onClick: () => copyArea(a, o.id) })),
+          lockMenuItem('areas', a.id, w.id),
           { label: 'Move this section to the Bin', kind: 'danger', onClick: () => store.remove('areas', a.id).then(() => toast('Moved to the Bin')).catch(fail) }
-        ]
+        ].filter(Boolean)
       })),
     steps.length ? h('div', { class: 'beads', 'aria-hidden': 'true' }, steps.map(x => h('i', { class: x.locked_at ? 'b-final' : isComplete(x) ? 'b-done' : (x.due && daysUntil(x.due) < 0) ? 'b-late' : x.status === 'doing' ? 'b-doing' : x.gate ? 'b-gate' : '' }))) : null,
     open ? null : h('button', { type: 'button', class: 'area-next', onclick: toggle },

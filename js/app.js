@@ -300,7 +300,7 @@ function renderHome() {
       h('img', { class: 'hb r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
       h('header', { class: 'home-top' },
         h('a', { class: 'brand', href: '#/' }, 'The Wedding War Room'),
-        h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), syncPill(), undoButtons(), avatar())),
+        h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), hereDots(null), syncPill(), undoButtons(), avatar())),
       newForYou(null),
       installOffer(),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
@@ -345,7 +345,7 @@ function renderSpace(id, sub, params) {
             h('span', { class: 'snav-ic', html: ICONS[icon] }), h('span', { class: 'snav-t' }, label),
             k === 'overview' && nWait ? h('span', { class: 'nbadge', title: `${nWait} big decisions waiting` }, String(nWait)) : null))),
         syncPill(),
-        helpButton(sub === 'todo' ? 'plan' : tab),
+        hereDots(w.id), roleChip(), helpButton(sub === 'todo' ? 'plan' : tab),
         undoButtons(),
         avatar())),
     h('div', { class: 'shead-rule', 'aria-hidden': 'true' }),
@@ -375,6 +375,25 @@ function renderSpace(id, sub, params) {
     setTimeout(() => openStep(sid), 60);
   }
   return root;
+}
+
+// Who else is here right now: a dot for each person, with the page they're on.
+const ROOM = { overview: 'the Overview', choose: 'Choose', options: 'Choose', board: 'the mood board', swipe: 'Choose', plan: 'the plan', todo: 'Jobs', lists: 'Lists', files: 'Lists', budget: 'the budget' };
+export function hereDots(wid) {
+  const ps = (store.presence || []).filter(p => !wid || String(p.room || '').startsWith(wid + '/'));
+  if (!ps.length) return null;
+  const where = (p) => { const [w, sub] = String(p.room || '').split('/'); return wid ? 'on ' + (ROOM[sub] || 'this wedding') : (wedding(w) ? 'in ' + wedding(w).couple : 'here'); };
+  const names = ps.map(p => `${p.name || 'Someone'} — ${where(p)}`);
+  return h('button', { type: 'button', class: 'here-dots', title: names.join('\n'), 'aria-label': `Here now: ${names.join(', ')}`, onclick: () => toast('Here now: ' + names.join(' · ')) },
+    ps.slice(0, 4).map(p => h('span', { class: 'hd-av' }, String(p.name || '?').trim().charAt(0).toUpperCase())),
+    ps.length > 4 ? h('span', { class: 'hd-more' }, '+' + (ps.length - 4)) : null);
+}
+
+// For people with a limited role: a small reminder of what they can do.
+function roleChip() {
+  const r = store.roleOf(store.me); if (r === 'full') return null;
+  const t = r === 'view' ? ['View only', 'You can look, comment and vote. Ask the admin if you need to change things.'] : ['Lists only', 'You can work on Lists & files, comment and vote.'];
+  return h('button', { type: 'button', class: 'role-chip', title: t[1], onclick: () => toast(t[1]) }, t[0]);
 }
 
 /* ---------- Family-wide pages ---------- */
@@ -438,6 +457,7 @@ function renderGate() {
 let pending = false;
 export function render() {
   const { parts, params } = parseRoute();
+  if (store.me && store.setRoom) store.setRoom(parts[0] === 'w' ? parts[1] + '/' + (parts[2] || 'overview') : parts[0] || 'home');
   const key = parts.join('/');
   document.title = 'The Wedding War Room';
   let view;

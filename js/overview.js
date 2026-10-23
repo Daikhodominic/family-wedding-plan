@@ -12,7 +12,7 @@ import { pictureEl } from './map.js?v=48';
 import { readyToDecide, favScore } from './boardauto.js?v=48';
 import { isDecider } from './tools.js?v=48';
 import { cardTitle } from './decisions.js?v=48';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=48';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=48';
 import { share, siteLink, copyLink } from './tools.js?v=48';
 import { planOffer } from './plans.js?v=48';
 import { newForYou, pendingFor } from './swipe.js?v=48';
@@ -126,6 +126,7 @@ export function renderOverview(root, w, params = {}) {
 
   // Announcements and final-week mode come first.
   root.append(...announcementBars(w.id));
+  const sent = sentAnnouncements(w.id); if (sent) root.append(sent);
   const fw = finalWeek(w, params.finalweek === '1' && store.me.isAdmin);
   if (fw) root.append(fw);
   // Header: date, countdown, a one-line tally, the journey bar and one "More" menu.

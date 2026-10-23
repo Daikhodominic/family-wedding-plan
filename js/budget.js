@@ -4,6 +4,7 @@
 //   contingency  — set by hand (starts at ₹0); unplanned payments and overspends draw from it
 //   areas        — the total split up; removing one frees its unspent money
 //   payments     — what is owed or paid; no area = unplanned (comes out of contingency)
+import { lockChip, toggleLock } from './locks.js?v=48';
 import { store } from './store.js?v=48';
 import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS, popMenu } from './ui.js?v=48';
 import { live, weddings, themeOf, stepVisible } from './app.js?v=48';
@@ -308,8 +309,9 @@ export function renderBudgetView(root, opts) {
     can ? { icon: 'plus', label: 'Add a budget line', onClick: () => editArea(id, null, m) } : null,
     can ? { icon: 'budget', label: 'Move money between budget lines', onClick: () => moveMoney(id, m) } : null,
     can ? { icon: 'edit', label: 'Change the total or contingency', onClick: () => editBudget(id, opts, m) } : null,
+    store.me.isAdmin && store.find('budgets', id) ? { icon: 'lock', label: store.isLocked('budgets', id) ? 'Unlock this budget' : 'Lock this budget (only you can change it)', onClick: () => toggleLock('budgets', id, store.find('budgets', id).wedding_id || id) } : null,
     opts.family !== false ? { icon: 'overview', label: 'Family total', href: '#/budget' } : null]) }, 'More ▾');
-  root.append(secHead('Money', opts.heading || 'Budget',
+  root.append(secHead('Money', [opts.heading || 'Budget', ' ', lockChip('budgets', id)],
     can ? h('button', { class: 'btn', type: 'button', onclick: () => editItem(id, null, m) }, '+ Payment') : null,
     can || opts.family !== false ? moreBtn : null));
   if (!can) root.append(h('p', { class: 'hint ro-note' }, `You can see everything here. Only the Deciders (${deciderNames()}) can change money.`));

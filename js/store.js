@@ -4,9 +4,10 @@
 import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=48';
 import { sampleRows } from './samples.js?v=48';
 
-export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
-const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates
-const UNLOGGED = ['reactions', 'announcement_seen', 'partner_links', 'partners'];
+export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'edit_locks', 'activity', 'members'];
+const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'edit_locks'];  // tables added by later database updates
+const lockId = (r) => { if (r && r.target_table) r.id = r.target_table + ':' + r.target_id; return r; };
+const UNLOGGED = ['reactions', 'announcement_seen', 'partner_links', 'partners', 'edit_locks'];
 
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -41,6 +42,27 @@ class BaseStore {
     this._hold = (this._hold || 0) + 1;
     try { return await fn(); }
     finally { this._hold--; if (!this._hold && this._held) { const i = this._held; this._held = null; this._fire(i); } }
+  }
+  // The same rules the database enforces (update 14), checked first so nothing flickers on and off.
+  roleOf(m) { return !m ? 'full' : (m.isAdmin || m.is_admin) ? 'full' : (m.role || 'full'); }
+  heldBy(table, row) {
+    const L = this.cache.edit_locks || []; if (!L.length || !row) return null;
+    const k = table === 'areas' ? ['areas', row.id] : table === 'steps' ? ['areas', row.area_id] : table === 'lists' ? ['lists', row.id] : table === 'list_rows' ? ['lists', row.list_id]
+      : table === 'budgets' ? ['budgets', row.id] : (table === 'budget_areas' || table === 'budget_items') ? ['budgets', row.budget_id] : null;
+    return k ? L.find(l => l.target_table === k[0] && l.target_id === k[1]) || null : null;
+  }
+  isLocked(target, id) { return (this.cache.edit_locks || []).find(l => l.target_table === target && l.target_id === id) || null; }
+  may(table, row) {
+    const OPEN = ['comments', 'reactions', 'announcement_seen', 'activity', 'members', 'edit_locks'];
+    const role = this.roleOf(this.me);
+    if (role === 'view' && !OPEN.includes(table)) return 'view';
+    if (role === 'lists' && !OPEN.includes(table) && !['lists', 'list_rows', 'files'].includes(table)) return 'lists';
+    if (this.me && !this.me.isAdmin && this.heldBy(table, row)) return 'locked';
+    return true;
+  }
+  guard(table, row) {
+    const r = this.may(table, row); if (r === true) return;
+    throw new Error(r === 'view' ? 'You can look, comment and vote. Ask the admin if you need to change things.' : r === 'lists' ? 'You can work on Lists & files. Ask the admin to change anything else.' : 'This is locked by the admin. Comments still work.');
   }
   rows(table) { return this.cache[table]; }
   find(table, id) { return this.cache[table].find(r => r.id === id); }
@@ -97,7 +119,8 @@ class LiveStore extends BaseStore {
     const { data, error } = await this.sb.from('members').select('*').eq('user_id', u.user.id).maybeSingle();
     if (error && isNetErr(error)) { this._netDown = true; return false; }
     if (error || !data) return false;
-    this.me = { id: data.user_id, name: data.name, isAdmin: data.is_admin, isDecider: !!(data.is_admin || data.is_decider), deciderFor: data.decider_for || [], phone: data.phone || '', lastSeen: Number(data.last_seen_activity) || 0 };
+    this.me = { id: data.user_id, name: data.name, isAdmin: data.is_admin, isDecider: !!(data.is_admin || data.is_decider), deciderFor: data.decider_for || [], phone: data.phone || '', role: data.role || 'full', lastSeen: Number(data.last_seen_activity) || 0 };
+    this.sb.rpc('touch_opened').then(() => null, () => null); // "last opened", for the admin (needs update 14)
     return true;
   }
 
@@ -134,6 +157,7 @@ class LiveStore extends BaseStore {
         throw new Error(r.error.message);
       }
       this.cache[t] = r.data || [];
+      if (t === 'edit_locks') this.cache[t].forEach(lockId);
     });
     this.reapplyOutbox();
     this.subscribe();
@@ -147,6 +171,8 @@ class LiveStore extends BaseStore {
       .on('postgres_changes', { event: '*', schema: 'public' }, (p) => {
         const t = p.table;
         if (!this.cache[t]) return;
+        if (t === 'edit_locks') { lockId(p.new); lockId(p.old); }
+        if (t === 'members' && p.new && this.me && p.new.user_id === this.me.id && p.new.role) this.me.role = p.new.role;
         const key = t === 'members' ? 'user_id' : 'id';
         const prev = p.new && p.new[key] != null ? (this.cache[t].find(r => r[key] === p.new[key]) || null) : null;
         const prevCopy = prev ? { ...prev } : null;
@@ -180,7 +206,47 @@ class LiveStore extends BaseStore {
     return Promise.resolve({ error: { message: 'unknown change' } });
   }
 
+  // Who else has the War Room open right now, and on which page (Supabase realtime presence).
+  setRoom(room) {
+    if (!this.me || !this.sb || this._room === room) return;
+    this._room = room;
+    if (!this.pchan) {
+      this.presence = [];
+      try {
+        this.pchan = this.sb.channel('who-is-here', { config: { presence: { key: this.me.id } } });
+        this.pchan.on('presence', { event: 'sync' }, () => {
+          const st = this.pchan.presenceState() || {};
+          this.presence = Object.entries(st).map(([k, metas]) => ({ id: k, ...((metas || [])[metas.length - 1] || {}) })).filter(p => p.id !== this.me.id && p.room);
+          this.emit({ table: 'presence', remote: true });
+        }).subscribe((status) => { if (status === 'SUBSCRIBED') this._track(); });
+        document.addEventListener('visibilitychange', () => this._track());
+      } catch (e) { this.pchan = null; }
+    } else this._track();
+  }
+  _track() {
+    if (!this.pchan) return;
+    try { (document.hidden ? this.pchan.untrack() : this.pchan.track({ name: this.me.name, room: this._room, at: Date.now() })).catch(() => null); } catch (e) { /* ignore */ }
+  }
+
+  async lock(target, id, weddingId) {
+    const row = lockId({ target_table: target, target_id: id, wedding_id: weddingId || null, created_by: this.me.id, created_at: nowIso() });
+    const { error } = await this.sb.from('edit_locks').insert({ target_table: target, target_id: id, wedding_id: weddingId || null });
+    if (error && !/duplicate/i.test(error.message)) throw new Error(/edit_locks/.test(error.message) ? 'Locks need database update 14' : error.message);
+    this.upsertLocal('edit_locks', row); this.emit({ table: 'edit_locks' });
+  }
+  async unlock(target, id) {
+    const { error } = await this.sb.from('edit_locks').delete().eq('target_table', target).eq('target_id', id);
+    if (error) throw new Error(error.message);
+    this.dropLocal('edit_locks', target + ':' + id); this.emit({ table: 'edit_locks' });
+  }
+  async setRole(userId, role) {
+    const { error } = await this.sb.rpc('set_role', { p_user: userId, p_role: role });
+    if (error) throw new Error(/set_role/.test(error.message) ? 'Roles need database update 14' : error.message);
+    this.upsertLocal('members', { user_id: userId, role }); this.emit({ table: 'members' });
+  }
+
   async insert(table, row) {
+    this.guard(table, row);
     const full = table === 'weddings' ? { ...row } : { id: uid(), created_at: nowIso(), created_by: this.me && this.me.id, ...row };
     this.upsertLocal(table, full); this.emit({ table });
     await this._send({ t: 'upsert', table, rows: [full] }, () => this.dropLocal(table, full.id));
@@ -189,6 +255,7 @@ class LiveStore extends BaseStore {
 
   // Many new rows in one request (used when loading a ready-made checklist).
   async insertMany(table, rows) {
+    if (rows.length) this.guard(table, rows[0]);
     const full = rows.map(row => ({ id: uid(), created_at: nowIso(), created_by: this.me && this.me.id, ...row }));
     for (const r of full) this.upsertLocal(table, r);
     this.emit({ table });
@@ -198,6 +265,7 @@ class LiveStore extends BaseStore {
 
   async update(table, id, patch) {
     const before = { ...this.find(table, id) };
+    this.guard(table, before); this.guard(table, { ...before, ...patch });
     this.upsertLocal(table, { id, ...patch }); this.emit({ table });
     await this._send({ t: 'update', table, id, patch }, () => this.upsertLocal(table, before));
   }
@@ -208,6 +276,7 @@ class LiveStore extends BaseStore {
   // Many rows at once (Clear all, Restore all). One timestamp keeps them grouped in the Bin.
   async patchMany(table, ids, patch) {
     if (!ids.length) return;
+    for (const id of ids) this.guard(table, this.find(table, id));
     for (const id of ids) this.upsertLocal(table, { id, ...patch });
     this.emit({ table });
     for (let i = 0; i < ids.length; i += 150) await this._send({ t: 'updateIn', table, ids: ids.slice(i, i + 150), patch });
@@ -217,6 +286,7 @@ class LiveStore extends BaseStore {
 
   async purge(table, id) {
     const row = this.find(table, id);
+    this.guard(table, row);
     const { error } = await this.sb.from(table).delete().eq('id', id);
     if (error) throw new Error(error.message);
     this.dropLocal(table, id); this.dropChildren(table, id); this.emit({ table });
@@ -262,6 +332,7 @@ class LiveStore extends BaseStore {
 
   async del(table, id) {
     const before = this.find(table, id);
+    this.guard(table, before);
     this.dropLocal(table, id); this.emit({ table });
     await this._send({ t: 'delete', table, id }, () => { if (before) this.upsertLocal(table, before); });
   }
@@ -528,7 +599,8 @@ class DemoStore extends BaseStore {
     if (saved && saved.cache) { this.cache = { ...this.cache, ...saved.cache }; for (const t of TABLES) if (!this.cache[t]) this.cache[t] = []; this.nextAct = saved.nextAct || 1; }
     else { this.cache = demoSeed(); this.save(); }
     const m = this.cache.members[0];
-    this.me = { id: m.user_id, name: m.name, phone: m.phone || '', isAdmin: true, isDecider: true, lastSeen: Number(m.last_seen_activity) || 0 };
+    this.me = { id: m.user_id, name: m.name, phone: m.phone || '', isAdmin: true, isDecider: true, role: 'full', lastSeen: Number(m.last_seen_activity) || 0 };
+    m.last_opened = nowIso(); this.save();
     return 'ready';
   }
   async join() { }
@@ -560,12 +632,18 @@ class DemoStore extends BaseStore {
     });
   }
 
+  setRoom() { this.presence = this.presence || []; }
+  async lock(target, id, weddingId) { if (!this.isLocked(target, id)) this.cache.edit_locks.push({ id: target + ':' + id, target_table: target, target_id: id, wedding_id: weddingId || null, created_by: this.me.id, created_at: nowIso() }); this.save(); this.emit({ table: 'edit_locks' }); }
+  async unlock(target, id) { this.dropLocal('edit_locks', target + ':' + id); this.save(); this.emit({ table: 'edit_locks' }); }
+  async setRole(userId, role) { this.upsertLocal('members', { user_id: userId, role }); this.save(); this.emit({ table: 'members' }); }
   async insert(table, row) {
+    this.guard(table, row);
     const full = { id: uid(), created_at: nowIso(), created_by: this.me.id, deleted_at: null, ...row };
     this.cache[table].push(full); if (!UNLOGGED.includes(table)) this.log('create', table, null, full);
     this.save(); this.emit({ table }); return full;
   }
   async insertMany(table, rows) {
+    if (rows.length) this.guard(table, rows[0]);
     const full = rows.map(row => ({ id: uid(), created_at: nowIso(), created_by: this.me.id, deleted_at: null, ...row }));
     this.cache[table].push(...full);
     this.save(); this.emit({ table }); return full;
@@ -573,6 +651,7 @@ class DemoStore extends BaseStore {
   async update(table, id, patch) {
     const before = { ...this.find(table, id) };
     const after = { ...before, ...patch };
+    this.guard(table, before); this.guard(table, after);
     if (table === 'steps' && before.locked_at && !after.locked_at && !this.me.isAdmin) throw new Error('Only the admin can unlock this');
     if (table === 'steps' && !before.locked_at && after.locked_at) after.locked_by = this.me.id;
     let action = 'update';
@@ -584,6 +663,7 @@ class DemoStore extends BaseStore {
   remove(table, id) { return this.update(table, id, { deleted_at: nowIso(), deleted_by: this.me.id }); }
   restore(table, id) { return this.update(table, id, { deleted_at: null, deleted_by: null }); }
   async patchMany(table, ids, patch) {
+    for (const id of ids) this.guard(table, this.find(table, id));
     for (const id of ids) {
       const before = { ...this.find(table, id) }; const after = { ...before, ...patch };
       this.upsertLocal(table, after);
@@ -595,6 +675,7 @@ class DemoStore extends BaseStore {
   restoreMany(table, ids) { return this.patchMany(table, ids, { deleted_at: null, deleted_by: null }); }
   async purge(table, id) {
     const row = this.find(table, id);
+    this.guard(table, row);
     this.dropChildren(table, id);
     this.dropLocal(table, id); this.log('purge', table, row, null);
     this.save(); this.emit({ table });
@@ -615,7 +696,7 @@ class DemoStore extends BaseStore {
     this.save(); this.emit({ table: 'stages' });
   }
   async removeMember(userId) { this.dropLocal('members', userId); this.save(); this.emit({ table: 'members' }); }
-  async del(table, id) { const before = this.find(table, id); this.dropLocal(table, id); if (before && !UNLOGGED.includes(table)) this.log('purge', table, before, null); this.save(); this.emit({ table }); }
+  async del(table, id) { const before = this.find(table, id); this.guard(table, before); this.dropLocal(table, id); if (before && !UNLOGGED.includes(table)) this.log('purge', table, before, null); this.save(); this.emit({ table }); }
   async saveBackup(name, json) { this.blobs.set('backups/' + name, URL.createObjectURL(new Blob([json], { type: 'application/json' }))); this._bsize = { ...(this._bsize || {}), ['backups/' + name]: json.length }; }
   async listBackups() { return [...this.blobs.keys()].filter(k => k.startsWith('backups/')).sort().reverse().map(p => ({ name: p.slice(8), path: p, size: (this._bsize || {})[p] || 0 })); }
   async removeBackups(paths) { for (const p of paths) this.blobs.delete(p); }

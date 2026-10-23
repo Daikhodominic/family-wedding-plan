@@ -313,9 +313,12 @@ export function renderSettings() {
     h('h2', { class: 'serif', style: { margin: '0 0 6px', fontWeight: 500, fontSize: '26px' } }, 'Who has joined'),
     h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Removing someone signs them out of the plans. They can come back only with the passcode — change it too if they shouldn’t.'),
     h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Deciders change money, make decisions final and choose between options — for the weddings you tick. Everyone else can add, suggest, vote and tick off their jobs.'),
-    h('div', {}, store.rows('members').map(m => h('div', { class: 'bin-row' },
-      h('span', {}, m.name, m.is_admin ? h('span', { class: 'muted' }, ' · admin · decides for every wedding') : null),
+    h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Role: Full can change everything they’re allowed to. Lists only can work on Lists & files. View only can look, comment and vote. The database enforces it (update 14).'),
+    h('div', {}, store.rows('members').map(m => h('div', { class: 'bin-row mem-row' },
+      h('span', { class: 'mem-who' }, h('b', {}, m.name), m.is_admin ? h('span', { class: 'muted' }, ' · admin · decides for every wedding') : null, memberStats(m)),
       m.is_admin ? h('span') : h('span', { class: 'acts' },
+        h('select', { class: 'mem-role', 'aria-label': `Role for ${m.name}`, onchange: (e) => store.setRole(m.user_id, e.target.value).then(() => toast(`${m.name}: ${ROLE[e.target.value]}`)).catch(err => { toast(err.message, 'error'); render(); }) },
+          Object.entries(ROLE).map(([k, l]) => h('option', { value: k, selected: (m.role || 'full') === k ? true : null }, l))),
         weddings().map(w => { const on = decidesFor(m, w.id) && !m.is_admin; const first = (w.couple || '').split('&')[0].trim();
           return h('button', { class: 'btn small ' + (on ? 'soft' : 'ghost'), type: 'button', 'aria-pressed': on ? 'true' : 'false', title: on ? `${m.name} decides for ${w.couple}` : `Make ${m.name} a Decider for ${w.couple}`, onclick: () => {
             const cur = weddings().filter(x => decidesFor(m, x.id)).map(x => x.id);
@@ -346,3 +349,16 @@ export function renderSettings() {
       storagePanel()] : null);
 }
 let settingsTab = 'weddings';
+const ROLE = { full: 'Full', lists: 'Lists only', view: 'View only' };
+// Joined, last opened, last change, votes — so the admin can see who is keeping up.
+function memberStats(m) {
+  const votes = (store.rows('reactions') || []).filter(r => r.created_by === m.user_id && ['love', 'no', 'maybe'].includes(r.value)).length;
+  const said = (store.rows('comments') || []).filter(c => c.created_by === m.user_id).length;
+  const last = (store.rows('activity') || []).find(a => a.actor === m.user_id);
+  const bits = [
+    m.joined_at ? 'joined ' + new Date(m.joined_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : null,
+    m.last_opened ? 'opened ' + ago(m.last_opened) : 'not opened since update 14',
+    last ? 'last change ' + ago(last.created_at) : 'no changes yet',
+    said ? `${said} ${said === 1 ? 'comment' : 'comments'}` : null];
+  return h('span', { class: 'mem-stats' }, bits.filter(Boolean).join(' · '), ' · ', votes ? h('span', {}, `${votes} ${votes === 1 ? 'vote' : 'votes'}`) : h('span', { class: 'mem-never' }, 'never voted'));
+}

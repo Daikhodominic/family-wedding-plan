@@ -1,4 +1,5 @@
 // Reactions, comments & suggestions, and option votes on mood board cards.
+import { afterComment, richBody, mentionChips } from './mentions.js?v=48';
 import { store } from './store.js?v=48';
 import { h, toast, ago, ICONS } from './ui.js?v=48';
 import { live } from './app.js?v=48';
@@ -88,8 +89,9 @@ export function openThread(itemId) {
       const body = box.value.trim(); if (!body) return;
       if (missing()) { toast('Comments need database update 6. Ask the admin to run it.', 'error'); return; }
       draft = ''; box.value = '';
-      await store.insert('comments', { wedding_id: item.wedding_id, item_id: item.id, kind, body, title: body.slice(0, 120), author_name: store.me.name }).catch(fail);
+      const ok = await store.insert('comments', { wedding_id: item.wedding_id, item_id: item.id, kind, body, title: body.slice(0, 120), author_name: store.me.name }).then(() => true, (e) => { fail(e); return false; });
       markSeen(itemId);
+      if (ok) afterComment(item, body);
     };
     box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); } });
     root.replaceChildren(
@@ -108,14 +110,15 @@ export function openThread(itemId) {
               c.from_partner ? h('span', { class: 'cm-tag partner' }, 'Partner family') : null,
               isFresh ? h('span', { class: 'cm-new' }, 'New') : c === latest ? h('span', { class: 'cm-latest' }, 'Latest') : null,
               h('span', { class: 'cm-t' }, ago(c.created_at))),
-            h('div', { class: 'cm-b' }, c.body),
+            h('div', { class: 'cm-b' }, richBody(c.body || '')),
             mine || store.me.isAdmin ? h('button', { type: 'button', class: 'link-btn cm-del', onclick: () => store.remove('comments', c.id).then(() => toast('Moved to the Bin')).catch(fail) }, 'Remove') : null);
         })),
         h('div', { class: 'composer' },
           h('div', { class: 'd-seg', role: 'group', 'aria-label': 'Type' },
             [['comment', 'Comment'], ['suggestion', 'Suggestion']].map(([k, l]) => h('button', { type: 'button', class: kind === k ? 'on' : '', onclick: () => { kind = k; draw(); } }, l))),
           box,
-          h('div', { class: 'composer-f' }, h('span', { class: 'hint', style: { margin: 0 } }, 'Everyone in the family sees this. Ctrl + Enter to send.'),
+          mentionChips(box, (v) => { draft = v; }),
+          h('div', { class: 'composer-f' }, h('span', { class: 'hint', style: { margin: 0 } }, 'Everyone in the family sees this. Type @name to ask someone — it goes into their jobs.'),
             h('button', { class: 'btn', type: 'button', onclick: send }, kind === 'suggestion' ? 'Send suggestion' : 'Send')))));
     const scroller = root.querySelector('.d-body');
     const firstNew = root.querySelector('.cm.fresh');

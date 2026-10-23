@@ -1,5 +1,6 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
+import { lockChip, lockButton } from './locks.js?v=48';
 import { store } from './store.js?v=48';
 import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=48';
 import { live } from './app.js?v=48';
@@ -121,11 +122,12 @@ function renderListPage(root, w, l) {
   root.append(
     h('a', { class: 'back-link', href: `#/w/${w.id}/lists` }, h('span', { html: ICONS.back }), 'All lists'),
     h('div', { class: 'lpage-head' },
-      h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'List'), title, h('div', { class: 'lp-sum' }, listSummary(l).join(' · '), step ? ` · for “${step.title}”` : '')),
+      h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'List', lockChip('lists', l.id, w.id)), title, h('div', { class: 'lp-sum' }, listSummary(l).join(' · '), step ? ` · for “${step.title}”` : '')),
       h('div', { class: 'ph-right' },
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=48').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
+        lockButton('lists', l.id, w.id),
         h('button', { type: 'button', class: 'btn ghost wa-btn', onclick: () => sendList(store.find('lists', l.id) || l) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send on WhatsApp'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => printList(store.find('lists', l.id) || l) }, 'Print or save as PDF'),
         ...otherWeddings(w.id).map(o => h('button', { type: 'button', class: 'btn ghost', onclick: () => copyList(l, o.id) }, 'Copy to ' + o.couple.split('&')[0].trim())),
