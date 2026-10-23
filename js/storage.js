@@ -1,9 +1,9 @@
 // Storage for the admin: how much space the photos and files take, what they are, and clearing by kind.
 // Supabase's free plan gives 1 GB of file storage. Every photo is kept as a full picture plus a small copy.
-import { store } from './store.js?v=44';
-import { h, toast, modal } from './ui.js?v=44';
+import { store } from './store.js?v=45';
+import { h, toast, modal } from './ui.js?v=45';
 const prettySize = (n) => !n ? '0 KB' : n >= 1024 ** 3 ? (n / 1024 ** 3).toFixed(n >= 10 * 1024 ** 3 ? 0 : 1).replace(/\.0$/, '') + ' GB' : n >= 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
-import { live } from './app.js?v=44';
+import { live } from './app.js?v=45';
 
 const LIMIT = 1024 * 1024 * 1024; // 1 GB — Supabase free plan
 const KINDS = {

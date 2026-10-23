@@ -1,9 +1,9 @@
 // One-tap WhatsApp nudges: opens WhatsApp with the message already written.
 // With a saved number it goes straight to that person; without one WhatsApp asks who to send it to.
-import { store } from './store.js?v=44';
-import { h, ICONS, shortDate, daysUntil, buzz } from './ui.js?v=44';
-import { wedding, live } from './app.js?v=44';
-import { siteLink, splitPeople, joinPeople } from './tools.js?v=44';
+import { store } from './store.js?v=45';
+import { h, ICONS, shortDate, daysUntil, buzz } from './ui.js?v=45';
+import { wedding, live } from './app.js?v=45';
+import { siteLink, splitPeople, joinPeople } from './tools.js?v=45';
 
 // Indian numbers are usually typed as 10 digits; WhatsApp needs the country code.
 export function waNumber(raw) {

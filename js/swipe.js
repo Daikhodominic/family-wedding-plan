@@ -1,17 +1,17 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=44';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=44';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=44';
-import { isDecider, personInput } from './tools.js?v=44';
-import { suggestDue } from './planauto.js?v=44';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=44';
-import { addVendor } from './decisions.js?v=44';
-import { pickFiles, fetchPreview } from './board.js?v=44';
-import { planOf } from './map.js?v=44';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=44';
-import { sampleRows, isSample } from './samples.js?v=44';
+import { store } from './store.js?v=45';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=45';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=45';
+import { isDecider, personInput } from './tools.js?v=45';
+import { suggestDue } from './planauto.js?v=45';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=45';
+import { addVendor } from './decisions.js?v=45';
+import { pickFiles, fetchPreview } from './board.js?v=45';
+import { planOf } from './map.js?v=45';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=45';
+import { sampleRows, isSample } from './samples.js?v=45';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -98,11 +98,13 @@ export function lightbox(paths, start = 0) {
 }
 
 /* ---------- Links ---------- */
+// Which service a link is, so its chip can wear that service's colour.
+const brandOf = (u) => { const host = hostOf(u) || ''; return /instagram\.com/.test(host) ? 'b-instagram' : /facebook\.com|fb\.com/.test(host) ? 'b-facebook' : /youtube\.com|youtu\.be/.test(host) ? 'b-youtube' : /maps\.|goo\.gl/.test(host) ? 'b-maps' : /wa\.me|whatsapp/.test(host) ? 'b-whatsapp' : ''; };
 const linkLabel = (u) => { const host = hostOf(u); if (/instagram\.com/.test(host)) return 'Instagram'; if (/facebook\.com|fb\.com/.test(host)) return 'Facebook'; if (/youtube\.com|youtu\.be/.test(host)) return 'YouTube'; if (/maps\.|goo\.gl/.test(host)) return 'Map'; if (/wa\.me|whatsapp/.test(host)) return 'WhatsApp'; return host || 'Link'; };
 function linkTile(u) {
   const safe = safeUrl(u); if (!safe) return null;
   if (instaPost(safe)) return instaEmbed(safe); // the post itself, right here
-  const pic = h('span', { class: 'lt-pic' }, linkLabel(u).slice(0, 1));
+  const pic = h('span', { class: 'lt-pic ' + brandOf(u) }, linkLabel(u).slice(0, 1));
   const title = h('span', { class: 'lt-t' }, linkLabel(u));
   const sub = h('span', { class: 'lt-s' }, u.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60));
   fetchPreview(safe).then(p => { if (!p) return; if (p.image) pic.replaceChildren(img(p.image, 'lt-img')); if (p.title) title.textContent = p.title.slice(0, 70); });
@@ -495,7 +497,7 @@ export function openCompare(list) {
       h('div', { class: 'cmp-rate' }, d.rate || '—'),
       h('div', { class: 'cmp-votes' }, `♥ ${v.love.length} · ✕ ${v.no.length}`),
       d.notes ? h('p', { class: 'cmp-notes' }, d.notes) : h('p', { class: 'cmp-notes muted' }, 'No details yet.'),
-      (d.links || []).length ? h('div', { class: 'cmp-links' }, (d.links || []).map(u => safeUrl(u) ? h('a', { href: safeUrl(u), target: '_blank', rel: 'noopener', class: 'chip-link' }, linkLabel(u)) : null)) : null,
+      (d.links || []).length ? h('div', { class: 'cmp-links' }, (d.links || []).map(u => safeUrl(u) ? h('a', { href: safeUrl(u), target: '_blank', rel: 'noopener', class: 'chip-link ' + brandOf(u) }, linkLabel(u)) : null)) : null,
       d.phone ? h('a', { class: 'cmp-phone', href: 'tel:' + d.phone.replace(/[^\d+]/g, '') }, '☏ ' + d.phone) : null,
       h('div', { class: 'cmp-acts' },
         h('button', { type: 'button', class: 'btn small ghost', onclick: () => openOption(o) }, 'See everything'),
@@ -533,7 +535,7 @@ function deckCard(o, rest, onVote) {
       d.notes ? h('p', { class: 'sw-notes' }, d.notes) : null,
       h('div', { class: 'sw-meta' },
         pics.length > 1 ? h('span', { class: 'chip-link' }, `${pics.length} photos`) : null,
-        (d.links || []).slice(0, 2).map(u => h('span', { class: 'chip-link' }, linkLabel(u))),
+        (d.links || []).slice(0, 2).map(u => h('span', { class: 'chip-link ' + brandOf(u) }, linkLabel(u))),
         v.total ? h('span', { class: 'sw-sofar' }, `♥ ${v.love.length} · ✕ ${v.no.length} so far`) : null),
       h('button', { type: 'button', class: 'sw-more', onclick: (e) => { e.stopPropagation(); openProfile(o, onVote); } }, h('span', { class: 'sw-more-ar', 'aria-hidden': 'true' }, '⌃'), pics.length > 1 ? `Swipe up for all ${pics.length} photos and details` : 'Swipe up for the details')));
   // Like Bumble: sideways decides (a light push in the general direction is enough), up opens the whole profile.

@@ -8,7 +8,7 @@ async def main():
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/w/charani/board'); await pg.wait_for_timeout(600)
         # give option B a rate and contact
-        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=44'); const it=store.find('board_items','demo-compare'); const o=it.data.options.map((x,i)=>i===1?{...x, rate:'45,000', contact:'Rose Florist 98765 43210'}:x); await store.update('board_items','demo-compare',{data:{...it.data, options:o}});}""")
+        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=45'); const it=store.find('board_items','demo-compare'); const o=it.data.options.map((x,i)=>i===1?{...x, rate:'45,000', contact:'Rose Florist 98765 43210'}:x); await store.update('board_items','demo-compare',{data:{...it.data, options:o}});}""")
         await pg.wait_for_timeout(300)
         cmp=pg.locator('.card.compare')
         await cmp.locator('.handle button[aria-label^="More"]').click(); await pg.wait_for_timeout(200)
@@ -18,7 +18,7 @@ async def main():
         await pg.locator('.card.compare .opt').nth(1).locator('.pill:has-text("Choose")').click(); await pg.wait_for_timeout(300)
         print('confirm', await pg.locator('.modal h2').inner_text())
         await pg.click('.modal-actions .btn:has-text("Make it final")'); await pg.wait_for_timeout(800)
-        st=await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=44'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title==='Buy the gifts'); const v=store.rows('lists').find(l=>l.title==='Vendors'); const rows=v?store.rows('list_rows').filter(r=>r.list_id===v.id).map(r=>r.cells):null; const todo=store.rows('todos').find(t=>t.title.startsWith('Pay the balance')); return [!!s.locked_at, s.lock_note.with, s.lock_note.amount, rows, todo&&todo.title];}""")
+        st=await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=45'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title==='Buy the gifts'); const v=store.rows('lists').find(l=>l.title==='Vendors'); const rows=v?store.rows('list_rows').filter(r=>r.list_id===v.id).map(r=>r.cells):null; const todo=store.rows('todos').find(t=>t.title.startsWith('Pay the balance')); return [!!s.locked_at, s.lock_note.with, s.lock_note.amount, rows, todo&&todo.title];}""")
         print('after choose', st)
         print('ribbon', await pg.locator('.card.compare .ribbon-chosen').count(), 'tag final', await pg.locator('.card.compare .ctag.step.final').count())
         # status + job on note

@@ -1756,7 +1756,7 @@ body[data-page=page]::before, body[data-page=page]::after { opacity: .26 !import
 .neg, .late { color: #F2A488 !important; }
 
 /* ---------- Buttons: champagne gold for the main action, smoked glass for the rest ---------- */
-.btn:not(.ghost):not(.soft):not(.danger) {
+.btn:not(.ghost):not(.soft):not(.danger):not(.wa-btn) {
   background: linear-gradient(180deg, #E8C988 0%, #D4AE66 55%, #B88B3E 100%) !important; color: #1A1408 !important; border: 0 !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -1px 0 rgba(0, 0, 0, .2), 0 14px 26px -14px rgba(217, 180, 112, .55) !important;
 }
@@ -2558,3 +2558,15 @@ body[data-theme=rose] .drawer .d-save { background: linear-gradient(180deg, rgba
 .lb-dl { position: absolute; top: max(14px, env(safe-area-inset-top)); right: 66px; z-index: 2; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .08); color: #fff; font-size: 20px; cursor: pointer; }
 .pf-wrap { z-index: 205 !important; }
 .stg-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+
+/* ---------- WhatsApp in WhatsApp green, other services in their own colours ---------- */
+html body .wa-btn, html body .btn.wa-btn, html body .btn.ghost.wa-btn, html body :is(.drawer, .modal, .d-body, .sbody, .wrap, .home, .pf-wrap, .st-wrap) .btn.wa-btn { background: linear-gradient(180deg, #2BD46C, #1DA851) !important; color: #fff !important; border: 1px solid rgba(0, 0, 0, .08) !important; box-shadow: 0 8px 18px -10px rgba(37, 211, 102, .6) !important; -webkit-text-fill-color: #fff !important; }
+html body .btn.wa-btn:hover, html body .btn.wa-btn:focus-visible { background: linear-gradient(180deg, #25D366, #128C7E) !important; }
+.wa-btn .wa-ic, .wa-btn .wa-ic svg { color: #fff !important; fill: currentColor; }
+.chip-link.b-instagram, .lt-pic.b-instagram { background: linear-gradient(45deg, #F58529, #DD2A7B 50%, #8134AF) !important; color: #fff !important; border-color: transparent !important; }
+.chip-link.b-facebook, .lt-pic.b-facebook { background: #1877F2 !important; color: #fff !important; border-color: transparent !important; }
+.chip-link.b-youtube, .lt-pic.b-youtube { background: #FF0000 !important; color: #fff !important; border-color: transparent !important; }
+.chip-link.b-maps, .lt-pic.b-maps { background: #34A853 !important; color: #fff !important; border-color: transparent !important; }
+.chip-link.b-whatsapp, .lt-pic.b-whatsapp { background: #25D366 !important; color: #fff !important; border-color: transparent !important; }
+.ig-open { color: #E1306C !important; font-weight: 600; }
+.ig-show { border-color: rgba(221, 42, 123, .5) !important; color: #C13584 !important; background: rgba(221, 42, 123, .06) !important; }

@@ -1,15 +1,15 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=44';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=44';
-import { addStepAt } from './addhere.js?v=44';
-import { uploadFile, pickFiles } from './board.js?v=44';
-import { isDecider, deciderNames, personInput } from './tools.js?v=44';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=44';
-import { voteCounts, optionKey } from './feedback.js?v=44';
-import { suggestDue } from './planauto.js?v=44';
-import { guestCount } from './boardauto.js?v=44';
-import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=44';
-import { stepWaButton } from './nudge.js?v=44';
+import { store } from './store.js?v=45';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=45';
+import { addStepAt } from './addhere.js?v=45';
+import { uploadFile, pickFiles } from './board.js?v=45';
+import { isDecider, deciderNames, personInput } from './tools.js?v=45';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=45';
+import { voteCounts, optionKey } from './feedback.js?v=45';
+import { suggestDue } from './planauto.js?v=45';
+import { guestCount } from './boardauto.js?v=45';
+import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=45';
+import { stepWaButton } from './nudge.js?v=45';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {

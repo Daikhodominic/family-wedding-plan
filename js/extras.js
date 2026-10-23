@@ -1,11 +1,11 @@
-import { storagePanel } from './storage.js?v=44';
-import { store } from './store.js?v=44';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=44';
-import { othersSummary, bringBackOthers } from './safety.js?v=44';
-import { weddings, wedding, feedList, render, THEMES } from './app.js?v=44';
-import { confirmAreaRestore, inr } from './budget.js?v=44';
-import { clearAll } from './clear.js?v=44';
-import { downloadBackup, decidesFor } from './tools.js?v=44';
+import { storagePanel } from './storage.js?v=45';
+import { store } from './store.js?v=45';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=45';
+import { othersSummary, bringBackOthers } from './safety.js?v=45';
+import { weddings, wedding, feedList, render, THEMES } from './app.js?v=45';
+import { confirmAreaRestore, inr } from './budget.js?v=45';
+import { clearAll } from './clear.js?v=45';
+import { downloadBackup, decidesFor } from './tools.js?v=45';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };
