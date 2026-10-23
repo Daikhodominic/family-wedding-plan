@@ -7,6 +7,7 @@ async def main():
         b=await p.chromium.launch(); ctx=await b.new_context(viewport={'width':1440,'height':900}, accept_downloads=True); pg=await ctx.new_page()
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/w/charani'); await pg.wait_for_timeout(600)
+        if await pg.locator('details.setup-card:not([open]) summary').count(): await pg.click('details.setup-card summary')
         print('dates banner', await pg.locator('.tip.auto').count())
         await pg.click('.tip.auto:has-text("no due date") .tip-x'); await pg.wait_for_timeout(600)
         dues=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=47'); return store.rows('steps').filter(s=>s.wedding_id==='charani'&&s.due).map(s=>s.title+':'+s.due).slice(0,6)}")
@@ -34,7 +35,7 @@ async def main():
         await pg.screenshot(path=D+'shots/finalweek.png')
         # copy list + area
         await pg.goto(B+'#/w/charani/plan'); await pg.wait_for_timeout(500); (await pg.locator('.fold-all button:has-text(\"Open all\")').click()) if await pg.locator('.fold-all').count() else None; await pg.wait_for_timeout(300)
-        await pg.locator('.area:has-text("Gift preparation") .menu-btn').click(); await pg.click('.modal .btn:has-text("Copy this area to Elow")'); await pg.wait_for_timeout(600)
+        await pg.locator('.area:has-text("Gift preparation") .menu-btn').click(); await pg.click('.modal .btn:has-text("Copy this section to Elow")'); await pg.wait_for_timeout(600)
         n=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=47'); return store.rows('areas').filter(a=>a.wedding_id==='elow'&&a.title==='Gift preparation'&&!a.deleted_at).length}")
         print('elow gift areas', n)
         # drawer suggested date

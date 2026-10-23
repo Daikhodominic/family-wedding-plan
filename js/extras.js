@@ -1,4 +1,5 @@
 import { storagePanel } from './storage.js?v=47';
+import { sampleButton } from './swipe.js?v=47';
 import { backupsPanel } from './backups.js?v=47';
 import { store } from './store.js?v=47';
 import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=47';
@@ -8,7 +9,7 @@ import { confirmAreaRestore, inr } from './budget.js?v=47';
 import { clearAll } from './clear.js?v=47';
 import { downloadBackup, decidesFor } from './tools.js?v=47';
 
-const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
+const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget line', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };
 const FIELD = {
   title: 'name', owner: 'person in charge', due: 'due date', status: 'status', notes: 'notes', area_id: 'area', stage_id: 'stage',
@@ -30,7 +31,7 @@ function show(v, key) {
   if (v === null || v === undefined || v === '') return '(empty)';
   if (key === 'status') return STATUS[v] || v;
   if (key === 'due' || key === 'wedding_date') return /^\d{4}-\d{2}-\d{2}$/.test(v) ? shortDate(v) : v;
-  if (key === 'area_id') { const r = store.find('areas', v) || (store.rows('budget_areas') || []).find(x => x.id === v); return r ? r.title : 'another area'; }
+  if (key === 'area_id') { const r = store.find('areas', v) || (store.rows('budget_areas') || []).find(x => x.id === v); return r ? r.title : 'another section'; }
   if (['planned', 'amount', 'total', 'contingency'].includes(key)) return inr(Number(v) || 0);
   if (key === 'paid_at') return v ? 'paid' : 'not paid';
   if (key === 'refund_expected') return v ? 'yes' : 'no';
@@ -142,7 +143,7 @@ export function renderBin() {
     if (t === 'budget_items') bits.push(inr(Number(r.amount) || 0) + (r.paid_at ? ' · paid' : ''));
     if (t === 'steps') { const a = store.find('areas', r.area_id); if (a) bits.push('in ' + a.title); }
     if (t === 'areas') { const s = store.find('stages', r.stage_id); if (s) bits.push('in ' + s.title); }
-    if (t === 'stages') { const n = store.rows('areas').filter(a => a.stage_id === r.id && !a.deleted_at).length; if (n) bits.push(`with ${n} ${n === 1 ? 'area' : 'areas'} inside`); }
+    if (t === 'stages') { const n = store.rows('areas').filter(a => a.stage_id === r.id && !a.deleted_at).length; if (n) bits.push(`with ${n} ${n === 1 ? 'section' : 'sections'} inside`); }
     const who = store.memberName(r.deleted_by);
     bits.push(`removed ${who ? 'by ' + who + ' ' : ''}${ago(r.deleted_at)}`);
     return bits.filter(Boolean).join(' · ');
@@ -168,7 +169,7 @@ export function renderBin() {
             try { await store.batch(async () => { for (const t of tables) await store.restoreMany(t, g.filter(it => it.t === t).map(it => it.r.id)); }); toast(`Restored ${g.length}`); } catch (e) { toast(e.message, 'error'); }
           } }, 'Restore all'),
           oth.n ? h('button', { class: 'btn small', type: 'button', style: { background: 'var(--gold)' }, title: oth.people.join(' · '), onclick: async () => {
-            try { const k = await store.batch(() => bringBackOthers(g)); toast(`Brought back ${k} — steps whose area was gone are in “Brought back from the old plan”`); } catch (e) { toast(e.message, 'error'); }
+            try { const k = await store.batch(() => bringBackOthers(g)); toast(`Brought back ${k} — steps whose section was gone are in “Brought back from the old plan”`); } catch (e) { toast(e.message, 'error'); }
           } }, `Bring back what others added (${oth.n})`) : null,
           store.me.isAdmin ? h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
             if (!(await confirmBox('Delete all of these for good?', `${g.length} things will be gone for everyone and can't be restored.` + (oth.n ? ` ${oth.n} of them were added by other people (${oth.people.join('; ')}).` : ''), 'Delete for good'))) return;
@@ -263,7 +264,10 @@ export function renderSettings() {
             if (!(await confirmBox(`Remove ${w.couple}?`, 'The whole space (plan, to-dos and mood board) moves to the Bin. You can restore it from there.', 'Move to Bin'))) return;
             store.remove('weddings', w.id).then(() => toast('Moved to the Bin')).catch(e => toast(e.message, 'error'));
           }
-        }, 'Remove this space')));
+        }, 'Remove this space')),
+      h('div', { style: { display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap', alignItems: 'center' } },
+        h('span', { class: 'muted', style: { fontSize: '14px', marginRight: 'auto' } }, 'Sample options (placeholders to try the swipe)'),
+        sampleButton(w)));
   });
 
   // Add a new wedding or event space

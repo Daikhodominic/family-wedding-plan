@@ -19,9 +19,9 @@ async def main():
         await pg.locator('.st-nav.next').click(); await pg.wait_for_timeout(300)
         print('next', await pg.locator('.st-pos').inner_text())
         # choose the leader as admin (demo user is admin & decider)
-        btn=pg.locator('.st-alt .btn:has-text("Choose this")').first
+        btn=pg.locator('.st-alt .btn:has-text("Make it final")').first
         if await btn.count():
-            await btn.evaluate('b=>b.click()'); await pg.wait_for_timeout(300); await pg.locator('.modal-actions .btn:has-text("Choose it")').click(); await pg.wait_for_timeout(800)
+            await btn.evaluate('b=>b.click()'); await pg.wait_for_timeout(300); await pg.locator('.modal-actions .btn:has-text("Make it final")').click(); await pg.wait_for_timeout(800)
         print('after choose:', await pg.locator('.st-line').first.inner_text())
         await pg.screenshot(path='shots/story2.png')
         # add final design

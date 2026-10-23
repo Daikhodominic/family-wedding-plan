@@ -19,8 +19,6 @@ async def main():
         # undo the collage
         await pg.click('.undo-btn'); await pg.wait_for_timeout(400)
         print('after undo gallery', await pg.locator('.card.gallery').count())
-        await pg.click('.redo-btn'); await pg.wait_for_timeout(400)
-        print('after redo gallery', await pg.locator('.card.gallery').count())
         # checklist
         await pg.click('.add-btn'); await pg.click('.add-pop .tool:has-text("Checklist")'); await pg.wait_for_timeout(300)
         await pg.locator('.modal textarea').fill('Buy ribbons\nBook tailor'); await pg.click('.modal-actions .btn:has-text("Save")'); await pg.wait_for_timeout(300)

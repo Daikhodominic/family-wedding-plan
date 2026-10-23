@@ -35,10 +35,10 @@ export async function addStepAt(areaId, afterStep = null) {
 }
 
 export async function addAreaTo(stage) {
-  const title = await askTitle(`New area in ${stage.title}`, 'e.g. Bridal shower');
+  const title = await askTitle(`New section in ${stage.title}`, 'e.g. Bridal shower');
   if (!title) return;
   const last = live(store.rows('areas')).filter(a => a.stage_id === stage.id).sort(byPos).pop();
-  await store.insert('areas', { wedding_id: stage.wedding_id, stage_id: stage.id, title, position: (last ? last.position || 0 : 0) + 1000 }).then(() => toast('Area added')).catch(fail);
+  await store.insert('areas', { wedding_id: stage.wedding_id, stage_id: stage.id, title, position: (last ? last.position || 0 : 0) + 1000 }).then(() => toast('Section added')).catch(fail);
 }
 
 export async function addStageTo(weddingId) {
@@ -53,7 +53,7 @@ export async function removeArea(area) {
   const others = steps.filter(s => s.created_by && store.me && s.created_by !== store.me.id);
   const names = [...new Set(others.map(s => store.memberName(s.created_by) || 'someone else'))];
   const ok = await confirmBox(`Remove “${area.title}”?`,
-    `The area and its ${steps.length} ${steps.length === 1 ? 'step' : 'steps'} move to the Bin, where anyone can restore them.` + (others.length ? ` ${others.length} of these steps were added by ${names.join(', ')}.` : ''), 'Move to the Bin');
+    `The section and its ${steps.length} ${steps.length === 1 ? 'step' : 'steps'} move to the Bin, where anyone can restore them.` + (others.length ? ` ${others.length} of these steps were added by ${names.join(', ')}.` : ''), 'Move to the Bin');
   if (!ok) return;
   await store.remove('areas', area.id).then(() => toast('Moved to the Bin')).catch(fail);
 }

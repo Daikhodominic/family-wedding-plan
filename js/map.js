@@ -69,10 +69,10 @@ export function renderMap(root, w, plan, params) {
           h('span', { class: 'area-badge', 'aria-hidden': 'true' }, h('span', { class: 'ab-ring', html: ringSvg(a.complete, a.steps.filter(x => x.locked_at).length, a.steps.length, 42) }), h('span', { class: 'ab-ic', html: areaIcon(a.title) })),
           h('span', { class: 'area-tt' }, h('b', {}, a.title), h('span', { class: 'ft-sub' }, `${a.complete} of ${a.steps.length}`)),
           plan.here === a.id ? h('span', { class: 'here-tag' }, 'You are here') : null,
-          h('button', { type: 'button', class: 'marea-x', title: `Remove ${a.title}`, 'aria-label': `Remove the area ${a.title}`, html: ICONS.trash, onclick: () => removeArea(a) })),
+          h('button', { type: 'button', class: 'marea-x', title: `Remove ${a.title}`, 'aria-label': `Remove the section ${a.title}`, html: ICONS.trash, onclick: () => removeArea(a) })),
         h('div', { class: 'mnodes' }, a.steps.flatMap((s, i) => i < a.steps.length - 1 ? [nodeEl(s), gap(a, s)] : [nodeEl(s)]),
           h('button', { type: 'button', class: 'madd', onclick: () => addStepAt(a.id, null) }, '+ Add a step')))),
-        h('button', { type: 'button', class: 'madd area', onclick: () => addAreaTo(st) }, '+ Add an area'))));
+        h('button', { type: 'button', class: 'madd area', onclick: () => addAreaTo(st) }, '+ Add a section'))));
   });
   inner.append(h('section', { class: 'mstage add' }, h('button', { type: 'button', class: 'madd stage', onclick: () => addStageTo(w.id) }, '+ Add a stage')));
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

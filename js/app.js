@@ -9,7 +9,7 @@ import { clearPage, clearAll } from './clear.js?v=47';
 import { undoButtons } from './history.js?v=47';
 import { downloadBackup } from './tools.js?v=47';
 import { renderMyJobs, myOpenJobs } from './myjobs.js?v=47';
-import { maybeWelcome, openTour, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=47';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=47';
 import { announcementBars } from './planauto.js?v=47';
 import { renderPartner } from './partner.js?v=47';
 import { renderOverview, editDate } from './overview.js?v=47';
@@ -22,6 +22,7 @@ import { notifySupported, notifyOn, notifySettings, startNotifier } from './noti
 import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=47';
 import { morphInto, onScreen } from './morph.js?v=47';
 import { renderShare } from './share.js?v=47';
+import { pendingFor } from './swipe.js?v=47';
 import { installApp, installOffer, isStandalone } from './install.js?v=47';
 
 const app = document.getElementById('app');
@@ -240,16 +241,19 @@ function comingUp() {
 }
 const stepLink = (s) => s.kind === 'todo' ? `#/w/${s.wedding_id}/todo?focus=${s.id}` : `#/w/${s.wedding_id}/plan?open=${s.id}`;
 
+// Home's first card: hello, your next jobs, and how many options are waiting for your vote.
 function greeting() {
-  const jobs = myOpenJobs();
+  const jobs = myOpenJobs().sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
   const late = jobs.filter(t => t.due && daysUntil(t.due) < 0).length;
-  const week = jobs.filter(t => t.due && daysUntil(t.due) >= 0 && daysUntil(t.due) <= 7).length;
   const first = (store.me.name || '').split(/\s+/)[0];
-  return h('a', { class: 'greet', href: '#/me' },
-    h('span', {}, `Hi ${first}`),
-    jobs.length ? h('b', {}, ` · ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} for you`) : h('span', { class: 'muted' }, ' · nothing on your list'),
-    late ? h('span', { class: 'neg' }, ` · ${late} overdue`) : week ? h('span', {}, ` · ${week} this week`) : null,
-    jobs.length ? h('span', { class: 'greet-go' }, ' →') : null);
+  return h('section', { class: 'greet-card' },
+    h('div', { class: 'gc-h' }, h('b', {}, `Hi ${first}`),
+      h('span', { class: 'muted' }, jobs.length ? ` · ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} for you` : ' · nothing on your list'),
+      late ? h('span', { class: 'neg' }, ` · ${late} overdue`) : null),
+    jobs.length ? h('div', { class: 'gc-jobs' }, jobs.slice(0, 2).map(t => h('a', { class: 'gc-job', href: t.kind === 'todo' ? `#/w/${t.wedding_id}/todo` : `#/w/${t.wedding_id}/plan?open=${t.id}` },
+      h('span', {}, t.title), t.due ? h('small', { class: daysUntil(t.due) < 0 ? 'neg' : '' }, shortDate(t.due)) : null))) : null,
+    h('div', { class: 'gc-links' },
+      jobs.length ? h('a', { href: '#/me' }, 'All your jobs →') : h('span', { class: 'muted' }, 'When someone puts your name on a job, it shows here.')));
 }
 
 function renderHome() {
@@ -296,13 +300,13 @@ function renderHome() {
       h('img', { class: 'hb r', src: 'assets/lush_rose.svg', alt: '', 'aria-hidden': 'true' }),
       h('header', { class: 'home-top' },
         h('a', { class: 'brand', href: '#/' }, 'The Wedding War Room'),
-        greeting(),
         h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), syncPill(), undoButtons(), avatar())),
       newForYou(null),
       installOffer(),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
         ws.length ? ws.map(emblem)
           : h('p', { class: 'muted' }, store.me.isAdmin ? h('span', {}, 'No weddings yet. ', h('a', { href: '#/settings' }, 'Add one in Settings')) : 'No weddings yet.')),
+      greeting(),
       h('main', { class: 'home-row' }, changes, decide, coming)));
 }
 
@@ -341,6 +345,7 @@ function renderSpace(id, sub, params) {
             h('span', { class: 'snav-ic', html: ICONS[icon] }), h('span', { class: 'snav-t' }, label),
             k === 'overview' && nWait ? h('span', { class: 'nbadge', title: `${nWait} big decisions waiting` }, String(nWait)) : null))),
         syncPill(),
+        helpButton(sub === 'todo' ? 'plan' : tab),
         undoButtons(),
         avatar())),
     h('div', { class: 'shead-rule', 'aria-hidden': 'true' }),

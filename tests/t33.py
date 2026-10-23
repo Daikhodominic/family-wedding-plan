@@ -11,7 +11,9 @@ async def main():
         # Charani: add the preparations from the plan offer
         await pg.goto(B+'#/w/charani/plan'); await pg.wait_for_timeout(1200)
         print('offer:', await pg.locator('.tip.auto').inner_text() if await pg.locator('.tip.auto').count() else None)
-        await pg.locator('.tip.auto .tip-x').click(); await pg.wait_for_timeout(400)
+        await pg.evaluate("location.hash=location.hash.split('?')[0].split('/').slice(0,3).join('/')"); await pg.wait_for_timeout(500)
+        if await pg.locator('details.setup-card:not([open]) summary').count(): await pg.click('details.setup-card summary')
+        await pg.locator('.tip.auto .tip-x').first.click(); await pg.wait_for_timeout(400)
         print('modal:', (await pg.locator('.modal').inner_text())[:200].replace('\n',' | '))
         await pg.locator('.modal button:has-text("Add them")').click(); await pg.wait_for_timeout(1200)
         t=await pg.locator('.toast').all_inner_texts(); print('toast', t); assert any('5 lists' in x for x in t), 'lists not made'

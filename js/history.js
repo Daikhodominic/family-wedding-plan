@@ -81,7 +81,7 @@ async function forward(op) {
   if (op.k === 'del') return orig.del(op.t, op.row.id);
 }
 
-const NOUN = { board_items: 'card', steps: 'step', areas: 'area', stages: 'stage', todos: 'to-do', files: 'file', lists: 'list', list_rows: 'list row', budget_items: 'payment', budget_areas: 'budget area', budgets: 'budget', comments: 'comment', weddings: 'wedding' };
+const NOUN = { board_items: 'card', steps: 'step', areas: 'area', stages: 'stage', todos: 'to-do', files: 'file', lists: 'list', list_rows: 'list row', budget_items: 'payment', budget_areas: 'budget line', budgets: 'budget', comments: 'comment', weddings: 'wedding' };
 export function describeStep(ops) {
   if (!ops) return '';
   if (ops.length > 1) {
@@ -121,14 +121,14 @@ export async function redo() {
 }
 
 // Two small buttons for headers.
+// One ↶ button, shown only when there's something to undo (Ctrl+Shift+Z still redoes).
 export function undoButtons(cls = '') {
-  return h('span', { class: 'undo-redo ' + cls },
-    h('button', { type: 'button', class: 'ur-btn undo-btn', 'aria-label': 'Undo', title: undoS.length ? 'Undo ' + describeStep(undoS[undoS.length - 1]) + ' (Ctrl+Z)' : 'Nothing to undo', disabled: !undoS.length ? true : null, html: ICONS.undo, onclick: undo }),
-    h('button', { type: 'button', class: 'ur-btn redo-btn', 'aria-label': 'Redo', title: redoS.length ? 'Redo ' + describeStep(redoS[redoS.length - 1]) + ' (Ctrl+Shift+Z)' : 'Nothing to redo', disabled: !redoS.length ? true : null, html: ICONS.redo, onclick: redo }));
+  return h('span', { class: 'undo-redo ' + cls, hidden: undoS.length ? null : true },
+    h('button', { type: 'button', class: 'ur-btn undo-btn', 'aria-label': 'Undo', title: undoS.length ? 'Undo ' + describeStep(undoS[undoS.length - 1]) + ' (Ctrl+Z)' : 'Nothing to undo', html: ICONS.undo, onclick: undo }));
 }
 function refreshButtons() {
-  document.querySelectorAll('.undo-btn').forEach(b => { b.disabled = !undoS.length; b.title = undoS.length ? 'Undo ' + describeStep(undoS[undoS.length - 1]) + ' (Ctrl+Z)' : 'Nothing to undo'; });
-  document.querySelectorAll('.redo-btn').forEach(b => { b.disabled = !redoS.length; b.title = redoS.length ? 'Redo ' + describeStep(redoS[redoS.length - 1]) + ' (Ctrl+Shift+Z)' : 'Nothing to redo'; });
+  document.querySelectorAll('.undo-redo').forEach(w => { w.hidden = !undoS.length; });
+  document.querySelectorAll('.undo-btn').forEach(b => { b.title = undoS.length ? 'Undo ' + describeStep(undoS[undoS.length - 1]) + ' (Ctrl+Z)' : 'Nothing to undo'; });
 }
 
 document.addEventListener('keydown', (e) => {

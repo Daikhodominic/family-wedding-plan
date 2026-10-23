@@ -108,7 +108,6 @@ export function renderPipeline(root, w, params) {
     const el = root.querySelector(`[data-area="${CSS.escape(areaId)}"]`) || root.querySelector(`.area[data-id="${CSS.escape(areaId)}"]`);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
   });
-  { const po = planOffer(w); if (po) root.append(po); }
   if (view === 'list') root.append(h('div', { class: 'fold-all' },
     h('button', { type: 'button', class: 'link-btn', onclick: () => setAllFolded(w, true) }, 'Open all'),
     h('span', { 'aria-hidden': 'true' }, '/'),
@@ -130,9 +129,9 @@ export function renderPipeline(root, w, params) {
       class: 'dashed', type: 'button', onclick: () => {
         const input = h('input', { placeholder: 'e.g. Decorations', maxlength: 120 });
         modal({
-          title: `New area in ${st.title}`, body: field('Area name', input),
+          title: `New section in ${st.title}`, body: field('Section name', input),
           actions: [{
-            label: 'Add area', onClick: async () => {
+            label: 'Add section', onClick: async () => {
               const v = input.value.trim(); if (!v) return false;
               const last = areas.length ? areas[areas.length - 1].position : 0;
               await store.insert('areas', { wedding_id: w.id, stage_id: st.id, title: v, position: last + 1000 }).catch(fail);
@@ -140,7 +139,7 @@ export function renderPipeline(root, w, params) {
           }]
         });
       }
-    }, '+ Add an area');
+    }, '+ Add a section');
 
     const stSteps = visSteps.filter(s => areas.some(a => a.id === s.area_id));
     const stDone = stSteps.filter(isComplete).length, stFinal = stSteps.filter(s => s.locked_at).length;
@@ -150,13 +149,13 @@ export function renderPipeline(root, w, params) {
         h('span', { class: 'stage-num', 'aria-hidden': 'true' }, h('span', { html: ringSvg(stDone, stFinal, stSteps.length, 52) }), h('b', {}, roman(stages.indexOf(st) + 1))),
         h('div', { class: 'stage-tt' },
           h('h3', { onclick: () => renameBox('Rename stage', st.title, v => store.update('stages', st.id, { title: v })) }, st.title),
-          h('span', { class: 'meta' }, `${areas.length} ${areas.length === 1 ? 'area' : 'areas'} · ${stDone} of ${stepCount} done${stFinal ? ` · ${stFinal} final` : ''}`)),
+          h('span', { class: 'meta' }, `${areas.length} ${areas.length === 1 ? 'section' : 'sections'} · ${stDone} of ${stepCount} done${stFinal ? ` · ${stFinal} final` : ''}`)),
         menu({
           title: st.title, list: [
             { label: 'Rename', onClick: () => renameBox('Rename stage', st.title, v => store.update('stages', st.id, { title: v })) },
             {
               label: 'Move this stage to the Bin', kind: 'danger', onClick: async () => {
-                if (await confirmBox(`Remove “${st.title}”?`, 'Its areas and steps go with it. Anyone can bring it back from the Bin.', 'Move to Bin'))
+                if (await confirmBox(`Remove “${st.title}”?`, 'Its sections and steps go with it. Anyone can bring it back from the Bin.', 'Move to Bin'))
                   store.remove('stages', st.id).then(() => toast('Moved to the Bin')).catch(fail);
               }
             }
@@ -257,17 +256,17 @@ function areaEl(a, steps, w, ctx = {}) {
   const toggle = () => { setFold(w.id, { [a.id]: !open }); render(); };
   return h('div', { class: 'area st-' + st + (open ? ' open' : ' folded') + (late ? ' has-late' : ''), dataset: { id: a.id } },
     h('div', { class: 'area-h' },
-      h('button', { class: 'icon-btn grip area-grip', type: 'button', 'aria-label': 'Drag to move area', html: ICONS.grip }),
+      h('button', { class: 'icon-btn grip section-grip', type: 'button', 'aria-label': 'Drag to move section', html: ICONS.grip }),
       h('button', { type: 'button', class: 'area-toggle', 'aria-expanded': String(open), onclick: toggle },
         h('span', { class: 'area-badge', 'aria-hidden': 'true' }, h('span', { class: 'ab-ring', html: ringSvg(done, lk, steps.length, 42) }), h('span', { class: 'ab-ic', html: areaIcon(a.title) })),
         h('span', { class: 'area-tt' }, h('h4', {}, a.title), h('span', { class: 'meta' }, steps.length ? `${done} of ${steps.length}${lk ? ` · ${lk} final` : ''}` : 'No steps yet')),
         h('span', { class: 'fold-ic', 'aria-hidden': 'true' })),
       menu({
         title: a.title, list: [
-          { label: 'Rename', onClick: () => renameBox('Rename area', a.title, v => store.update('areas', a.id, { title: v })) },
+          { label: 'Rename', onClick: () => renameBox('Rename section', a.title, v => store.update('areas', a.id, { title: v })) },
           { label: sectionFor(a.id) ? 'See its ideas on the mood board' : 'Ideas on the mood board', onClick: () => openIdeas(w, a) },
-          ...otherWeddings(w.id).map(o => ({ label: `Copy this area to ${o.couple}`, onClick: () => copyArea(a, o.id) })),
-          { label: 'Move this area to the Bin', kind: 'danger', onClick: () => store.remove('areas', a.id).then(() => toast('Moved to the Bin')).catch(fail) }
+          ...otherWeddings(w.id).map(o => ({ label: `Copy this section to ${o.couple}`, onClick: () => copyArea(a, o.id) })),
+          { label: 'Move this section to the Bin', kind: 'danger', onClick: () => store.remove('areas', a.id).then(() => toast('Moved to the Bin')).catch(fail) }
         ]
       })),
     steps.length ? h('div', { class: 'beads', 'aria-hidden': 'true' }, steps.map(x => h('i', { class: x.locked_at ? 'b-final' : isComplete(x) ? 'b-done' : (x.due && daysUntil(x.due) < 0) ? 'b-late' : x.status === 'doing' ? 'b-doing' : x.gate ? 'b-gate' : '' }))) : null,

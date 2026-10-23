@@ -73,12 +73,24 @@ const TIPS = {
   options: 'Vote on each option, tick two or three to compare them side by side, and tap a photo to see everything.',
   swipe: 'Push right if you love it, left if not — a light push is enough. Swipe up to see every photo and detail. ↶ undoes a swipe.'
 };
+// A page's tip shows on the first visit only (for that visit), then stays out of the way.
+// The ? in the header brings it back any time.
+const sess = (k) => { try { return sessionStorage.getItem('fwp-tip-s-' + k) === '1'; } catch (e) { return false; } };
 export function tip(key) {
-  if (!TIPS[key] || !once('tip-' + key)) return null;
-  const el = h('div', { class: 'tip', role: 'note' },
+  if (!TIPS[key]) return null;
+  const first = once('tip-' + key);
+  if (first) { markOnce('tip-' + key); try { sessionStorage.setItem('fwp-tip-s-' + key, '1'); } catch (e) { /* ignore */ } }
+  if (!first && !sess(key)) return null;
+  return h('div', { class: 'tip', role: 'note' },
     h('span', { class: 'tip-i', html: ICONS.sparkle }), h('span', {}, TIPS[key]),
-    h('button', { type: 'button', class: 'tip-x', onclick: () => { markOnce('tip-' + key); el.remove(); } }, 'Got it'));
-  return el;
+    h('button', { type: 'button', class: 'tip-x', onclick: (e) => { try { sessionStorage.removeItem('fwp-tip-s-' + key); } catch (x) { /* ignore */ } const t = e.currentTarget.closest('.tip'); if (t) t.remove(); } }, 'Got it'));
+}
+// The ? button: this page's tip again, and the tour.
+export function helpButton(key) {
+  return h('button', { type: 'button', class: 'help-btn', 'aria-label': 'How this page works', title: 'How this page works', onclick: () => {
+    modal({ title: 'How this page works', body: h('p', { style: { margin: 0 } }, TIPS[key] || 'Tap anything to open it. Changes save by themselves.'),
+      actions: [{ label: 'Show the tour', kind: 'ghost', onClick: () => setTimeout(() => openTour(), 50) }, { label: 'OK', onClick: () => { } }] });
+  } }, '?');
 }
 
 export const easyOn = () => { try { return localStorage.getItem('fwp-easy') === '1'; } catch (e) { return false; } };

@@ -51,8 +51,9 @@ function carryOver(o, n) {
 }
 
 function syncAttrs(o, n) {
-  for (const { name } of [...o.attributes]) if (!n.hasAttribute(name)) { if (o.nodeName === 'IMG' && (name === 'src' || name === 'srcset')) continue; o.removeAttribute(name); }
-  for (const { name, value } of [...n.attributes]) if (o.getAttribute(name) !== value) o.setAttribute(name, value);
+  const fold = o.nodeName === 'DETAILS'; // a fold-out someone opened or closed stays that way
+  for (const { name } of [...o.attributes]) if (!n.hasAttribute(name)) { if (o.nodeName === 'IMG' && (name === 'src' || name === 'srcset')) continue; if (fold && name === 'open') continue; o.removeAttribute(name); }
+  for (const { name, value } of [...n.attributes]) if (o.getAttribute(name) !== value) { if (fold && name === 'open') continue; o.setAttribute(name, value); }
   syncHandlers(o, n);
 }
 

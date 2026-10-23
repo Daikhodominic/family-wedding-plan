@@ -24,8 +24,8 @@ async def main():
         print('after unplanned: cont',await stat(3), 'warn', await pg.locator('.bwarn').count())
         # remove Venue area
         await pg.locator('.barea:has-text("Example: Venue") .menu-btn').first.click(); await pg.wait_for_timeout(200)
-        await pg.click('.modal .btn:has-text("Remove this area")'); await pg.wait_for_timeout(200)
-        await pg.click('.modal-actions .btn:has-text("Remove area")'); await pg.wait_for_timeout(400)
+        await pg.click('.modal .btn:has-text("Remove this budget line")'); await pg.wait_for_timeout(200)
+        await pg.click('.modal-actions .btn:has-text("Remove budget line")'); await pg.wait_for_timeout(400)
         print('after remove venue: free',await stat(4),'removed section',await pg.locator('h2:has-text("From removed areas")').count())
         # move 4 lakh free -> catering
         await pg.click('.ph-right .btn:has-text("More")'); await pg.wait_for_timeout(150); await pg.click('.menu-pop .mi:has-text("Move money")'); await pg.wait_for_timeout(200)

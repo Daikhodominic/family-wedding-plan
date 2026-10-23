@@ -26,7 +26,7 @@ async def main():
         print('after undo done-sec', await pg.locator('.done-toggle').count())
         await pg.goto(B+'#/w/elow'); await pg.wait_for_timeout(500)
         print('who', (await pg.locator('.who-grid').inner_text())[:160].replace('\n',' | '))
-        print('lists block', (await pg.locator('.oblock:has(h2:text("Lists"))').inner_text()).replace('\n',' | ')[:200])
+        print('lists block', (await pg.locator('.oblock:has(h2:text("At a glance"))').inner_text()).replace('\n',' | ')[:200])
         # date
         await pg.click('.oh-count .btn'); await pg.wait_for_timeout(200)
         await pg.locator('.modal input[type=date]').fill('2027-03-06'); await pg.click('.modal-actions .btn:has-text("Save")'); await pg.wait_for_timeout(400)

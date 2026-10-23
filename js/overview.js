@@ -15,7 +15,7 @@ import { cardTitle } from './decisions.js?v=47';
 import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=47';
 import { share, siteLink, copyLink } from './tools.js?v=47';
 import { planOffer } from './plans.js?v=47';
-import { newForYou } from './swipe.js?v=47';
+import { newForYou, pendingFor } from './swipe.js?v=47';
 import { waButton, jobsMessage } from './nudge.js?v=47';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
@@ -101,6 +101,17 @@ function partnerLinks(w) {
   modal({ title: 'Share with the partner family', wide: true, body });
 }
 
+// One small block with a line each for the other tabs, instead of copies of them.
+function glanceEl(w, favs, lists) {
+  const m = !(store.missing && store.missing.budgets) ? budgetMath(w.id) : null;
+  const row = (href, title, sub) => h('a', { class: 'orow', href }, h('span', { class: 'o-dot list' }), h('span', { class: 'o-main' }, h('b', {}, title), h('span', {}, sub)), h('span', { class: 'o-go', 'aria-hidden': 'true' }, '›'));
+  return h('section', { class: 'oblock glance' }, h('div', { class: 'ob-h' }, h('h2', {}, 'At a glance')),
+    h('div', { class: 'olist' },
+      m && m.b ? row(`#/w/${w.id}/budget`, `Money · ${inr(m.committed)} of ${inr(m.T)}`, m.toPay ? `${inr(m.toPay)} still to pay${m.owing[0] ? ' · next: ' + m.owing[0].title : ''}` : 'Nothing left to pay') : row(`#/w/${w.id}/budget`, 'Money', 'The budget isn’t set up yet'),
+      row(`#/w/${w.id}/lists`, `Lists · ${lists.length}`, lists.length ? lists.slice(0, 3).map(l => l.title).join(' · ') : 'Guest list, meat list, gifts…'),
+      favs.length ? row(`#/w/${w.id}/board`, 'Family favourites', favs.slice(0, 3).map(({ i }) => cardTitle(i)).join(' · ')) : null));
+}
+
 export function renderOverview(root, w, params = {}) {
   const t = themeOf(w);
   const days = daysUntil(w.wedding_date);
@@ -115,7 +126,6 @@ export function renderOverview(root, w, params = {}) {
 
   // Announcements and final-week mode come first.
   root.append(...announcementBars(w.id));
-  { const n = newForYou(w.id); if (n) root.append(n); }
   const fw = finalWeek(w, params.finalweek === '1' && store.me.isAdmin);
   if (fw) root.append(fw);
   // Header: date, countdown, a one-line tally, the journey bar and one "More" menu.
@@ -142,8 +152,9 @@ export function renderOverview(root, w, params = {}) {
         moreBtn,
         h('div', { class: 'oh-tally' }, tally.map(([n, label, cls]) => h('span', { class: 'ot' + (cls ? ' ' + cls : '') }, h('b', {}, String(n)), ' ' + label))))),
     journeyBar(w, plan, { onPick: (areaId) => { location.hash = `#/w/${w.id}/plan?focus=${areaId}`; } })));
-  { const po = planOffer(w); if (po) root.append(po); }
-  const db = isDecider() ? datesBanner(w) : null; if (db) root.append(db);
+  // Set-up jobs for the admin (ready-made checklists, filling in dates) fold into one card.
+  { const items = [planOffer(w), isDecider() ? datesBanner(w) : null].filter(Boolean);
+    if (items.length) root.append(h('details', { class: 'setup-card' }, h('summary', {}, h('span', { class: 'tip-i', html: ICONS.sparkle }), h('b', {}, 'Set-up'), h('span', { class: 'muted' }, ` · ${items.length} ${items.length === 1 ? 'thing' : 'things'} ready to add`)), items)); }
   const lf = looksFinished(w);
   if (lf.length) root.append(h('section', { class: 'oblock looks' },
     h('div', { class: 'ob-h' }, h('h2', {}, 'Looks finished'), h('span', { class: 'count' }, String(lf.length)), h('span', { class: 'ob-sub' }, 'Tick these off?')),
@@ -210,7 +221,15 @@ export function renderOverview(root, w, params = {}) {
 
   const named = ppl.filter(([k]) => k !== '~');
   const nothingUrgent = !overdue.length && !doing.length && !soon.length;
+  const toVote = pendingFor(w.id).length;
+  const nobody = open.filter(x => !String(x.owner || '').trim()).length;
+  const attention = (toVote || nobody) ? h('section', { class: 'oblock attention' },
+    h('div', { class: 'ob-h' }, h('h2', {}, 'Needs you')),
+    h('div', { class: 'olist' },
+      toVote ? h('a', { class: 'orow', href: `#/w/${w.id}/swipe` }, h('span', { class: 'o-dot doing' }), h('span', { class: 'o-main' }, h('b', {}, `${toVote} ${toVote === 1 ? 'option' : 'options'} to vote on`), h('span', {}, 'Swipe through them in Choose'))) : null,
+      nobody ? h('a', { class: 'orow', href: `#/w/${w.id}/todo` }, h('span', { class: 'o-dot' }), h('span', { class: 'o-main' }, h('b', {}, `${nobody} ${nobody === 1 ? 'job has' : 'jobs have'} nobody in charge`), h('span', {}, 'Give each one a name in Jobs'))) : null)) : null;
   const left = [
+    attention,
     overdue.length ? block('Overdue', overdue, '', { key: w.id, cls: 'warnblock', countCls: 'warn', more: `#/w/${w.id}/plan` }) : null,
     doing.length ? block('Happening now', doing, '', { key: w.id, more: `#/w/${w.id}/plan` }) : null,
     soon.length ? block('Coming up · next 3 weeks', soon, '', { key: w.id, more: `#/w/${w.id}/plan` }) : null,
@@ -221,10 +240,7 @@ export function renderOverview(root, w, params = {}) {
     recent.length ? h('section', { class: 'oblock' },
       h('div', { class: 'ob-h' }, h('h2', {}, 'Recently done'), h('a', { class: 'ob-link', href: '#/history' }, 'History →')),
       feedList(recent.slice(0, 4), { compact: true })) : null,
-    favs.length ? h('section', { class: 'oblock' }, h('div', { class: 'ob-h' }, h('h2', {}, 'Family favourites'), h('a', { class: 'ob-link', href: `#/w/${w.id}/board` }, 'Board →')),
-      h('div', { class: 'olist' }, favs.slice(0, 4).map(({ i, s }) => h('a', { class: 'orow', href: `#/w/${w.id}/board?focus=${i.id}` }, h('span', { class: 'o-dot list' }), h('span', { class: 'o-main' }, h('b', {}, cardTitle(i)), h('span', {}, `${s} likes and votes`)))))) : null,
-    lists.length ? listsEl : null,
-    moneyEl && budgetMath(w.id).b ? moneyEl : null].filter(Boolean);
+    glanceEl(w, favs, lists)].filter(Boolean);
   if (nothingUrgent) root.append(h('p', { class: 'o-calm' }, '✓ Nothing overdue or due in the next three weeks.'));
   root.append(h('div', { class: 'ogrid' + (right.length ? '' : ' one') }, h('div', { class: 'ocol' }, left), right.length ? h('div', { class: 'ocol' }, right) : null));
   void t; void ago; void lockIcon;

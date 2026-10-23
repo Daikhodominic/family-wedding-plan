@@ -146,7 +146,7 @@ export async function sectionsFromPlan(w) {
   const have = new Set(items.filter(i => i.kind === 'label' && i.data && i.data.area_id).map(i => i.data.area_id));
   const stages = live(store.rows('stages')).filter(s => s.wedding_id === w.id).sort(byPos);
   const areas = stages.flatMap(st => live(store.rows('areas')).filter(a => a.stage_id === st.id).sort(byPos)).filter(a => !have.has(a.id));
-  if (!areas.length) { toast('Every plan area already has a section'); return; }
+  if (!areas.length) { toast('Every part of the plan already has a section on the board'); return; }
   const maxY = Math.max(0, ...items.map(i => (i.y || 0) + 400));
   let n = 0;
   await together(async () => {

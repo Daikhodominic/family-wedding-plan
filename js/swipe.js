@@ -481,7 +481,7 @@ export async function chooseOption(o) {
   if (!isDecider(o.wedding_id)) { toast('Only this wedding’s Deciders can make a choice final', 'error'); return; }
   const s = stepOf(o); const d = o.data || {};
   if (!s) { toast('This option isn’t in a category', 'error'); return; }
-  if (!(await confirmBox(`Choose “${d.title || 'this option'}” for ${s.title}?`, 'The step becomes final, the other options are marked “not chosen” (they stay visible), and it’s added to the vendor list.', 'Choose it', ''))) return;
+  if (!(await confirmBox(`Make “${d.title || 'this option'}” final for ${s.title}?`, 'The step becomes final, the other options are marked “not chosen” (they stay visible), and it’s added to the vendor list.', 'Make it final', ''))) return;
   try {
     await store.batch(async () => { for (const x of optionsOf(o.wedding_id, s.id)) await store.update('board_items', x.id, { data: { ...(x.data || {}), status: x.id === o.id ? 'chosen' : 'not' } }); });
     const note = { with: d.title || '', vendor: d.title || '', amount: d.rate || '', phone: d.phone || '', choice: { item_id: o.id, image: firstPic(o), title: d.title || '' } };
@@ -506,7 +506,7 @@ export function openCompare(list) {
       d.phone ? h('a', { class: 'cmp-phone', href: 'tel:' + d.phone.replace(/[^\d+]/g, '') }, '☏ ' + d.phone) : null,
       h('div', { class: 'cmp-acts' },
         h('button', { type: 'button', class: 'btn small ghost', onclick: () => openOption(o) }, 'See everything'),
-        isDecider(o.wedding_id) && isOpen(o) ? h('button', { type: 'button', class: 'btn small', onclick: () => { closeAll(); chooseOption(o); } }, 'Choose this') : null));
+        isDecider(o.wedding_id) && isOpen(o) ? h('button', { type: 'button', class: 'btn small', onclick: () => { closeAll(); chooseOption(o); } }, 'Make it final') : null));
   });
   modal({ title: 'Compare', wide: true, body: h('div', { class: 'cmp-grid n' + list.length }, cols) });
 }
@@ -636,7 +636,7 @@ export function openProfile(o, onVote) {
       h('p', { class: 'pf-who' }, v.total ? VOTES.filter(k => v[k].length).map(k => `${{ love: '♥', no: '✕' }[k]} ${v[k].join(', ')}`).join('  ·  ') : 'No votes yet — be the first.'),
       h('p', { class: 'pf-by' }, 'Added by ' + (store.memberName(cur.created_by) || 'someone') + (d.status === 'chosen' ? ' · ✓ Chosen' : d.status === 'not' ? ' · Not chosen' : '')),
       h('div', { class: 'od-acts pf-acts' },
-        isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Choose this — make it final') : null,
+        isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
         pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=47').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
@@ -739,7 +739,7 @@ export function newForYou(weddingId) {
 }
 
 /* ---------- Sample options (placeholder pictures) to try swiping ---------- */
-function sampleButton(w) {
+export function sampleButton(w) {
   const mine = live(store.rows('board_items')).filter(o => o.wedding_id === w.id && isSample(o));
   if (mine.length) return h('button', { type: 'button', class: 'btn ghost', title: 'Moves the sample options to the Bin', onclick: async () => {
     if (!(await confirmBox('Remove the samples?', `${mine.length} sample options move to the Bin. Real options stay.`, 'Remove samples'))) return;
@@ -761,7 +761,7 @@ export function renderChoose(root, w) {
       h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
       (() => { const n = optionsOf(w.id).filter(isOpen).length; return n ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, n) }) : null; })(),
       h('a', { class: 'btn ghost', href: `#/w/${w.id}/board` }, 'Mood board'),
-      store.me.isAdmin ? sampleButton(w) : null)));
+      null)));
   const nfy = newForYou(w.id); if (nfy) root.append(nfy);
   const cats = categoriesOf(w);
   if (!cats.length) { root.append(h('p', { class: 'muted' }, 'No categories yet. Mark a step in the plan as a big decision, or add an option to any step.')); return; }
@@ -854,7 +854,7 @@ export function renderOptions(root, w, stepId) {
         h('span', { class: 'oc-who', title: VOTES.filter(k => v[k].length).map(k => `${k}: ${v[k].join(', ')}`).join(' · ') }, v.total ? `♥ ${v.love.length} · ✕ ${v.no.length}${v.love.length ? ' — ' + v.love.slice(0, 3).join(', ') : ''}` : 'No votes yet'),
         h('div', { class: 'oc-acts' },
           VOTES.map(k => h('button', { type: 'button', class: 'mini-vote ' + k + (mine === k ? ' on' : ''), 'aria-label': { love: 'Love it', no: 'Not this' }[k], 'aria-pressed': mine === k ? 'true' : 'false', html: { love: ICONS.heart, no: ICONS.nope }[k], onclick: () => vote(o, k).catch(fail) })),
-          isDecider(w.id) && isOpen(o) && !step.locked_at ? h('button', { type: 'button', class: 'btn small', onclick: () => chooseOption(o) }, 'Choose') : null)));
+          isDecider(w.id) && isOpen(o) && !step.locked_at ? h('button', { type: 'button', class: 'btn small', onclick: () => chooseOption(o) }, 'Make it final') : null)));
   })));
   // Inspiration: mood-board cards pinned to this step.
   const insp = live(store.rows('board_items')).filter(i => i.wedding_id === w.id && !isOption(i) && (i.data || {}).step_id === step.id);

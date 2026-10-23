@@ -9,11 +9,11 @@ import { othersGate, withoutOthers, rescueOrphans } from './safety.js?v=47';
 const liveRows = (t, pred) => (store.rows(t) || []).filter(r => !r.deleted_at && pred(r));
 
 export const SECTIONS = {
-  plan: { label: 'Plan', what: 'stages, areas and steps', rows: (wid) => [['stages', liveRows('stages', r => r.wedding_id === wid)], ['areas', liveRows('areas', r => r.wedding_id === wid)], ['steps', liveRows('steps', r => r.wedding_id === wid)]] },
+  plan: { label: 'Plan', what: 'stages, sections and steps', rows: (wid) => [['stages', liveRows('stages', r => r.wedding_id === wid)], ['areas', liveRows('areas', r => r.wedding_id === wid)], ['steps', liveRows('steps', r => r.wedding_id === wid)]] },
   todo: { label: 'To-do list', what: 'to-dos', rows: (wid) => [['todos', liveRows('todos', r => r.wedding_id === wid)]] },
   board: { label: 'Mood board', what: 'cards, drawings and connections', rows: (wid) => [['board_items', liveRows('board_items', r => r.wedding_id === wid)]] },
   files: { label: 'Files and lists', what: 'files and lists', rows: (wid) => [['files', liveRows('files', r => r.wedding_id === wid)], ['lists', liveRows('lists', r => r.wedding_id === wid)]] },
-  budget: { label: 'Budget', what: 'budget areas and payments', rows: (bid) => [['budget_areas', liveRows('budget_areas', r => r.budget_id === bid)], ['budget_items', liveRows('budget_items', r => r.budget_id === bid)]] }
+  budget: { label: 'Budget', what: 'budget lines and payments', rows: (bid) => [['budget_areas', liveRows('budget_areas', r => r.budget_id === bid)], ['budget_items', liveRows('budget_items', r => r.budget_id === bid)]] }
 };
 const count = (groups) => groups.reduce((t, [, rows]) => t + rows.length, 0);
 

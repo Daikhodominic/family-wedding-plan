@@ -73,7 +73,7 @@ export function openStories(w, cats, start = 0) {
         decider && (st.decided ? store.me.isAdmin : true) && d.status !== 'chosen' ? h('button', { type: 'button', class: 'btn small ghost', onclick: async () => {
           if (step.locked_at) { toast('Start a new round first (↻ New round), then choose this one', 'error'); return; }
           await chooseOption(o);
-        } }, st.decided ? 'Change to this' : 'Choose this') : null);
+        } }, st.decided ? 'Change to this' : 'Make it final') : null);
     };
     wrap.replaceChildren(
       h('div', { class: 'st-bars' }, cats.map((_, k) => h('span', { class: k < i ? 'seen' : k === i ? 'on' : '' }))),

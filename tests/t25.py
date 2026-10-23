@@ -6,6 +6,8 @@ async def main():
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto('http://localhost:8765/index.html?demo#/w/elow/plan'); await pg.wait_for_timeout(1000)
         print('offer', await pg.locator('.tip.auto:has-text("full checklist")').count())
+        await pg.evaluate("location.hash=location.hash.split('?')[0].split('/').slice(0,3).join('/')"); await pg.wait_for_timeout(500)
+        if await pg.locator('details.setup-card:not([open]) summary').count(): await pg.click('details.setup-card summary')
         await pg.click('.tip.auto .tip-x:has-text("Load it")'); await pg.wait_for_timeout(300)
         await pg.click('.modal-actions .btn:has-text("Load the checklist")'); await pg.wait_for_timeout(1200)
         n = await pg.evaluate("""async () => { const { store } = await import('./js/store.js?v=47'); const live = r => r.filter(x => !x.deleted_at);

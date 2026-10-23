@@ -76,8 +76,8 @@ export function budgetMath(id) {
 function warnings(m) {
   const out = [];
   if (m.overTotal > 0) out.push(`The overall cost is ${inr(m.overTotal)} over the total budget.`);
-  if (m.contLeft < 0) out.push(`Contingency is overspent by ${inr(-m.contLeft)}. Top it up, or move money in from an area or from “Free to reassign”.`);
-  if (m.free < 0) out.push(`The areas and contingency add up to ${inr(-m.free)} more than the total. Raise the total or lower an area.`);
+  if (m.contLeft < 0) out.push(`Contingency is overspent by ${inr(-m.contLeft)}. Top it up, or move money in from a budget line or from “Free to reassign”.`);
+  if (m.free < 0) out.push(`The budget lines and contingency add up to ${inr(-m.free)} more than the total. Raise the total or lower a budget line.`);
   return out;
 }
 
@@ -110,10 +110,10 @@ function editArea(id, area, m) {
   const planned = amountInput(area && area.planned);
   const free = h('p', { class: 'hint' }, `Free to reassign right now: ${inr(m.free + (area ? Number(area.planned) || 0 : 0))}`);
   modal({
-    title: area ? 'Edit area' : 'New area',
-    body: [field('Area', title), field('Planned (₹)', planned), free],
+    title: area ? 'Edit budget line' : 'New budget line',
+    body: [field('Budget line', title), field('Planned (₹)', planned), free],
     actions: [{
-      label: area ? 'Save' : 'Add area', onClick: async () => {
+      label: area ? 'Save' : 'Add budget line', onClick: async () => {
         const t = title.value.trim(); if (!t) return false;
         const patch = { title: t, planned: money(planned.value) };
         if (area) await store.update('budget_areas', area.id, patch).catch(fail);
@@ -145,7 +145,7 @@ function editItem(id, item, m, preset = {}) {
     body: h('div', { class: 'form-grid' },
       h('div', { class: 'full' }, field('What it’s for', title)),
       field('Amount (₹)', amount), field('Due by', due),
-      field('Paid to', payee), removedArea ? h('div', { class: 'field' }, h('label', {}, 'Area'), h('p', { class: 'hint' }, 'Its area was removed. Restore the area from the Bin to move this back.')) : field('Area', area),
+      field('Paid to', payee), removedArea ? h('div', { class: 'field' }, h('label', {}, 'Budget line'), h('p', { class: 'hint' }, 'Its budget line was removed. Restore the budget line from the Bin to move this back.')) : field('Budget line', area),
       h('label', { class: 'd-check full' }, paid, 'Already paid'),
       removedArea ? h('label', { class: 'd-check full' }, refund, 'A refund is expected') : null,
       h('div', { class: 'full' }, field('Notes', notes))),
@@ -207,7 +207,7 @@ async function removeArea(r) {
   if (!deciderOnly('change money')) return;
   const unpaid = r.items.filter(i => !i.paid_at);
   const text = `${inr(r.left)} of unspent money goes to Free to reassign.` + (r.paid ? ` The ${inr(r.paid)} already paid stays on record.` : '') + (unpaid.length ? ` ${unpaid.length} unpaid ${unpaid.length === 1 ? 'payment is' : 'payments are'} cancelled with it.` : '') + ' Anyone can bring it back from the Bin.';
-  if (await confirmBox(`Remove “${r.area.title}”?`, text, 'Remove area')) store.remove('budget_areas', r.area.id).then(() => toast('Moved to the Bin')).catch(fail);
+  if (await confirmBox(`Remove “${r.area.title}”?`, text, 'Remove budget line')) store.remove('budget_areas', r.area.id).then(() => toast('Moved to the Bin')).catch(fail);
 }
 
 const markPaid = (i) => !deciderOnly('change money') ? null : store.update('budget_items', i.id, { paid_at: new Date().toISOString() }).then(() => toast('Marked paid')).catch(fail);
@@ -223,14 +223,14 @@ function ribbon(m) {
   const T = Math.max(m.T, m.allocated + m.C + m.removedPaidTotal, 1);
   const seg = (v, cls, label) => v > 0 ? h('span', { class: 'rb-seg ' + cls, style: { flexGrow: v }, title: `${label}: ${inr(v)}` }) : null;
   return h('div', { class: 'ribbon-wrap' },
-    h('div', { class: 'ribbon', role: 'img', 'aria-label': `Of ${inr(m.T)}: ${inr(m.allocated)} in areas, ${inr(m.C)} contingency, ${inr(Math.max(0, m.free))} free` },
-      seg(m.allocated, 'alloc', 'In areas'), seg(m.removedPaidTotal, 'gone', 'Paid in removed areas'), seg(m.C, 'cont', 'Contingency'), seg(Math.max(0, m.free), 'free', 'Free to reassign'),
+    h('div', { class: 'ribbon', role: 'img', 'aria-label': `Of ${inr(m.T)}: ${inr(m.allocated)} in budget lines, ${inr(m.C)} contingency, ${inr(Math.max(0, m.free))} free` },
+      seg(m.allocated, 'alloc', 'In budget lines'), seg(m.removedPaidTotal, 'gone', 'Paid in removed budget lines'), seg(m.C, 'cont', 'Contingency'), seg(Math.max(0, m.free), 'free', 'Free to reassign'),
       m.free < 0 ? null : null),
     h('div', { class: 'rb-legend' },
-      h('span', {}, h('i', { class: 'rb-seg alloc' }), 'In areas ', h('b', {}, inr(m.allocated))),
+      h('span', {}, h('i', { class: 'rb-seg alloc' }), 'In budget lines ', h('b', {}, inr(m.allocated))),
       h('span', {}, h('i', { class: 'rb-seg cont' }), 'Contingency ', h('b', {}, inr(m.C))),
       h('span', {}, h('i', { class: 'rb-seg free' }), 'Free to reassign ', h('b', { class: m.free < 0 ? 'neg' : '' }, inr(m.free))),
-      m.removedPaidTotal ? h('span', {}, h('i', { class: 'rb-seg gone' }), 'Paid in removed areas ', h('b', {}, inr(m.removedPaidTotal))) : null));
+      m.removedPaidTotal ? h('span', {}, h('i', { class: 'rb-seg gone' }), 'Paid in removed budget lines ', h('b', {}, inr(m.removedPaidTotal))) : null));
   void T;
 }
 
@@ -252,8 +252,8 @@ function itemRow(id, i, m, opts = {}) {
     h('button', { type: 'button', class: 'brow-main', onclick: () => editItem(id, i, m) },
       h('span', { class: 'brow-t' }, i.title),
       h('span', { class: 'brow-s' + (late ? ' late' : '') }, [
-        i.payee, opts.cancelled ? 'cancelled with the area' : i.paid_at ? 'paid ' + shortDate(i.paid_at.slice(0, 10)) : i.due ? (late ? 'overdue since ' : 'due ') + shortDate(i.due) : 'no due date',
-        opts.removed ? 'area removed' : null, i.refund_expected ? 'refund expected' : null].filter(Boolean).join(' · '))),
+        i.payee, opts.cancelled ? 'cancelled with the budget line' : i.paid_at ? 'paid ' + shortDate(i.paid_at.slice(0, 10)) : i.due ? (late ? 'overdue since ' : 'due ') + shortDate(i.due) : 'no due date',
+        opts.removed ? 'budget line removed' : null, i.refund_expected ? 'refund expected' : null].filter(Boolean).join(' · '))),
     h('span', { class: 'brow-amt' }, inr(Number(i.amount || 0))),
     opts.cancelled ? h('span') : i.paid_at
       ? h('button', { type: 'button', class: 'paid-tag', title: 'Tap to mark as not paid', onclick: () => markUnpaid(i) }, h('span', { html: ICONS.check }), 'Paid')
@@ -298,15 +298,15 @@ export function renderBudgetView(root, opts) {
     root.append(h('div', { class: 'budget-empty' },
       h('div', { class: 'eyebrow' }, 'Start here'),
       h('h2', {}, 'Set the total budget'),
-      h('p', {}, opts.blurb || 'Write down the total you have for this. Then split it into areas, keep some aside for surprises, and add payments as they come up.'),
+      h('p', {}, opts.blurb || 'Write down the total you have for this. Then split it into budget lines, keep some aside for surprises, and add payments as they come up.'),
       isDecider() ? h('button', { class: 'btn', type: 'button', onclick: () => editBudget(id, opts, m) }, 'Set the total') : h('p', { class: 'hint' }, `One of the Deciders (${deciderNames()}) can set it up.`)));
     return;
   }
 
   const can = isDecider();
   const moreBtn = h('button', { class: 'btn ghost', type: 'button', 'aria-haspopup': 'menu', onclick: () => popMenu(moreBtn, [
-    can ? { icon: 'plus', label: 'Add an area', onClick: () => editArea(id, null, m) } : null,
-    can ? { icon: 'budget', label: 'Move money between areas', onClick: () => moveMoney(id, m) } : null,
+    can ? { icon: 'plus', label: 'Add a budget line', onClick: () => editArea(id, null, m) } : null,
+    can ? { icon: 'budget', label: 'Move money between budget lines', onClick: () => moveMoney(id, m) } : null,
     can ? { icon: 'edit', label: 'Change the total or contingency', onClick: () => editBudget(id, opts, m) } : null,
     opts.family !== false ? { icon: 'overview', label: 'Family total', href: '#/budget' } : null]) }, 'More ▾');
   root.append(secHead('Money', opts.heading || 'Budget',
@@ -325,8 +325,8 @@ export function renderBudgetView(root, opts) {
 
   // Areas, each with its payments
   const areasEl = h('section', { class: 'dsec' },
-    h('div', { class: 'dsec-h' }, h('h2', {}, 'Areas'), h('span', { class: 'count' }, String(m.areaRows.length))),
-    m.areaRows.length ? null : h('p', { class: 'muted' }, 'No areas yet. Add one for each big spend — catering, venue, décor, clothes, gifts.'),
+    h('div', { class: 'dsec-h' }, h('h2', {}, 'Budget lines'), h('span', { class: 'count' }, String(m.areaRows.length))),
+    m.areaRows.length ? null : h('p', { class: 'muted' }, 'No budget lines yet. Add one for each big spend — catering, venue, décor, clothes, gifts.'),
     m.areaRows.map(r => h('div', { class: 'barea' + (r.over ? ' is-over' : '') },
       h('div', { class: 'barea-h' },
         h('button', { type: 'button', class: 'barea-t', onclick: () => editArea(id, r.area, m) }, r.area.title),
@@ -336,7 +336,7 @@ export function renderBudgetView(root, opts) {
           onclick: () => {
             const mm = modal({
               title: r.area.title, body: h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
-                [['Add a payment here', () => editItem(id, null, m, { area_id: r.area.id })], ['Edit name or planned amount', () => editArea(id, r.area, m)], ['Move money out of this area…', () => moveMoney(id, m, r.area.id)], ['Remove this area', () => removeArea(r), 'danger']]
+                [['Add a payment here', () => editItem(id, null, m, { area_id: r.area.id })], ['Edit name or planned amount', () => editArea(id, r.area, m)], ['Move money out of this budget line…', () => moveMoney(id, m, r.area.id)], ['Remove this budget line', () => removeArea(r), 'danger']]
                   .map(([l, f, k]) => h('button', { class: 'btn ' + (k || 'ghost'), type: 'button', style: { justifyContent: 'flex-start' }, onclick: () => { mm.close(); f(); } }, l)))
             });
           }
@@ -350,15 +350,15 @@ export function renderBudgetView(root, opts) {
   if (m.unplanned.length || m.fromLocks.length) extras.append(h('section', { class: 'dsec' },
     h('div', { class: 'dsec-h' }, h('h2', {}, 'Unplanned · from contingency'), h('span', { class: 'count gold' }, inr(m.unplannedTotal))),
     m.fromLocks.length ? h('div', { class: 'lockfeed' },
-      h('p', { class: 'hint', style: { margin: '0 0 8px' } }, 'Final decisions with an amount. They count here until you put them in an area.'),
+      h('p', { class: 'hint', style: { margin: '0 0 8px' } }, 'Final decisions with an amount. They count here until you put them in a budget line.'),
       m.fromLocks.map(x => h('div', { class: 'brow' },
         h('button', { type: 'button', class: 'brow-main', onclick: () => openStep(x.step.id) }, h('span', { class: 'brow-t' }, x.step.title), h('span', { class: 'brow-s' }, ['Final decision', x.step.lock_note && x.step.lock_note.with, x.advance ? inr(x.advance) + ' advance paid' : null].filter(Boolean).join(' · '))),
         h('span', { class: 'brow-amt' }, inr(x.amount)),
-        h('button', { type: 'button', class: 'btn small', onclick: () => addLockToBudget(id, x, m) }, 'Put in an area')))) : null,
+        h('button', { type: 'button', class: 'btn small', onclick: () => addLockToBudget(id, x, m) }, 'Put in a budget line')))) : null,
     m.unplanned.length ? h('div', { class: 'blist' }, m.unplanned.map(i => itemRow(id, i, m))) : null));
   if (m.removedPaid.length || m.cancelled.length) extras.append(h('section', { class: 'dsec' },
-    h('div', { class: 'dsec-h' }, h('h2', {}, 'From removed areas')),
-    h('p', { class: 'hint' }, 'Money already paid stays on record. Unpaid payments were cancelled with their area — restore the area from the Bin to bring them back.'),
+    h('div', { class: 'dsec-h' }, h('h2', {}, 'From removed budget lines')),
+    h('p', { class: 'hint' }, 'Money already paid stays on record. Unpaid payments were cancelled with their budget line — restore the budget line from the Bin to bring them back.'),
     h('div', { class: 'blist' }, m.removedPaid.map(i => itemRow(id, i, m, { removed: true })), m.cancelled.map(i => itemRow(id, i, m, { cancelled: true })))));
 
   const side = h('aside', { class: 'bside' },
@@ -372,8 +372,8 @@ async function addLockToBudget(id, x, m) {
   if (!deciderOnly('change money')) return;
   const pick = h('select', {}, m.areaRows.map(r => h('option', { value: r.area.id }, r.area.title)), h('option', { value: '' }, 'Unplanned — from contingency'));
   modal({
-    title: 'Put in an area',
-    body: [h('p', { class: 'muted', style: { margin: 0 } }, `“${x.step.title}” · ${inr(x.amount)}${x.advance ? `, of which ${inr(x.advance)} is paid` : ''}.`), field('Area', pick)],
+    title: 'Put in a budget line',
+    body: [h('p', { class: 'muted', style: { margin: 0 } }, `“${x.step.title}” · ${inr(x.amount)}${x.advance ? `, of which ${inr(x.advance)} is paid` : ''}.`), field('Budget line', pick)],
     actions: [{
       label: 'Add to budget', onClick: async () => {
         const base = { budget_id: id, wedding_id: m.b.wedding_id || null, step_id: x.step.id, area_id: pick.value || null, payee: (x.step.lock_note && x.step.lock_note.with) || '', notes: '', refund_expected: false, position: 0 };

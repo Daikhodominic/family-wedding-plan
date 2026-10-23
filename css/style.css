@@ -2617,3 +2617,23 @@ button.sync { border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 
 .bk-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, .08); font-size: 14px; }
 .bk-list small { color: #BDB4A8; }
 .bk .btn.small:not(.ghost) { align-self: flex-start; }
+/* The ? next to the header controls */
+.help-btn { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .06); color: #E9C98A; font: 600 15px var(--sans); cursor: pointer; }
+.undo-redo[hidden] { display: none !important; }
+/* Overview: the folded set-up card, Needs you, At a glance */
+.setup-card { margin: 0 0 14px; border-radius: 18px; border: 1px dashed rgba(217, 180, 112, .45); background: rgba(217, 180, 112, .06); padding: 4px 14px; }
+.setup-card > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; padding: 10px 0; color: #F1E3C2; }
+.setup-card > summary::-webkit-details-marker { display: none; }
+.setup-card > summary::after { content: '▾'; margin-left: auto; color: #E9C98A; }
+.setup-card[open] > summary::after { content: '▴'; }
+.setup-card .tip { margin: 0 0 10px !important; }
+.oblock.attention { border-color: rgba(217, 180, 112, .45) !important; }
+.orow .o-go { margin-left: auto; color: #E9C98A; font-size: 20px; }
+/* Home: your jobs */
+.greet-card { margin: 0 0 14px; padding: 14px 16px; border-radius: 20px; background: linear-gradient(160deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .04)); border: 1px solid rgba(255, 255, 255, .13); border-top-color: rgba(217, 180, 112, .38); color: #F3ECE0; display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1; }
+.gc-h b { font-family: var(--serif); font-size: 22px; font-weight: 600; color: #F1E3C2; }
+.gc-jobs { display: flex; flex-direction: column; gap: 6px; }
+.gc-job { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 12px; background: rgba(255, 255, 255, .06); color: #F3ECE0; text-decoration: none; font-size: 14.5px; }
+.gc-job small { color: #E9C98A; white-space: nowrap; }
+.gc-links { display: flex; gap: 16px; font-size: 13.5px; }
+.gc-links a { color: #E9C98A; }

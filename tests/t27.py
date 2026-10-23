@@ -20,6 +20,8 @@ async def run(keep):
         await pg.evaluate("async () => { const { store } = await import('./js/store.js?v=47'); await store.resetDemo(); }"); await pg.wait_for_timeout(800)
         await pg.goto('http://localhost:8765/index.html?demo#/w/elow/plan'); await pg.wait_for_timeout(900)
         print(await pg.evaluate(SEED))
+        await pg.evaluate("location.hash=location.hash.split('?')[0].split('/').slice(0,3).join('/')"); await pg.wait_for_timeout(500)
+        if await pg.locator('details.setup-card:not([open]) summary').count(): await pg.click('details.setup-card summary')
         await pg.click('.tip.auto .tip-x:has-text("Load it")'); await pg.wait_for_timeout(300)
         print(' warning:', (await pg.locator('.others-gate').inner_text()).replace('\n',' | '))
         if keep is False: await pg.locator('.others-gate input').uncheck()
