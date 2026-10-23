@@ -8,7 +8,7 @@ async def main():
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(400)
         await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1'); localStorage.setItem('fwp-view-elow','glimpse')}"); await pg.reload(); await pg.wait_for_timeout(400)
-        await pg.goto(B+'#/w/elow/plan'); await pg.wait_for_timeout(1200)
+        await pg.goto(B+'#/w/elow/choose?view=glimpse'); await pg.wait_for_timeout(1200)
         tiles=await pg.locator('.ig-tile').count(); print('glimpse tiles', tiles, await pg.locator('.gl-filters .lchip').all_inner_texts()); assert tiles>0
         await pg.screenshot(path='shots/glimpse_grid.png')
         await pg.locator('.gl-filters .lchip:has-text("Still open")').click(); await pg.wait_for_timeout(500)
@@ -45,7 +45,7 @@ async def main():
             await (await fc.value).set_files('sample.jpg'); await pg.wait_for_timeout(400)
         print('save label', await m.locator('.modal-actions .btn:not(.ghost)').inner_text())
         await m.locator('.modal-actions .btn:not(.ghost)').click(); await pg.wait_for_timeout(800)
-        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=47'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
+        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=48'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
         print('sample on board', r); assert r==[True, True, 2]
         print('errors', errs); assert not errs
         await b.close()

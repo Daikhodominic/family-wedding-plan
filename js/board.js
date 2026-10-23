@@ -1,13 +1,14 @@
-import { store } from './store.js?v=47';
-import { h, modal, field, toast, ICONS, instaEmbed, instaPost, compressImage, uploadPhoto, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=47';
-import { live, ui, render, wedding } from './app.js?v=47';
-import { cardsToOptions } from './swipe.js?v=47';
-import { downloadZip, boardFiles } from './downloads.js?v=47';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=47';
-import { together } from './history.js?v=47';
-import { isDecider } from './tools.js?v=47';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=47';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=47';
+import { chooseTabs } from './tabs.js?v=48';
+import { store } from './store.js?v=48';
+import { h, modal, field, toast, ICONS, instaEmbed, instaPost, compressImage, uploadPhoto, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=48';
+import { live, ui, render, wedding } from './app.js?v=48';
+import { cardsToOptions } from './swipe.js?v=48';
+import { downloadZip, boardFiles } from './downloads.js?v=48';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=48';
+import { together } from './history.js?v=48';
+import { isDecider } from './tools.js?v=48';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=48';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=48';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -774,12 +775,35 @@ export function renderBoard(root, w, params) {
     box: 'Drag a box around the cards you want to select'
   }[board.tool] || '';
 
+  // Phones: the board as a photo grid (reading order: top to bottom, left to right); the free board is one tap away.
+  const phone = matchMedia('(max-width: 760px)').matches;
+  const layoutSeg = phone ? h('div', { class: 'd-seg bd-layout', role: 'radiogroup', 'aria-label': 'Layout' },
+    [['grid', 'Grid'], ['canvas', 'Board']].map(([k, l]) => h('button', { type: 'button', role: 'radio', class: (board.layout || 'grid') === k ? 'on' : '', 'aria-checked': String((board.layout || 'grid') === k), onclick: () => { board.layout = k; render(); } }, l))) : null;
+  if (phone && board.layout !== 'canvas') {
+    const order = [...items].sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    const tiles = new Map(); ctx.cardEls = tiles;
+    const grid = h('div', { class: 'bd-grid' }, order.map(it => {
+      if (it.kind === 'label') return h('h3', { class: 'bd-label' }, (it.data && it.data.text) || '');
+      const el = h('article', { class: 'card gtile ' + it.kind + (it.kind === 'note' ? ' ' + ((it.data && it.data.tint) || 'yellow') : ''), dataset: { id: it.id } }, ...[].concat(cardBody(it)).filter(Boolean), cardFooter(it));
+      tiles.set(it.id, el); return el;
+    }));
+    root.append(h('div', { class: 'board-shell grid-mode' }, h('div', { class: 'wrap' },
+      chooseTabs(w, 'board'),
+      h('div', { class: 'plan-head board-bar' },
+        h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
+        h('div', { class: 'ph-right' }, layoutSeg, topAdd())),
+      findBar(),
+      items.length ? grid : h('p', { class: 'muted' }, 'The board is empty. Tap + to add photos, links or notes.'))));
+    requestAnimationFrame(() => applyFind(root.querySelector('.find-count')));
+    return;
+  }
   const wrapCls = 'board-shell' + (board.full ? ' full' : '');
   root.append(h('div', { class: wrapCls },
     h('div', { class: 'wrap' },
+      board.full ? null : chooseTabs(w, 'board'),
       h('div', { class: 'plan-head board-bar' },
         h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
-        h('div', { class: 'ph-right' }, h('button', { type: 'button', class: 'btn ghost', title: 'Arrange every section into neat columns — chosen first', onclick: () => tidyUp(w, cardEls) }, 'Tidy up'), h('button', { type: 'button', class: 'btn ghost', title: 'Download every photo and file on this board as one .zip', onclick: () => downloadZip(boardFiles(items), `${w.couple} mood board`) }, '⬇ Photos'), topAdd())),
+        h('div', { class: 'ph-right' }, layoutSeg, h('button', { type: 'button', class: 'btn ghost', title: 'Arrange every section into neat columns — chosen first', onclick: () => tidyUp(w, cardEls) }, 'Tidy up'), h('button', { type: 'button', class: 'btn ghost', title: 'Download every photo and file on this board as one .zip', onclick: () => downloadZip(boardFiles(items), `${w.couple} mood board`) }, '⬇ Photos'), topAdd())),
       findBar(),
       h('p', { class: 'board-hint' }, board.multi.size ? `${board.multi.size} selected · drag any of them to move them together · Esc to clear` : hint)),
     h('div', { class: 'wrap board-holder' }, view, h('div', { class: 'drop-hint', 'aria-hidden': 'true' }, h('span', {}, 'Drop to add to the board')), drawBar, selBar, zoomBar, fab, addMenu)));

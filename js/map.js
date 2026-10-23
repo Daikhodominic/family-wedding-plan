@@ -1,10 +1,11 @@
 // Progress tracking and the Map view of a wedding's pipeline.
-import { store } from './store.js?v=47';
-import { h, shortDate, daysUntil, ICONS } from './ui.js?v=47';
-import { openStep, lockIcon } from './panel.js?v=47';
-import { stepPicture, previewUrl } from './decisions.js?v=47';
-import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=47';
-import { areaIcon, ringSvg, roman } from './areaicons.js?v=47';
+import { store } from './store.js?v=48';
+import { render } from './app.js?v=48';
+import { h, shortDate, daysUntil, ICONS } from './ui.js?v=48';
+import { openStep, lockIcon } from './panel.js?v=48';
+import { stepPicture, previewUrl } from './decisions.js?v=48';
+import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=48';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=48';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -53,12 +54,21 @@ export function journeyBar(w, plan, { onPick } = {}) {
 }
 
 // The map: stages left to right (top to bottom on phones), areas as columns of numbered stations, joined by lines.
+const mapStage = {}; // which stage a phone shows, per wedding
 export function renderMap(root, w, plan, params) {
   const map = h('div', { class: 'pmap', 'data-fresh': '' }); // drawn lines follow the nodes, so the map is always rebuilt whole
   const inner = h('div', { class: 'pmap-inner' });
   map.append(inner);
+  // Phones: one stage at a time, picked from a row of chips (starts at the stage you're in).
+  const phone = matchMedia('(max-width: 760px)').matches;
+  const hereStage = plan.stages.findIndex(st => st.areas.some(a => a.id === plan.here));
+  let si0 = mapStage[w.id] ?? (hereStage >= 0 ? hereStage : 0);
+  if (si0 >= plan.stages.length) si0 = 0;
+  if (params && params.focus) { const fi = plan.stages.findIndex(st => st.areas.some(a => a.id === params.focus || a.steps.some(x => x.id === params.focus))); if (fi >= 0) si0 = fi; }
+  if (phone && plan.stages.length > 1) root.append(h('div', { class: 'mstage-pick lchips', role: 'tablist', 'aria-label': 'Stage' }, plan.stages.map((st, i) => h('button', { type: 'button', role: 'tab', class: 'lchip' + (i === si0 ? ' on' : ''), 'aria-selected': String(i === si0), onclick: () => { mapStage[w.id] = i; render(); } }, roman(i + 1) + ' · ' + st.title))));
   const gap = (a, s) => h('button', { type: 'button', class: 'mgap', title: s ? `Add a step after “${s.title}”` : 'Add a step', 'aria-label': s ? `Add a step after ${s.title}` : `Add a step to ${a.title}`, onclick: (e) => { e.stopPropagation(); addStepAt(a.id, s); } }, h('span', {}, '+'));
   plan.stages.forEach((st, si) => {
+    if (phone && plan.stages.length > 1 && si !== si0) return;
     const stSteps = st.areas.flatMap(a => a.steps), stDone = stSteps.filter(isComplete).length, stFinal = stSteps.filter(x => x.locked_at).length;
     inner.append(h('section', { class: 'mstage' },
       h('div', { class: 'mstage-h' },
@@ -74,7 +84,7 @@ export function renderMap(root, w, plan, params) {
           h('button', { type: 'button', class: 'madd', onclick: () => addStepAt(a.id, null) }, '+ Add a step')))),
         h('button', { type: 'button', class: 'madd area', onclick: () => addAreaTo(st) }, '+ Add a section'))));
   });
-  inner.append(h('section', { class: 'mstage add' }, h('button', { type: 'button', class: 'madd stage', onclick: () => addStageTo(w.id) }, '+ Add a stage')));
+  if (!phone || plan.stages.length <= 1 || si0 === plan.stages.length - 1) inner.append(h('section', { class: 'mstage add' }, h('button', { type: 'button', class: 'madd stage', onclick: () => addStageTo(w.id) }, '+ Add a stage')));
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'pmap-lines'); svg.setAttribute('aria-hidden', 'true');
   inner.prepend(svg);
@@ -115,8 +125,11 @@ export function renderMap(root, w, plan, params) {
     svg.innerHTML = paths.join('');
     void nodes;
   };
-  requestAnimationFrame(() => requestAnimationFrame(drawLines));
-  if (window.ResizeObserver) new ResizeObserver(() => drawLines()).observe(inner);
+  // Lines are drawn at most once a frame, and not while the map is off screen.
+  let queued = false;
+  const queue = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; if (inner.isConnected) drawLines(); }); };
+  requestAnimationFrame(queue);
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => { if (!inner.isConnected) { ro.disconnect(); return; } queue(); }); ro.observe(inner); }
 
   if (params && params.focus) requestAnimationFrame(() => {
     const el = inner.querySelector(`[data-id="${CSS.escape(params.focus)}"]`);

@@ -1,12 +1,12 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { store } from './store.js?v=47';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=47';
-import { live } from './app.js?v=47';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=47';
-import { renderFiles } from './files.js?v=47';
-import { copyList, otherWeddings } from './planauto.js?v=47';
-import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=47';
+import { store } from './store.js?v=48';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=48';
+import { live } from './app.js?v=48';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=48';
+import { renderFiles } from './files.js?v=48';
+import { copyList, otherWeddings } from './planauto.js?v=48';
+import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=48';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -124,7 +124,7 @@ function renderListPage(root, w, l) {
       h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'List'), title, h('div', { class: 'lp-sum' }, listSummary(l).join(' · '), step ? ` · for “${step.title}”` : '')),
       h('div', { class: 'ph-right' },
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
-        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=47').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=48').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
         h('button', { type: 'button', class: 'btn ghost wa-btn', onclick: () => sendList(store.find('lists', l.id) || l) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send on WhatsApp'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => printList(store.find('lists', l.id) || l) }, 'Print or save as PDF'),

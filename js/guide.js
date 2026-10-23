@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=47';
-import { h, modal , ICONS } from './ui.js?v=47';
-import { once, markOnce } from './tools.js?v=47';
+import { store } from './store.js?v=48';
+import { h, modal , ICONS } from './ui.js?v=48';
+import { once, markOnce } from './tools.js?v=48';
 
 // The first-visit tour. It comes back each visit until "Don't show this again" is tapped,
 // and can be opened any time from the menu ("How to use the War Room").
@@ -21,11 +21,11 @@ const SLIDES = [
     p: 'Tap “+ Add an option”. Pick a category or type a new one, say when it happens and who’s in charge. Add photos — front, back, a vendor’s work. Choose “A sample for ideas” to put it on the mood board instead, with nothing to vote on.',
     where: 'Choose → + Add an option' },
   { t: 'The plan and your jobs', ic: sv('<path d="M10 12h28M10 24h28M10 36h18"/><circle cx="38" cy="36" r="4"/>'),
-    p: 'Plan shows every step: tap one to see details, add files or make it final, and tick it when it’s done. Map and Glimpse are other views of the same plan. Anything with your name shows in My jobs (the menu, top right).',
-    where: 'Plan → List · Map · Glimpse · To-do' },
+    p: 'Plan shows every step: tap one to see details, add files or make it final, and tick it when it’s done. Map shows the same plan by stage. Jobs has the quick to-dos and everything with your name on it.',
+    where: 'Plan → List · Map · Jobs' },
   { t: 'Glimpse: the wedding at a glance', ic: sv('<rect x="6" y="6" width="16" height="16" rx="3"/><rect x="26" y="6" width="16" height="16" rx="3"/><rect x="6" y="26" width="16" height="16" rx="3"/><rect x="26" y="26" width="16" height="16" rx="3"/>'),
     p: 'Every choice as a picture, like Instagram. Tap one and go through them one by one: what was chosen, the alternatives, the votes, and whether it can still change. Once a sample is chosen, add the final design there.',
-    where: 'Plan → Glimpse' },
+    where: 'Choose → Glimpse' },
   { t: 'Lists, invitations and the meat list', ic: sv('<rect x="10" y="6" width="28" height="36" rx="4"/><path d="M16 16h16M16 24h16M16 32h10"/>'),
     p: 'Lists holds the invitation and meat lists for each side, gifts, the trousseau and more. Each list can be sent on WhatsApp or printed / saved as a PDF. Files and photos live there too.',
     where: 'Lists' },

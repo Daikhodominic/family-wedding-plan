@@ -1,10 +1,10 @@
 // "My jobs": everything with your name on it, across both weddings.
-import { store } from './store.js?v=47';
-import { h, daysUntil, shortDate, secHead } from './ui.js?v=47';
-import { live, stepVisible, wedding, themeOf } from './app.js?v=47';
-import { openStep } from './panel.js?v=47';
-import { editStep } from './pipeline.js?v=47';
-import { samePerson, icsFile } from './tools.js?v=47';
+import { store } from './store.js?v=48';
+import { h, daysUntil, shortDate, secHead } from './ui.js?v=48';
+import { live, stepVisible, wedding, themeOf } from './app.js?v=48';
+import { openStep } from './panel.js?v=48';
+import { editStep } from './pipeline.js?v=48';
+import { samePerson, icsFile } from './tools.js?v=48';
 
 const done = (t) => t.status === 'done' || !!t.locked_at;
 
@@ -32,6 +32,22 @@ function row(t) {
     h('span', { class: 'o-main' }, h('b', {}, t.title),
       h('span', {}, h('span', { class: 'wtag', style: { color: th.deep, borderColor: th.goldLine } }, (w.couple || '').split('&')[0].trim()), ' ', [t.where, t.due ? (late ? 'overdue since ' : done(t) ? 'was due ' : 'due ') + shortDate(t.due) : 'no due date'].filter(Boolean).join(' · '))));
 }
+
+// Overdue / This week / Later / No date / Done, for a set of jobs.
+export function jobSections(all, maxWidth = '820px') {
+  const openJobs = all.filter(t => !done(t));
+  const by = (a, b) => (a.due || '9999').localeCompare(b.due || '9999');
+  const overdue = openJobs.filter(t => t.due && daysUntil(t.due) < 0).sort(by);
+  const week = openJobs.filter(t => t.due && daysUntil(t.due) >= 0 && daysUntil(t.due) <= 7).sort(by);
+  const later = openJobs.filter(t => t.due && daysUntil(t.due) > 7).sort(by);
+  const nodate = openJobs.filter(t => !t.due);
+  const finished = all.filter(done);
+  const sec = (title, list, cls = '') => list.length ? h('section', { class: 'oblock ' + cls }, h('div', { class: 'ob-h' }, h('h2', {}, title), h('span', { class: 'count' + (cls ? ' warn' : '') }, String(list.length))), h('div', { class: 'olist' }, list.map(row))) : null;
+  return h('div', { class: 'ocol', style: { maxWidth } },
+    sec('Overdue', overdue, 'warnblock'), sec('This week', week), sec('Later', later), sec('No date yet', nodate),
+    finished.length ? h('details', { class: 'oblock' }, h('summary', { class: 'done-toggle' }, `Done · ${finished.length}`), h('div', { class: 'olist' }, finished.map(row))) : null);
+}
+export const isDone = done;
 
 export function renderMyJobs() {
   const me = store.me;

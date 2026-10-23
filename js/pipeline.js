@@ -1,14 +1,13 @@
-import { store } from './store.js?v=47';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=47';
-import { live, ui, render } from './app.js?v=47';
-import { openStep, lockIcon } from './panel.js?v=47';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=47';
-import { personInput } from './tools.js?v=47';
-import { openIdeas, sectionFor } from './decisions.js?v=47';
-import { renderGlimpse } from './glimpse.js?v=47';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=47';
-import { planOffer } from './plans.js?v=47';
-import { areaIcon, ringSvg, roman } from './areaicons.js?v=47';
+import { store } from './store.js?v=48';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=48';
+import { live, ui, render } from './app.js?v=48';
+import { openStep, lockIcon } from './panel.js?v=48';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=48';
+import { personInput } from './tools.js?v=48';
+import { openIdeas, sectionFor } from './decisions.js?v=48';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=48';
+import { planOffer } from './plans.js?v=48';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=48';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -84,15 +83,16 @@ export function renderPlanHead(root, w, current, plan = planOf(w), onPick) {
   };
   root.append(h('div', { class: 'plan-head' },
     h('div', { class: 'ph-title' },
-      h('h1', {}, current === 'todo' ? 'To-do list' : current === 'glimpse' ? 'The wedding at a glance' : 'The plan')),
+      h('h1', {}, current === 'todo' ? 'Jobs' : 'The plan')),
     h('div', { class: 'viewtoggle', role: 'group', 'aria-label': 'View' },
-      [['list', 'List'], ['map', 'Map'], ['glimpse', 'Glimpse'], ['todo', 'To-do']].map(([k, l]) =>
+      [['list', 'List'], ['map', 'Map'], ['todo', 'Jobs']].map(([k, l]) =>
         h('button', { type: 'button', 'aria-pressed': String(current === k), onclick: () => setView(k) }, l)))));
   root.append(journeyBar(w, plan, {
     onPick: onPick || ((areaId) => { try { localStorage.setItem('fwp-view-' + w.id, 'list'); } catch (e) { } location.hash = '#/w/' + w.id + '/plan?focus=' + areaId; })
   }));
 }
 
+let planEditing = false; // the plan reads clean; handles, ⋯ menus and add boxes appear while editing
 export function renderPipeline(root, w, params) {
   const stages = live(store.rows('stages')).filter(s => s.wedding_id === w.id).sort(byPos);
   const areasAll = live(store.rows('areas')).filter(a => a.wedding_id === w.id);
@@ -100,25 +100,27 @@ export function renderPipeline(root, w, params) {
   const visibleAreaIds = new Set(areasAll.filter(a => stages.some(s => s.id === a.stage_id)).map(a => a.id));
   const visSteps = stepsAll.filter(s => visibleAreaIds.has(s.area_id));
   let view = 'list';
-  try { const v = localStorage.getItem('fwp-view-' + w.id); view = ['map', 'glimpse'].includes(v) ? v : 'list'; } catch (e) { }
-  if (params.view && ['list', 'map', 'glimpse'].includes(params.view)) view = params.view;
+  try { const v = localStorage.getItem('fwp-view-' + w.id); view = v === 'map' ? v : 'list'; } catch (e) { }
+  if (params.view === 'glimpse') { location.replace('#/w/' + w.id + '/choose?view=glimpse'); return; } // Glimpse lives in Choose now
+  if (params.view && ['list', 'map'].includes(params.view)) view = params.view;
   const plan = planOf(w);
 
   renderPlanHead(root, w, view, plan, (areaId) => {
     const el = root.querySelector(`[data-area="${CSS.escape(areaId)}"]`) || root.querySelector(`.area[data-id="${CSS.escape(areaId)}"]`);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2300); }
   });
+  const editing = planEditing || !visSteps.length;
   if (view === 'list') root.append(h('div', { class: 'fold-all' },
     h('button', { type: 'button', class: 'link-btn', onclick: () => setAllFolded(w, true) }, 'Open all'),
     h('span', { 'aria-hidden': 'true' }, '/'),
-    h('button', { type: 'button', class: 'link-btn', onclick: () => setAllFolded(w, false) }, 'Fold all')));
-  if (view === 'glimpse') { renderGlimpse(root, w, plan); return; }
+    h('button', { type: 'button', class: 'link-btn', onclick: () => setAllFolded(w, false) }, 'Fold all'),
+    visSteps.length ? h('button', { type: 'button', class: 'btn small ' + (editing ? '' : 'ghost') + ' plan-edit', 'aria-pressed': String(editing), title: 'Add, rename, move and remove stages, sections and steps', onclick: () => { planEditing = !planEditing; render(); } }, editing ? 'Done editing' : 'Edit the plan') : null));
   if (view === 'map') {
     renderMap(root, w, plan, params);
     return;
   }
 
-  const stagesEl = h('div', { class: 'stages' });
+  const stagesEl = h('div', { class: 'stages' + (editing ? ' editing' : '') });
   for (const st of stages) {
     const areas = areasAll.filter(a => a.stage_id === st.id).sort(byPos);
     const stepCount = visSteps.filter(s => areas.some(a => a.id === s.area_id)).length;

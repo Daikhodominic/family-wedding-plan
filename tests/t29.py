@@ -45,7 +45,7 @@ async def main():
                 print('final line:', await pg.locator('.final-line').all_inner_texts(), '| chosen:', await pg.locator('.opt-card.chosen .oc-t').all_inner_texts())
                 await pg.goto(B+'#/w/charani/board'); await pg.wait_for_timeout(800)
                 print('options on board (should be 0):', await pg.locator('.card:has-text("Lens & Light")').count())
-                await pg.goto(B+'#/settings'); await pg.wait_for_timeout(800)
+                await pg.goto(B+'#/settings?tab=family'); await pg.wait_for_timeout(800)
                 print('decider buttons:', await pg.locator('.bin-row:has-text("Elow") button:has-text("Decider")').all_inner_texts())
                 await pg.goto(B+'#/w/elow/budget'); await pg.wait_for_timeout(600)
             print(name,'errors', errs)

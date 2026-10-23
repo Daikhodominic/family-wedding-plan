@@ -1,15 +1,15 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=47';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=47';
-import { addStepAt } from './addhere.js?v=47';
-import { uploadFile, pickFiles } from './board.js?v=47';
-import { isDecider, deciderNames, personInput } from './tools.js?v=47';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=47';
-import { voteCounts, optionKey } from './feedback.js?v=47';
-import { suggestDue } from './planauto.js?v=47';
-import { guestCount } from './boardauto.js?v=47';
-import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=47';
-import { stepWaButton } from './nudge.js?v=47';
+import { store } from './store.js?v=48';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=48';
+import { addStepAt } from './addhere.js?v=48';
+import { uploadFile, pickFiles } from './board.js?v=48';
+import { isDecider, deciderNames, personInput } from './tools.js?v=48';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=48';
+import { voteCounts, optionKey } from './feedback.js?v=48';
+import { suggestDue } from './planauto.js?v=48';
+import { guestCount } from './boardauto.js?v=48';
+import { optionsOf, pendingFor, votesOf, editOption, wantsOptions } from './swipe.js?v=48';
+import { stepWaButton } from './nudge.js?v=48';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -179,8 +179,9 @@ export function openStep(stepId) {
       lockBlock = h('div', { class: 'd-lock' },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
           isDecider() ? h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Make it final') : h('span', { class: 'ft-sub' }, `Only the Deciders (${deciderNames()}) can make this final.`),
-          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Big decision')),
-        h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Make it final once it’s confirmed — a vendor booked, a menu agreed. Tick “Big decision” for the main choices; they show on the Decide list and as gold ◆ on the map.'));
+          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Big decision'),
+          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: wantsOptions(s) ? true : null, onchange: (e) => set({ lock_note: { ...(s.lock_note || {}), choose: e.target.checked } }) }), 'Choose between options')),
+        h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Make it final once it’s confirmed — a vendor booked, a menu agreed. “Big decision”: one of the main choices — it waits on the Overview and shows as a gold ◆ on the map. “Choose between options”: it gets a place in Choose so the family can add options and vote.'));
     }
 
     const owner = personInput(s.owner || '', { disabled: !canEdit ? true : null, onchange: (e) => set({ owner: e.target.value.trim() }) });

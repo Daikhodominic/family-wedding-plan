@@ -1,18 +1,31 @@
-import { store } from './store.js?v=47';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=47';
-import { live, ui, render, stepVisible } from './app.js?v=47';
-import { editStep } from './pipeline.js?v=47';
-import { personInput } from './tools.js?v=47';
+import { store } from './store.js?v=48';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=48';
+import { live, ui, render, stepVisible } from './app.js?v=48';
+import { editStep } from './pipeline.js?v=48';
+import { personInput } from './tools.js?v=48';
+import { jobsFor, jobSections, isDone } from './myjobs.js?v=48';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 let showDone = false;   // the Done section starts folded
 let person = '';        // filter by person in charge
+let whose = null;       // 'mine' | 'all' — null until chosen: Mine when you have open jobs here
 
 function fail(e) { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); }
 
 export function renderTodo(root, w, params) {
   if (store.todosMissing) {
     root.append(h('div', { class: 'panel', style: { marginTop: '24px' } }, h('p', { style: { margin: 0 } }, 'The to-do list needs database update 2. Ask the admin to run it in Supabase, then reload.')));
+    return;
+  }
+  const mineHere = store.me ? jobsFor(store.me.name).filter(t => t.wedding_id === w.id) : [];
+  const view = whose || (mineHere.some(t => !isDone(t)) ? 'mine' : 'all');
+  const nMine = mineHere.filter(t => !isDone(t)).length;
+  root.append(h('div', { class: 'jobs-seg d-seg', role: 'radiogroup', 'aria-label': 'Whose jobs' },
+    [['mine', `Mine${nMine ? ' · ' + nMine : ''}`], ['all', 'Everyone']].map(([k, l]) => h('button', { type: 'button', role: 'radio', 'aria-checked': String(view === k), class: view === k ? 'on' : '', onclick: () => { whose = k; render(); } }, l))));
+  if (view === 'mine') {
+    root.append(h('p', { class: 'hint' }, `Steps and to-dos in this wedding with “${store.me.name}” as the person in charge.`));
+    if (!mineHere.length) root.append(h('div', { class: 'budget-empty' }, h('h2', {}, 'Nothing with your name on it here yet'), h('p', {}, 'When someone puts you in charge of a step or a to-do, it shows here.'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { whose = 'all'; render(); } }, 'See everyone’s jobs')));
+    else root.append(jobSections(mineHere));
     return;
   }
   const all = live(store.rows('todos')).filter(t => t.wedding_id === w.id).sort((a, b) => (a.position || 0) - (b.position || 0));

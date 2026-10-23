@@ -1041,7 +1041,7 @@ body.easy .step, body.easy .orow { padding-top: 12px; padding-bottom: 12px; }
 body.easy .tick { width: 30px; height: 30px; }
 body.easy .step .t, body.easy .o-main b { font-size: 17px; }
 body.easy .step .sub, body.easy .o-main span { font-size: 14.5px; }
-body.easy .grip, body.easy .drawbar.palette, body.easy .findbar .btn.ghost, body.easy .jlegend, body.easy .viewtoggle button:nth-child(2), body.easy .board-hint { display: none !important; }
+body.easy .grip, body.easy .drawbar.palette, body.easy .findbar .btn.ghost, body.easy .jlegend, body.easy .viewtoggle:not(.choose-tabs) button:nth-child(2), body.easy .board-hint { display: none !important; }
 body.easy .ph-title h1 { font-size: 46px; }
 body.easy input, body.easy textarea, body.easy select { font-size: 17px; }
 
@@ -2637,3 +2637,29 @@ button.sync { border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 
 .gc-job small { color: #E9C98A; white-space: nowrap; }
 .gc-links { display: flex; gap: 16px; font-size: 13.5px; }
 .gc-links a { color: #E9C98A; }
+
+/* Choose: To vote · Glimpse · Mood board */
+.choose-tabs { margin: 4px 0 18px; }
+.board-shell .choose-tabs { margin: 14px 0 4px; }
+.ph-right .choose-tabs { margin: 0; }
+/* Jobs: Mine · Everyone */
+.jobs-seg { max-width: 320px; margin: 4px 0 14px; }
+
+/* Plan: edit controls only while editing */
+.stages:not(.editing) .grip, .stages:not(.editing) .menu-btn, .stages:not(.editing) .add-line, .stages:not(.editing) .stage > .dashed, .stages:not(.editing) .new-stage { display: none !important; }
+.fold-all .plan-edit { margin-left: 12px; }
+.stages.editing .stage-tt h3 { cursor: text; }
+
+/* Mood board on phones: a photo grid */
+.bd-layout { max-width: 180px; }
+.bd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 90px; align-items: start; }
+.bd-grid .gtile { position: relative !important; left: auto !important; top: auto !important; width: auto !important; margin: 0; }
+.bd-grid .gtile.dim { display: none; }
+.bd-grid .gtile img, .bd-grid .gtile video { width: 100%; height: auto; display: block; }
+.bd-grid .gtile.note, .bd-grid .gtile.compare, .bd-grid .gtile.checklist, .bd-grid .gtile.contact { grid-column: span 2; }
+.bd-label { grid-column: 1 / -1; margin: 14px 2px 0; font-family: var(--serif, 'Cormorant Garamond'), serif; font-weight: 500; font-size: 22px; }
+
+.set-tabs { margin: 6px 0 18px; }
+
+.mstage-pick { display: flex; gap: 6px; overflow-x: auto; margin: 4px 0 12px; padding-bottom: 4px; scrollbar-width: none; }
+.mstage-pick .lchip { white-space: nowrap; flex: none; }

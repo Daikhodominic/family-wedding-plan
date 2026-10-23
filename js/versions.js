@@ -1,8 +1,8 @@
 // Version history for a list or an option: every change, who made it and when, with Restore —
 // one change, one deleted row, or the whole list back to how it was at that moment.
 // Built on the edit history (activity) the database already keeps.
-import { store } from './store.js?v=47';
-import { h, modal, toast, ago, confirmBox } from './ui.js?v=47';
+import { store } from './store.js?v=48';
+import { h, modal, toast, ago, confirmBox } from './ui.js?v=48';
 
 const FIELD = { cells: 'the row', title: 'the name', rate: 'the price', notes: 'the notes', phone: 'the phone', links: 'the links', images: 'the photos', columns: 'the columns', status: 'the status', caption: 'the caption', text: 'the text', final: 'the final design', step_id: 'the category' };
 const show = (v) => v == null || v === '' ? '—' : Array.isArray(v) ? (v.every(x => typeof x === 'string') ? v.filter(Boolean).join(' · ') || '—' : `${v.length} ${v.length === 1 ? 'item' : 'items'}`) : typeof v === 'object' ? '…' : String(v);

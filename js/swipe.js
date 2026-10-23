@@ -1,17 +1,19 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=47';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=47';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=47';
-import { isDecider, personInput } from './tools.js?v=47';
-import { suggestDue } from './planauto.js?v=47';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=47';
-import { addVendor } from './decisions.js?v=47';
-import { pickFiles, fetchPreview } from './board.js?v=47';
-import { planOf } from './map.js?v=47';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=47';
-import { sampleRows, isSample } from './samples.js?v=47';
+import { store } from './store.js?v=48';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=48';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=48';
+import { isDecider, personInput } from './tools.js?v=48';
+import { suggestDue } from './planauto.js?v=48';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=48';
+import { addVendor } from './decisions.js?v=48';
+import { pickFiles, fetchPreview } from './board.js?v=48';
+import { chooseTabs } from './tabs.js?v=48';
+import { renderGlimpse } from './glimpse.js?v=48';
+import { planOf } from './map.js?v=48';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=48';
+import { sampleRows, isSample } from './samples.js?v=48';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -55,11 +57,13 @@ export async function vote(o, value) {
 }
 
 // The categories of a wedding: big decisions, plus any step that has options, in plan order.
+// Does this step have a place in Choose? Set in the step ("Choose between options"); older plans: every big decision did.
+export const wantsOptions = (s) => { const c = s.lock_note && s.lock_note.choose; return c === undefined ? !!s.gate : !!c; };
 export function categoriesOf(w) {
   const plan = planOf(w); const out = [];
   for (const st of plan.stages) for (const a of st.areas) for (const s of a.steps) {
     const n = optionsOf(w.id, s.id).length;
-    if (s.gate || n) out.push({ step: s, area: a, stage: st, n });
+    if (wantsOptions(s) || n) out.push({ step: s, area: a, stage: st, n });
   }
   return out;
 }
@@ -638,10 +642,10 @@ export function openProfile(o, onVote) {
       h('div', { class: 'od-acts pf-acts' },
         isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
-        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=47').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
+        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=48').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
-        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=47').then(m => m.openHistory('option', cur)); } }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=48').then(m => m.openHistory('option', cur)); } }, '↺ History'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { close(); deleteOption(cur); } }, 'Delete'))));
   const bar = h('div', { class: 'pf-bar' },
@@ -754,14 +758,18 @@ export function sampleButton(w) {
 }
 
 /* ---------- Choose: every category of a wedding ---------- */
-export function renderChoose(root, w) {
+export function renderChoose(root, w, params = {}) {
+  if (params.view === 'glimpse') {
+    root.append(h('div', { class: 'ph-row' }, h('div', {}, h('h1', { class: 'page-title' }, 'The wedding at a glance')), h('div', { class: 'ph-right' }, chooseTabs(w, 'glimpse'))));
+    renderGlimpse(root, w); return;
+  }
   root.append(h('div', { class: 'ph-row' },
     h('div', {}, h('h1', { class: 'page-title' }, 'Choose'), h('p', { class: 'ph-sub' }, 'Everything waiting to be chosen, and what the family thinks.')),
     h('div', { class: 'ph-right' },
       h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
       (() => { const n = optionsOf(w.id).filter(isOpen).length; return n ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, n) }) : null; })(),
-      h('a', { class: 'btn ghost', href: `#/w/${w.id}/board` }, 'Mood board'),
       null)));
+  root.append(chooseTabs(w, 'vote'));
   const nfy = newForYou(w.id); if (nfy) root.append(nfy);
   const cats = categoriesOf(w);
   if (!cats.length) { root.append(h('p', { class: 'muted' }, 'No categories yet. Mark a step in the plan as a big decision, or add an option to any step.')); return; }

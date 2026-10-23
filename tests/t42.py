@@ -8,7 +8,7 @@ async def main():
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(300)
         await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off']) localStorage.setItem('fwp-once-'+k,'1')}"); await pg.reload(); await pg.wait_for_timeout(600)
-        await pg.goto(B+'#/settings'); await pg.wait_for_timeout(1200)
+        await pg.goto(B+'#/settings?tab=data'); await pg.wait_for_timeout(1200)
         print('before', await pg.locator('.bk-body').inner_text())
         await pg.locator('.bk button:has-text("Back up now")').click(); await pg.wait_for_timeout(1500)
         print('list', await pg.locator('.bk-list li').all_inner_texts())

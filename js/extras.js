@@ -1,13 +1,13 @@
-import { storagePanel } from './storage.js?v=47';
-import { sampleButton } from './swipe.js?v=47';
-import { backupsPanel } from './backups.js?v=47';
-import { store } from './store.js?v=47';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=47';
-import { othersSummary, bringBackOthers } from './safety.js?v=47';
-import { weddings, wedding, feedList, render, THEMES } from './app.js?v=47';
-import { confirmAreaRestore, inr } from './budget.js?v=47';
-import { clearAll } from './clear.js?v=47';
-import { downloadBackup, decidesFor } from './tools.js?v=47';
+import { storagePanel } from './storage.js?v=48';
+import { sampleButton } from './swipe.js?v=48';
+import { backupsPanel } from './backups.js?v=48';
+import { store } from './store.js?v=48';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=48';
+import { othersSummary, bringBackOthers } from './safety.js?v=48';
+import { weddings, wedding, feedList, render, THEMES } from './app.js?v=48';
+import { confirmAreaRestore, inr } from './budget.js?v=48';
+import { clearAll } from './clear.js?v=48';
+import { downloadBackup, decidesFor } from './tools.js?v=48';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget line', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };
@@ -329,14 +329,20 @@ export function renderSettings() {
         }
       }, 'Remove'))))));
 
+  const q = new URLSearchParams((location.hash.split('?')[1] || ''));
+  const tab = ['weddings', 'family', 'data'].includes(q.get('tab')) ? q.get('tab') : settingsTab;
+  const TABS = [['weddings', 'Weddings'], ['family', 'Family'], ['data', 'Backups & space']];
+  const pick = (k) => { settingsTab = k; if (q.get('tab')) location.hash = '#/settings'; else render(); };
   return h('main', { class: 'wrap', style: { paddingBottom: '60px' } },
-    h('div', { class: 'eyebrow' }, 'Admin only'), h('h1', { class: 'page-title' }, 'Settings'),
-    h('div', { style: { margin: '6px 0 14px', display: 'flex', gap: '8px', flexWrap: 'wrap' } },
-      h('button', { class: 'btn ghost small', type: 'button', onclick: downloadBackup }, 'Download a backup'),
-      h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: () => clearAll() }, 'Clear all and start over…')),
-    h('p', { class: 'muted', style: { marginTop: 0 } }, 'Only you can see this page.'),
-    h('div', { class: 'settings-grid' }, cards),
-    h('div', { class: 'settings-grid' }, pass, people),
-    backupsPanel(),
-    storagePanel());
+    h('div', { class: 'eyebrow' }, 'Admin only · only you can see this page'), h('h1', { class: 'page-title' }, 'Settings'),
+    h('div', { class: 'viewtoggle set-tabs', role: 'group', 'aria-label': 'Settings' }, TABS.map(([k, l]) => h('button', { type: 'button', 'aria-pressed': String(tab === k), onclick: () => pick(k) }, l))),
+    tab === 'weddings' ? h('div', { class: 'settings-grid' }, cards) : null,
+    tab === 'family' ? h('div', { class: 'settings-grid' }, pass, people) : null,
+    tab === 'data' ? [
+      h('div', { style: { margin: '6px 0 14px', display: 'flex', gap: '8px', flexWrap: 'wrap' } },
+        h('button', { class: 'btn ghost small', type: 'button', onclick: downloadBackup }, 'Download a backup'),
+        h('button', { class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: () => clearAll() }, 'Clear all and start over…')),
+      backupsPanel(),
+      storagePanel()] : null);
 }
+let settingsTab = 'weddings';

@@ -1,22 +1,22 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=47';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=47';
-import { live, stepVisible, feedList, themeOf, render } from './app.js?v=47';
-import { openStep, lockIcon } from './panel.js?v=47';
-import { planOf, journeyBar } from './map.js?v=47';
-import { listSummary } from './lists.js?v=47';
-import { budgetMath, inr } from './budget.js?v=47';
-import { editStep } from './pipeline.js?v=47';
-import { canonical } from './myjobs.js?v=47';
-import { pictureEl } from './map.js?v=47';
-import { readyToDecide, favScore } from './boardauto.js?v=47';
-import { isDecider } from './tools.js?v=47';
-import { cardTitle } from './decisions.js?v=47';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=47';
-import { share, siteLink, copyLink } from './tools.js?v=47';
-import { planOffer } from './plans.js?v=47';
-import { newForYou, pendingFor } from './swipe.js?v=47';
-import { waButton, jobsMessage } from './nudge.js?v=47';
+import { store } from './store.js?v=48';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=48';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=48';
+import { openStep, lockIcon } from './panel.js?v=48';
+import { planOf, journeyBar } from './map.js?v=48';
+import { listSummary } from './lists.js?v=48';
+import { budgetMath, inr } from './budget.js?v=48';
+import { editStep } from './pipeline.js?v=48';
+import { canonical } from './myjobs.js?v=48';
+import { pictureEl } from './map.js?v=48';
+import { readyToDecide, favScore } from './boardauto.js?v=48';
+import { isDecider } from './tools.js?v=48';
+import { cardTitle } from './decisions.js?v=48';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement } from './planauto.js?v=48';
+import { share, siteLink, copyLink } from './tools.js?v=48';
+import { planOffer } from './plans.js?v=48';
+import { newForYou, pendingFor } from './swipe.js?v=48';
+import { waButton, jobsMessage } from './nudge.js?v=48';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -169,7 +169,7 @@ export function renderOverview(root, w, params = {}) {
   const favs = boardItems.map(i => ({ i, s: favScore(i) })).filter(x => x.s >= 2).sort((a, b) => b.s - a.s).slice(0, 6);
   const finals = all.filter(x => x.kind === 'step' && x.locked_at).sort((a, b) => String(b.locked_at).localeCompare(String(a.locked_at)));
   if (finals.length) root.append(h('section', { class: 'decided-strip' },
-    h('div', { class: 'ob-h' }, h('h2', {}, 'Decided so far'), h('span', { class: 'count gold' }, String(finals.length)), h('a', { class: 'ob-link', href: `#/w/${w.id}/plan?view=glimpse` }, 'See the wedding at a glance →')),
+    h('div', { class: 'ob-h' }, h('h2', {}, 'Decided so far'), h('span', { class: 'count gold' }, String(finals.length)), h('a', { class: 'ob-link', href: `#/w/${w.id}/choose?view=glimpse` }, 'See the wedding at a glance →')),
     h('div', { class: 'ds-row' }, finals.slice(0, 6).map(s => h('button', { type: 'button', class: 'ds-item', onclick: () => openStep(s.id) },
       pictureEl(s, 'ds-pic') || h('span', { class: 'ds-pic ph' }, '✓'),
       h('b', {}, (s.lock_note && s.lock_note.choice && s.lock_note.choice.title) || s.title),

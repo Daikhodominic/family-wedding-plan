@@ -1,29 +1,29 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=47';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=47';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=47';
-import { renderBoard } from './board.js?v=47';
-import { renderTodo } from './todo.js?v=47';
-import { renderFiles } from './files.js?v=47';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=47';
-import { clearPage, clearAll } from './clear.js?v=47';
-import { undoButtons } from './history.js?v=47';
-import { downloadBackup } from './tools.js?v=47';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=47';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=47';
-import { announcementBars } from './planauto.js?v=47';
-import { renderPartner } from './partner.js?v=47';
-import { renderOverview, editDate } from './overview.js?v=47';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=47';
-import { renderLists } from './lists.js?v=47';
-import { planOf } from './map.js?v=47';
-import { openStep, closeDrawer } from './panel.js?v=47';
-import { waNumber } from './nudge.js?v=47';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=47';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=47';
-import { morphInto, onScreen } from './morph.js?v=47';
-import { renderShare } from './share.js?v=47';
-import { pendingFor } from './swipe.js?v=47';
-import { installApp, installOffer, isStandalone } from './install.js?v=47';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=48';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=48';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=48';
+import { renderBoard } from './board.js?v=48';
+import { renderTodo } from './todo.js?v=48';
+import { renderFiles } from './files.js?v=48';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=48';
+import { clearPage, clearAll } from './clear.js?v=48';
+import { undoButtons } from './history.js?v=48';
+import { downloadBackup } from './tools.js?v=48';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=48';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=48';
+import { announcementBars } from './planauto.js?v=48';
+import { renderPartner } from './partner.js?v=48';
+import { renderOverview, editDate } from './overview.js?v=48';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=48';
+import { renderLists } from './lists.js?v=48';
+import { planOf } from './map.js?v=48';
+import { openStep, closeDrawer } from './panel.js?v=48';
+import { waNumber } from './nudge.js?v=48';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=48';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=48';
+import { morphInto, onScreen } from './morph.js?v=48';
+import { renderShare } from './share.js?v=48';
+import { pendingFor } from './swipe.js?v=48';
+import { installApp, installOffer, isStandalone } from './install.js?v=48';
 
 const app = document.getElementById('app');
 
@@ -358,7 +358,7 @@ function renderSpace(id, sub, params) {
   const tp = tip(sub === 'todo' ? 'plan' : tab);
   if (tp) body.prepend(tp);
   if (tab === 'board') renderBoard(body, w, params);
-  else if (tab === 'choose') renderChoose(body, w);
+  else if (tab === 'choose') renderChoose(body, w, params);
   else if (tab === 'options') renderOptions(body, w, params.step);
   else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap', 'data-fresh': '' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step }); }
   else if (tab === 'decide') renderOverview(body, w, params); // the old Decisions page now lives on the Overview and in Choose
@@ -511,7 +511,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=47').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=48').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 
