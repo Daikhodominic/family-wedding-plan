@@ -1,17 +1,20 @@
 // Small shared helpers: roles, backup, sharing, calendar files, people.
-import { store } from './store.js?v=25';
-import { h, toast } from './ui.js?v=25';
+import { store } from './store.js?v=26';
+import { h, toast } from './ui.js?v=26';
 
 /* ---------- Roles ---------- */
-export const isDecider = () => !!(store.me && (store.me.isAdmin || store.me.isDecider));
-export function deciderNames() {
-  const names = (store.rows('members') || []).filter(m => m.is_admin || m.is_decider).map(m => m.name);
+const routeWedding = () => { const m = /^#\/w\/([^/?]+)/.exec(location.hash || ''); return m ? decodeURIComponent(m[1]) : null; };
+// Deciders can be limited to some weddings (members.decider_for). An empty list means every wedding.
+export const decidesFor = (m, wid) => !!(m && (m.is_admin || (m.is_decider && (!wid || wid === 'shared' || !(m.decider_for || []).length || (m.decider_for || []).includes(wid)))));
+export const isDecider = (wid = routeWedding()) => !!(store.me && (store.me.isAdmin || (store.me.isDecider && (!wid || wid === 'shared' || !(store.me.deciderFor || []).length || store.me.deciderFor.includes(wid)))));
+export function deciderNames(wid = routeWedding()) {
+  const names = (store.rows('members') || []).filter(m => decidesFor(m, wid)).map(m => m.name);
   return names.length ? names.join(', ') : 'the admin';
 }
 // Use at the top of anything only Deciders may do. Returns true if allowed.
-export function deciderOnly(what = 'do this') {
-  if (isDecider()) return true;
-  toast(`Only the Deciders (${deciderNames()}) can ${what}`, 'error');
+export function deciderOnly(what = 'do this', wid) {
+  if (isDecider(wid)) return true;
+  toast(`Only the Deciders (${deciderNames(wid)}) can ${what}`, 'error');
   return false;
 }
 

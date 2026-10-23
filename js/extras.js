@@ -1,13 +1,13 @@
-import { store } from './store.js?v=25';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=25';
-import { othersSummary, bringBackOthers } from './safety.js?v=25';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=25';
-import { confirmAreaRestore, inr } from './budget.js?v=25';
-import { clearAll } from './clear.js?v=25';
-import { downloadBackup } from './tools.js?v=25';
+import { store } from './store.js?v=26';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=26';
+import { othersSummary, bringBackOthers } from './safety.js?v=26';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=26';
+import { confirmAreaRestore, inr } from './budget.js?v=26';
+import { clearAll } from './clear.js?v=26';
+import { downloadBackup, decidesFor } from './tools.js?v=26';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
-const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist' };
+const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };
 const FIELD = {
   title: 'name', owner: 'person in charge', due: 'due date', status: 'status', notes: 'notes', area_id: 'area', stage_id: 'stage',
   couple: 'couple names', monogram: 'monogram', wedding_date: 'wedding date', date_note: 'date note', theme: 'theme', theme_custom: 'theme colours',
@@ -317,11 +317,16 @@ export function renderSettings() {
   const people = h('section', { class: 'panel' },
     h('h2', { class: 'serif', style: { margin: '0 0 6px', fontWeight: 500, fontSize: '26px' } }, 'Who has joined'),
     h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Removing someone signs them out of the plans. They can come back only with the passcode — change it too if they shouldn’t.'),
-    h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Deciders can change money, make decisions final and choose between options. Everyone else can add, suggest, vote and tick off their jobs.'),
+    h('p', { class: 'muted', style: { marginTop: 0, fontSize: '14px' } }, 'Deciders change money, make decisions final and choose between options — for the weddings you tick. Everyone else can add, suggest, vote and tick off their jobs.'),
     h('div', {}, store.rows('members').map(m => h('div', { class: 'bin-row' },
-      h('span', {}, m.name, m.is_admin ? h('span', { class: 'muted' }, ' · admin') : m.is_decider ? h('span', { class: 'role-tag' }, 'Decider') : null),
+      h('span', {}, m.name, m.is_admin ? h('span', { class: 'muted' }, ' · admin · decides for every wedding') : null),
       m.is_admin ? h('span') : h('span', { class: 'acts' },
-        h('button', { class: 'btn small ' + (m.is_decider ? 'soft' : 'ghost'), type: 'button', onclick: () => store.setDecider(m.user_id, !m.is_decider).then(() => toast(m.is_decider ? `${m.name} is no longer a Decider` : `${m.name} is now a Decider`)).catch(e => toast(e.message, 'error')) }, m.is_decider ? 'Remove as Decider' : 'Make a Decider'),
+        weddings().map(w => { const on = decidesFor(m, w.id) && !m.is_admin; const first = (w.couple || '').split('&')[0].trim();
+          return h('button', { class: 'btn small ' + (on ? 'soft' : 'ghost'), type: 'button', 'aria-pressed': on ? 'true' : 'false', title: on ? `${m.name} decides for ${w.couple}` : `Make ${m.name} a Decider for ${w.couple}`, onclick: () => {
+            const cur = weddings().filter(x => decidesFor(m, x.id)).map(x => x.id);
+            const next = on ? cur.filter(x => x !== w.id) : [...new Set([...cur, w.id])];
+            store.setDeciderFor(m.user_id, next).then(() => toast(on ? `${m.name} no longer decides for ${w.couple}` : `${m.name} now decides for ${w.couple}`)).catch(e => toast(e.message, 'error'));
+          } }, (on ? '✓ ' : '') + 'Decider · ' + first); }),
         h('button', {
         class: 'btn ghost small', type: 'button', style: { color: 'var(--warn)' }, onclick: async () => {
           if (!(await confirmBox(`Remove ${m.name}?`, 'They will no longer see or change the plans on their devices.', 'Remove'))) return;

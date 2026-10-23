@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=25';
-import { h, modal } from './ui.js?v=25';
-import { once, markOnce } from './tools.js?v=25';
+import { store } from './store.js?v=26';
+import { h, modal } from './ui.js?v=26';
+import { once, markOnce } from './tools.js?v=26';
 
 const SLIDES = [
   ['Welcome to the War Room', 'Both weddings live here. Everyone in the family can add ideas, tick off jobs and see what’s been decided — from any phone or laptop.'],
@@ -32,7 +32,10 @@ const TIPS = {
   plan: 'Tap a step to see its details, add files, or make it final. Tick the circle when it’s done. Drag by the dots to move things.',
   board: 'Drop photos and links here, or press Ctrl+V to paste. Tap “Comment” on a card to discuss it; tap ☺ to react.',
   lists: 'Guest list, gifts, vehicles, songs… Start one below. Tick boxes and totals fill in by themselves.',
-  budget: 'Everyone can see the money. Only the Deciders can change it. Tap any payment for details.'
+  budget: 'Everyone can see the money. Only the Deciders can change it. Tap any payment for details.',
+  choose: 'Every big decision has its options here — photographers, rings, cards. Anyone can add one with photos and links; everyone votes; the Deciders choose.',
+  options: 'Vote on each option, tick two or three to compare them side by side, and tap a photo to see everything.',
+  swipe: 'Swipe right if you love it, left if not, up for maybe. Tap the photo for more photos, or “See everything” for links and details.'
 };
 export function tip(key) {
   if (!TIPS[key] || !once('tip-' + key)) return null;

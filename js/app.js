@@ -1,23 +1,24 @@
-import { store, onStatus, syncState } from './store.js?v=25';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=25';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=25';
-import { renderBoard } from './board.js?v=25';
-import { renderTodo } from './todo.js?v=25';
-import { renderFiles } from './files.js?v=25';
-import { renderDecide } from './decide.js?v=25';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=25';
-import { clearPage, clearAll } from './clear.js?v=25';
-import { undoButtons } from './history.js?v=25';
-import { downloadBackup } from './tools.js?v=25';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=25';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=25';
-import { announcementBars } from './planauto.js?v=25';
-import { renderPartner } from './partner.js?v=25';
-import { renderOverview, editDate } from './overview.js?v=25';
-import { renderLists } from './lists.js?v=25';
-import { planOf } from './map.js?v=25';
-import { openStep } from './panel.js?v=25';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=25';
+import { store, onStatus, syncState } from './store.js?v=26';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=26';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=26';
+import { renderBoard } from './board.js?v=26';
+import { renderTodo } from './todo.js?v=26';
+import { renderFiles } from './files.js?v=26';
+import { renderDecide } from './decide.js?v=26';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=26';
+import { clearPage, clearAll } from './clear.js?v=26';
+import { undoButtons } from './history.js?v=26';
+import { downloadBackup } from './tools.js?v=26';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=26';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=26';
+import { announcementBars } from './planauto.js?v=26';
+import { renderPartner } from './partner.js?v=26';
+import { renderOverview, editDate } from './overview.js?v=26';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=26';
+import { renderLists } from './lists.js?v=26';
+import { planOf } from './map.js?v=26';
+import { openStep } from './panel.js?v=26';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=26';
 
 const app = document.getElementById('app');
 
@@ -269,6 +270,7 @@ function renderHome() {
         h('a', { class: 'brand', href: '#/' }, 'The Wedding War Room'),
         greeting(),
         h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), undoButtons(), avatar())),
+      newForYou(null),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
         ws.length ? ws.flatMap((w, i) => i ? [h('span', { class: 'divider', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')), emblem(w)] : [emblem(w)])
           : h('p', { class: 'muted' }, store.me.isAdmin ? h('span', {}, 'No weddings yet. ', h('a', { href: '#/settings' }, 'Add one in Settings')) : 'No weddings yet.')),
@@ -276,8 +278,8 @@ function renderHome() {
 }
 
 /* ---------- Wedding space ---------- */
-const TABS = [['overview', 'Overview', 'overview'], ['plan', 'Plan', 'plan'], ['board', 'Board', 'board'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget']];
-const ALIAS = { decide: 'overview', files: 'lists' }; // still reachable, shown under these tabs
+const TABS = [['overview', 'Overview', 'overview'], ['choose', 'Choose', 'compare'], ['plan', 'Plan', 'plan'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget']];
+const ALIAS = { decide: 'overview', files: 'lists', board: 'choose', options: 'choose', swipe: 'choose' }; // still reachable, shown under these tabs
 const tabOf = (t, params = {}) => !t ? (params.focus ? 'plan' : 'overview') : t === 'todo' ? 'plan' : t;
 
 function renderSpace(id, sub, params) {
@@ -322,6 +324,9 @@ function renderSpace(id, sub, params) {
   const tp = tip(sub === 'todo' ? 'plan' : tab);
   if (tp) body.prepend(tp);
   if (tab === 'board') renderBoard(body, w, params);
+  else if (tab === 'choose') renderChoose(body, w);
+  else if (tab === 'options') renderOptions(body, w, params.step);
+  else if (tab === 'swipe') renderSwipe(body, { weddingId: w.id, stepId: params.step });
   else if (tab === 'decide') renderDecide(body, w, params);
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
@@ -412,8 +417,9 @@ export function render() {
   else if (parts[0] === 'budget') view = familyPage(renderFamilyBudget(params));
   else if (parts[0] === 'me') view = familyPage(renderMyJobs());
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
+  else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, {}); view = familyPage(el); }
   else { view = renderHome(); setTimeout(maybeWelcome, 400); }
-  document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me'].includes(parts[0]) ? 'home' : 'page';
+  document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   app.dataset.view = key;
   const boardView = $('.board-view');

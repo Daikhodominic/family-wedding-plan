@@ -1,10 +1,10 @@
 // Joins the mood board to the plan: pin cards to steps, card status, card → job,
 // comparisons that become final decisions, and the follow-ups a decision brings.
-import { store } from './store.js?v=25';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=25';
-import { live, stepVisible, wedding, weddings, render } from './app.js?v=25';
-import { together } from './history.js?v=25';
-import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=25';
+import { store } from './store.js?v=26';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil } from './ui.js?v=26';
+import { live, stepVisible, wedding, weddings, render } from './app.js?v=26';
+import { together } from './history.js?v=26';
+import { isDecider, deciderOnly, personInput, share, siteLink } from './tools.js?v=26';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -22,7 +22,7 @@ function stepOptions(wid, selected) {
   return out;
 }
 export const cardTitle = (it) => { const d = it.data || {}; return (d.title || d.text || d.caption || d.name || (d.preview && d.preview.title) || d.url || 'Card').toString().slice(0, 80); };
-export const cardsForStep = (stepId) => live(store.rows('board_items')).filter(i => i.data && i.data.step_id === stepId && !['shape', 'connector'].includes(i.kind));
+export const cardsForStep = (stepId) => live(store.rows('board_items')).filter(i => i.data && i.data.step_id === stepId && !['shape', 'connector', 'option'].includes(i.kind));
 const setData = (it, patch) => store.update('board_items', it.id, { data: { ...(store.find('board_items', it.id) || it).data, ...patch } });
 
 export function pinToStep(it) {

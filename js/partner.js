@@ -2,10 +2,10 @@
 // (no prices, rates or phone numbers), what's been decided (no amounts) and how far along
 // it is — and can react, vote and send suggestions, which the family sees.
 // Security lives in the database (update 9): partners only ever receive partner_data().
-import { store } from './store.js?v=25';
-import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=25';
-import { live, themeOf, monogram, applyTheme, render } from './app.js?v=25';
-import { EMOJI } from './feedback.js?v=25';
+import { store } from './store.js?v=26';
+import { h, toast, fancyDate, daysUntil, shortDate, ICONS } from './ui.js?v=26';
+import { live, themeOf, monogram, applyTheme, render } from './app.js?v=26';
+import { EMOJI } from './feedback.js?v=26';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That didn’t work. Check your connection.', 'error'); };
 let state = { token: null, data: null, mode: null, loading: false, error: null };
@@ -14,7 +14,7 @@ let state = { token: null, data: null, mode: null, loading: false, error: null }
 function localData(wid, asName) {
   const w = store.find('weddings', wid);
   const strip = (d) => { const { phone, rate, job_id, role, ...rest } = d || {}; void phone; void rate; void job_id; void role; return rest; };
-  const board = live(store.rows('board_items')).filter(b => b.wedding_id === wid && !['contact', 'shape', 'connector'].includes(b.kind))
+  const board = live(store.rows('board_items')).filter(b => b.wedding_id === wid && !['contact', 'shape', 'connector', 'option'].includes(b.kind))
     .sort((a, b) => (a.y - b.y) || (a.x - b.x))
     .map(b => ({ id: b.id, kind: b.kind, x: b.x, y: b.y, w: b.w, z: b.z, data: b.kind === 'compare' ? { ...strip(b.data), options: (b.data.options || []).map(({ rate, contact, notes, ...o }) => (void rate, void contact, void notes, o)) } : strip(b.data) }));
   const steps = live(store.rows('steps')).filter(s => s.wedding_id === wid && s.locked_at);

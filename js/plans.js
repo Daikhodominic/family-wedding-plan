@@ -2,11 +2,11 @@
 // Each step: [title, note, big decision?, suggested?]. Suggested steps came from
 // Claude's review of Catholic weddings in Nagaland and Manipur; the rest are the family's own list.
 // Each to-do: [title, due date, where it belongs].
-import { store } from './store.js?v=25';
-import { h, toast, modal } from './ui.js?v=25';
-import { live } from './app.js?v=25';
-import { SECTIONS } from './clear.js?v=25';
-import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=25';
+import { store } from './store.js?v=26';
+import { h, toast, modal } from './ui.js?v=26';
+import { live } from './app.js?v=26';
+import { SECTIONS } from './clear.js?v=26';
+import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=26';
 
 const S = (title, note = '', gate = false, sugg = false) => [title, note, gate, sugg];
 
@@ -230,8 +230,9 @@ const loaded = (w, p) => live(store.rows('steps')).some(s => s.wedding_id === w.
 
 // What a loaded wedding is still missing from the ready-made plan (new steps added since, and the to-dos).
 function missingFor(w, p) {
-  const have = new Set(live(store.rows('steps')).filter(s => s.wedding_id === w.id).map(s => s.title));
-  const haveT = new Set(live(store.rows('todos') || []).filter(t => t.wedding_id === w.id).map(t => t.title));
+  // Anything with the same title counts — even if it's in the Bin, because someone removed it on purpose.
+  const have = new Set(store.rows('steps').filter(s => s.wedding_id === w.id).map(s => s.title));
+  const haveT = new Set((store.rows('todos') || []).filter(t => t.wedding_id === w.id).map(t => t.title));
   const steps = [];
   p.stages.forEach(([st, as]) => as.forEach(([ar, ss]) => ss.forEach((s, i) => { if (!have.has(s[0])) steps.push({ st, ar, s, i }); })));
   const todos = hasTodos() ? p.todos.filter(t => !haveT.has(t[0])) : [];
@@ -325,10 +326,17 @@ export function loadPlan(w) {
 }
 
 // A one-line offer on the plan and overview pages, for the admin, until everything is in.
+// Once the checklist is in, new items are added by themselves (for the admin, once per visit) — never removed.
+const autoRan = new Set();
+function autoTopUp(w, p) {
+  if (autoRan.has(w.id)) return; autoRan.add(w.id);
+  setTimeout(() => topUp(w, p).then(r => { if (r.steps || r.todos) toast(`Added ${r.steps ? r.steps + ' new steps' : ''}${r.steps && r.todos ? ' and ' : ''}${r.todos ? r.todos + ' to-dos' : ''} to the plan`); }).catch(e => console.warn(e)), 600);
+}
 export function planOffer(w) {
   const p = planFor(w);
   if (!p || !store.me || !store.me.isAdmin || planLoaded(w)) return null;
   const fresh = !loaded(w, p);
+  if (!fresh && store.mode === 'live') { autoTopUp(w, p); return null; }
   const m = fresh ? null : missingFor(w, p);
   return h('section', { class: 'tip auto' }, h('span', { class: 'tip-i' }, '✦'),
     fresh

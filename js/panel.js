@@ -1,13 +1,14 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { store } from './store.js?v=25';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=25';
-import { addStepAt } from './addhere.js?v=25';
-import { uploadFile, pickFiles } from './board.js?v=25';
-import { isDecider, deciderNames, personInput } from './tools.js?v=25';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=25';
-import { voteCounts, optionKey } from './feedback.js?v=25';
-import { suggestDue } from './planauto.js?v=25';
-import { guestCount } from './boardauto.js?v=25';
+import { store } from './store.js?v=26';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt } from './ui.js?v=26';
+import { addStepAt } from './addhere.js?v=26';
+import { uploadFile, pickFiles } from './board.js?v=26';
+import { isDecider, deciderNames, personInput } from './tools.js?v=26';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=26';
+import { voteCounts, optionKey } from './feedback.js?v=26';
+import { suggestDue } from './planauto.js?v=26';
+import { guestCount } from './boardauto.js?v=26';
+import { optionsOf, pendingFor, votesOf, editOption } from './swipe.js?v=26';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -200,6 +201,7 @@ export function openStep(stepId) {
           (() => { const wd = store.find('weddings', s.wedding_id); const sg = !s.due && !locked && canEdit ? suggestDue(s, wd) : null; return sg ? h('button', { type: 'button', class: 'link-btn sugg', onclick: () => set({ due: sg }) }, `Suggested: ${shortDate(sg)} — use it`) : null; })())),
         /head ?count|guest/i.test(s.title) && guestCount(s.wedding_id) ? h('div', { class: 'd-card' }, `Guest list so far: ${guestCount(s.wedding_id)} people`, h('a', { href: `#/w/${s.wedding_id}/lists`, style: { marginLeft: '8px' }, onclick: () => close() }, 'Open lists →')) : null,
         field('Notes', notes),
+        optionsSection(s),
         boardSection(s, area),
         h('section', { class: 'd-sec' },
           h('div', { class: 'd-sec-h' }, h('h3', {}, 'Files'), missing.files ? null : h('button', { type: 'button', class: 'btn small soft', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(s.wedding_id, s.id, fs); } }, '+ Upload')),
@@ -234,6 +236,23 @@ export function openStep(stepId) {
 // Ideas pinned from the mood board, and the comparison that decides this step.
 function stepPictureEl(s) { const p = stepPicture(s), ext = p ? null : previewUrl(s); if (!p && !ext) return null; const im = h('img', { class: 'd-final-pic', alt: '', referrerpolicy: 'no-referrer' }); if (ext) im.src = ext; else store.url(p).then(u => { if (u) im.src = u; }); return im; }
 function thumb(path) { const im = h('img', { alt: '', loading: 'lazy' }); if (path) store.url(path).then(u => { if (u) im.src = u; }); return im; }
+// The step's options (vendors, products) — swiped and compared on the Choose tab.
+function optionsSection(s) {
+  const w = store.find('weddings', s.wedding_id);
+  const opts = optionsOf(s.wedding_id, s.id);
+  const fresh = pendingFor(s.wedding_id, s.id).length;
+  const chosen = opts.find(o => (o.data || {}).status === 'chosen');
+  const lead = opts.filter(o => (o.data || {}).status !== 'not').sort((a, b) => votesOf(b).score - votesOf(a).score)[0];
+  return h('section', { class: 'd-sec' },
+    h('div', { class: 'd-sec-h' }, h('h3', {}, 'Options'),
+      h('button', { type: 'button', class: 'btn small soft', onclick: () => { if (current) current.close(); editOption(w, s.id); } }, '+ Add an option')),
+    opts.length ? h('a', { class: 'd-opts', href: `#/w/${s.wedding_id}/options?step=${s.id}`, onclick: () => { if (current) current.close(); } },
+      h('b', {}, `${opts.length} ${opts.length === 1 ? 'option' : 'options'}`),
+      h('span', {}, chosen ? '✓ Chosen: ' + ((chosen.data || {}).title || '') : lead && votesOf(lead).total ? 'Leading: ' + ((lead.data || {}).title || '') : 'No votes yet'),
+      fresh ? h('span', { class: 'd-opts-new' }, `${fresh} new for you`) : null,
+      h('span', { class: 'd-opts-go' }, 'See, swipe and compare →'))
+      : h('div', { class: 'ft-sub' }, 'Add the vendors or designs you’re considering — photos, Instagram links, price, phone — and the family can swipe and compare them.'));
+}
 function boardSection(s, area) {
   const cards = cardsForStep(s.id);
   const w = store.find('weddings', s.wedding_id);

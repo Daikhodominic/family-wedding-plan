@@ -1,11 +1,11 @@
 // Glimpse: the wedding in a nutshell — every final decision, in the order of the plan,
 // with its picture and who to call. Undecided big decisions show as soft outlines.
-import { store } from './store.js?v=25';
-import { h, shortDate } from './ui.js?v=25';
-import { live } from './app.js?v=25';
-import { openStep } from './panel.js?v=25';
-import { pictureEl } from './map.js?v=25';
-import { cardTitle } from './decisions.js?v=25';
+import { store } from './store.js?v=26';
+import { h, shortDate } from './ui.js?v=26';
+import { live } from './app.js?v=26';
+import { openStep } from './panel.js?v=26';
+import { pictureEl } from './map.js?v=26';
+import { cardTitle } from './decisions.js?v=26';
 
 function tile(s, area) {
   const n = s.lock_note || {};

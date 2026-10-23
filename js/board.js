@@ -1,11 +1,11 @@
-import { store } from './store.js?v=25';
-import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=25';
-import { live, ui, render } from './app.js?v=25';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=25';
-import { together } from './history.js?v=25';
-import { isDecider } from './tools.js?v=25';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=25';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=25';
+import { store } from './store.js?v=26';
+import { h, modal, field, toast, ICONS, compressImage, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=26';
+import { live, ui, render } from './app.js?v=26';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=26';
+import { together } from './history.js?v=26';
+import { isDecider } from './tools.js?v=26';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=26';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=26';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -616,7 +616,7 @@ const ctx = { cardEls: new Map(), all: [], w: null };  // shared with drag handl
 try { board.zoom = Number(localStorage.getItem('fwp-zoom')) || 1; } catch (e) { board.zoom = 1; }
 
 export function renderBoard(root, w, params) {
-  const all = live(store.rows('board_items')).filter(i => i.wedding_id === w.id);
+  const all = live(store.rows('board_items')).filter(i => i.wedding_id === w.id && i.kind !== 'option');
   const items = all.filter(i => i.kind !== 'shape' && i.kind !== 'connector').sort((a, b) => (a.z || 1) - (b.z || 1));
   const shapes = all.filter(i => i.kind === 'shape').sort((a, b) => (a.z || 1) - (b.z || 1));
   const links = all.filter(i => i.kind === 'connector');
