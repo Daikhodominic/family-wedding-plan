@@ -92,12 +92,14 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- Restrictive policies are added on top of the existing ones: a change must pass both.
-do $$
+-- (Written without any dollar signs inside, so the Supabase editor reads it correctly.)
+do $do$
 declare
   r record;
+  lock_kind text;
 begin
   for r in select * from (values
-      ('stages', 'null::text'),            -- role check only
+      ('stages', 'null::text'),
       ('areas', 'id::text'),
       ('steps', 'area_id::text'),
       ('todos', 'null::text'),
@@ -112,21 +114,19 @@ begin
     ) as t(tbl, held_col)
   loop
     if to_regclass('public.' || r.tbl) is null then continue; end if;
-    execute format('drop policy if exists "role insert %1$s" on public.%1$I', r.tbl);
-    execute format('drop policy if exists "role update %1$s" on public.%1$I', r.tbl);
-    execute format('drop policy if exists "role delete %1$s" on public.%1$I', r.tbl);
-    execute format($p$create policy "role insert %1$s" on public.%1$I as restrictive for insert to authenticated
-      with check (public.may_write(%2$L) and not public.is_held(%3$L, %4$s))$p$,
-      r.tbl, r.tbl, case when r.tbl in ('steps','areas') then 'areas' when r.tbl in ('lists','list_rows') then 'lists' else 'budgets' end, r.held_col);
-    execute format($p$create policy "role update %1$s" on public.%1$I as restrictive for update to authenticated
-      using (public.may_write(%2$L) and not public.is_held(%3$L, %4$s))
-      with check (public.may_write(%2$L) and not public.is_held(%3$L, %4$s))$p$,
-      r.tbl, r.tbl, case when r.tbl in ('steps','areas') then 'areas' when r.tbl in ('lists','list_rows') then 'lists' else 'budgets' end, r.held_col);
-    execute format($p$create policy "role delete %1$s" on public.%1$I as restrictive for delete to authenticated
-      using (public.may_write(%2$L) and not public.is_held(%3$L, %4$s))$p$,
-      r.tbl, r.tbl, case when r.tbl in ('steps','areas') then 'areas' when r.tbl in ('lists','list_rows') then 'lists' else 'budgets' end, r.held_col);
+    lock_kind := case when r.tbl in ('steps', 'areas') then 'areas' when r.tbl in ('lists', 'list_rows') then 'lists' else 'budgets' end;
+    execute format('drop policy if exists %I on public.%I', 'role insert ' || r.tbl, r.tbl);
+    execute format('drop policy if exists %I on public.%I', 'role update ' || r.tbl, r.tbl);
+    execute format('drop policy if exists %I on public.%I', 'role delete ' || r.tbl, r.tbl);
+    execute format('create policy %I on public.%I as restrictive for insert to authenticated with check (public.may_write(%L) and not public.is_held(%L, %s))',
+      'role insert ' || r.tbl, r.tbl, r.tbl, lock_kind, r.held_col);
+    execute format('create policy %I on public.%I as restrictive for update to authenticated using (public.may_write(%L) and not public.is_held(%L, %s)) with check (public.may_write(%L) and not public.is_held(%L, %s))',
+      'role update ' || r.tbl, r.tbl, r.tbl, lock_kind, r.held_col, r.tbl, lock_kind, r.held_col);
+    execute format('create policy %I on public.%I as restrictive for delete to authenticated using (public.may_write(%L) and not public.is_held(%L, %s))',
+      'role delete ' || r.tbl, r.tbl, r.tbl, lock_kind, r.held_col);
   end loop;
-end $$;
+end
+$do$;
 
 -- Storage: View-only people can't upload or delete files.
 drop policy if exists "role uploads media" on storage.objects;
@@ -193,6 +193,8 @@ drop trigger if exists list_rows_log on public.list_rows;
 create trigger list_rows_log after insert or update or delete on public.list_rows for each row execute function public.log_change();
 
 -- Live updates for locks.
-do $$ begin
+do $do$
+begin
   begin alter publication supabase_realtime add table public.edit_locks; exception when duplicate_object then null; end;
-end $$;
+end
+$do$;
