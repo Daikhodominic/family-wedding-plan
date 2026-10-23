@@ -32,6 +32,6 @@
     auth: { getSession: async () => ({ data: { session: { user: { id: 'u1' } } } }), getUser: async () => ({ data: { user: { id: 'u1' } } }), onAuthStateChange() { return { data: { subscription: { unsubscribe() { } } } }; } },
     from: (t) => builder(t), rpc: async () => ({ data: true, error: null }), channel: () => channel, removeChannel() { },
     storage: { from: () => ({ upload: async () => ({ error: null }), createSignedUrl: async (p) => ({ data: { signedUrl: 'data:,' }, error: null }), list: async () => ({ data: [], error: null }), remove: async () => ({ error: null }) }) },
-    functions: { invoke: async () => ({ data: null, error: { message: 'not deployed' } }) }
+    functions: { invoke: async (name, opts) => { window.__fnCalls = (window.__fnCalls || []).concat([{ name, body: opts && opts.body }]); return window.__smart ? { data: window.__smart(opts.body), error: null } : { data: null, error: { message: 'not deployed' } }; } }
   }) };
 })();

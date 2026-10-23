@@ -3,11 +3,11 @@
 // chosen one as its picture, otherwise the option in the lead. Tap one to open it full screen and go through
 // them one after another, like stories: what was chosen, the alternatives that were considered and their votes,
 // and whether it can still change.
-import { store } from './store.js?v=48';
-import { h, ICONS, shortDate, toast, buzz } from './ui.js?v=48';
-import { isDecider } from './tools.js?v=48';
-import { render } from './app.js?v=48';
-import { categoriesOf, optionsOf, votesOf, myVote, finalOf, chosenOf, openProfile, chooseOption, lightbox, photoEl, firstPic, placeholder, swipeAgain, roundsOf, addFinal, editOption, vote } from './swipe.js?v=48';
+import { store } from './store.js?v=49';
+import { h, ICONS, shortDate, toast, buzz } from './ui.js?v=49';
+import { isDecider } from './tools.js?v=49';
+import { render } from './app.js?v=49';
+import { categoriesOf, optionsOf, votesOf, myVote, finalOf, chosenOf, openProfile, chooseOption, lightbox, photoEl, firstPic, placeholder, swipeAgain, roundsOf, addFinal, editOption, vote } from './swipe.js?v=49';
 
 const FILTERS = [['all', 'Everything'], ['decided', 'Decided'], ['open', 'Still open'], ['empty', 'No options yet']];
 let filter = 'all';

@@ -2690,3 +2690,47 @@ button.lock-chip { cursor: pointer; }
 .hd-av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 12px/1 inherit; color: #fff; background: #3E8E5E; border: 2px solid var(--w-bg, #102a22); margin-left: -7px; box-shadow: 0 0 0 1px rgba(62,142,94,.6); }
 .hd-av:first-child { margin-left: 0; }
 .hd-more { font-size: 12px; margin-left: 4px; opacity: .8; }
+
+/* Smart add */
+.sa-bar { margin: 0 0 20px; padding: 10px 12px 8px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--gold, #C9A45C) 45%, transparent); background: color-mix(in srgb, var(--w-surface, #fff) 82%, transparent); box-shadow: 0 6px 22px -14px rgba(0,0,0,.5); }
+.sa-bar.drop { outline: 2px dashed var(--gold, #C9A45C); outline-offset: 3px; }
+.sa-row { display: flex; align-items: flex-end; gap: 8px; }
+.sa-ic { color: var(--gold, #C9A45C); display: inline-flex; padding-bottom: 9px; }
+.sa-ic svg { width: 20px; height: 20px; }
+.sa-input { flex: 1; min-width: 0; resize: none; border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 8px 2px !important; font-size: 15px; line-height: 1.4; max-height: 220px; color: inherit; }
+.sa-input:focus { outline: none; }
+.sa-pic { flex: none; }
+.sa-go { flex: none; }
+.sa-tray { display: flex; gap: 6px; flex-wrap: wrap; }
+.sa-tray:empty { display: none; }
+.sa-thumb { position: relative; width: 54px; height: 54px; border-radius: 10px; overflow: hidden; margin-top: 6px; }
+.sa-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.sa-thumb button { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; line-height: 18px; cursor: pointer; }
+.sa-foot { display: flex; align-items: center; gap: 12px; justify-content: flex-end; font-size: 12.5px; color: var(--w-muted); min-height: 20px; }
+.sa-status { margin-right: auto; }
+.sa-inbox-link { color: var(--gold, #C9A45C); font-weight: 600; }
+.sa-list { display: flex; flex-direction: column; gap: 12px; }
+.sa-card { border: 1px solid var(--line, rgba(0,0,0,.12)); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.sa-card.check { border-color: color-mix(in srgb, var(--warn, #c0392b) 45%, transparent); }
+.sa-card.off { opacity: .45; }
+.sa-top { display: flex; align-items: center; gap: 8px; }
+.sa-top input:not([type]) , .sa-top input[type=text] { flex: 1; font-weight: 600; }
+.sa-keep input { width: 18px; height: 18px; }
+.sa-badge { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.sa-badge.sure { background: rgba(62,142,94,.16); color: #2e7a4d; }
+.sa-badge.check { background: rgba(217,150,26,.18); color: #9a6a0c; }
+.sa-badge.match { background: rgba(79,106,132,.16); color: #3d5873; }
+.sa-pics { display: flex; gap: 6px; overflow-x: auto; }
+.sa-pics img { height: 84px; border-radius: 8px; flex: none; }
+.sa-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sa-chip { font-size: 12.5px; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.06); }
+.sa-chip.ig { background: linear-gradient(90deg, rgba(253,186,116,.25), rgba(219,39,119,.18)); }
+.sa-notes { margin: 0; font-size: 13.5px; color: var(--muted, #666); }
+.sa-where { display: flex; align-items: center; gap: 8px; }
+.sa-where select { flex: 1; min-width: 0; }
+.sa-inbox { margin-top: 26px; }
+.sa-ilist { display: flex; flex-direction: column; gap: 8px; }
+.sa-irow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--gold, #C9A45C) 55%, transparent); }
+.sa-itx { display: flex; flex-direction: column; flex: 1; min-width: 160px; }
+.sa-irow select { width: auto; max-width: 220px; }
+body[data-page] .sa-bar.sa-bar textarea.sa-input.sa-input.sa-input.sa-input, body[data-page] .sa-bar.sa-bar textarea.sa-input.sa-input.sa-input.sa-input:focus { min-height: 0; background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 9px 2px !important; overflow-wrap: anywhere; }

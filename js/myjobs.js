@@ -1,10 +1,10 @@
 // "My jobs": everything with your name on it, across both weddings.
-import { store } from './store.js?v=48';
-import { h, daysUntil, shortDate, secHead } from './ui.js?v=48';
-import { live, stepVisible, wedding, themeOf } from './app.js?v=48';
-import { openStep } from './panel.js?v=48';
-import { editStep } from './pipeline.js?v=48';
-import { samePerson, icsFile } from './tools.js?v=48';
+import { store } from './store.js?v=49';
+import { h, daysUntil, shortDate, secHead } from './ui.js?v=49';
+import { live, stepVisible, wedding, themeOf } from './app.js?v=49';
+import { openStep } from './panel.js?v=49';
+import { editStep } from './pipeline.js?v=49';
+import { samePerson, icsFile } from './tools.js?v=49';
 
 const done = (t) => t.status === 'done' || !!t.locked_at;
 

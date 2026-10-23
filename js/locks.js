@@ -1,7 +1,7 @@
 // Locks: the admin can lock a plan section, a list or a budget so only the admin can change it.
 // Everyone can still see it and comment. The database enforces it (update 14).
-import { store } from './store.js?v=48';
-import { h, toast } from './ui.js?v=48';
+import { store } from './store.js?v=49';
+import { h, toast } from './ui.js?v=49';
 
 const NAME = { areas: 'section', lists: 'list', budgets: 'budget' };
 export const lockedBy = (target, id) => store.isLocked(target, id);

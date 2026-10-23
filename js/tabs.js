@@ -1,5 +1,5 @@
 // The view switch under Choose: To vote · Glimpse · Mood board.
-import { h } from './ui.js?v=48';
+import { h } from './ui.js?v=49';
 export function chooseTabs(w, current) {
   const base = '#/w/' + w.id;
   return h('div', { class: 'viewtoggle choose-tabs', role: 'group', 'aria-label': 'View' },

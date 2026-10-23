@@ -7,7 +7,7 @@ async def main():
         b=await p.chromium.launch(); ctx=await b.new_context(viewport={'width':1440,'height':900}); pg=await ctx.new_page()
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/w/charani/board'); await pg.wait_for_timeout(600)
-        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=48'); const it=store.find('board_items','demo-compare');
+        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=49'); const it=store.find('board_items','demo-compare');
           const o=it.data.options.map((x,i)=>({...x, rate: i===0?'₹40 per piece':'₹55 per piece'}));
           await store.update('board_items','demo-compare',{data:{...it.data, options:o}, created_at: new Date(Date.now()-5*86400000).toISOString()});
           for (const [u,v] of [['demo-charani','up'],['demo-elow','up']]) store.cache.reactions.push({id:'r'+u, wedding_id:'charani', item_id:'demo-compare', target:'o-a', value:v, created_by:u, user_name:u, created_at:new Date().toISOString()});

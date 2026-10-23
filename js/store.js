@@ -1,8 +1,8 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=48';
-import { sampleRows } from './samples.js?v=48';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=49';
+import { sampleRows } from './samples.js?v=49';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'edit_locks', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'edit_locks'];  // tables added by later database updates
@@ -238,6 +238,14 @@ class LiveStore extends BaseStore {
     const { error } = await this.sb.from('edit_locks').delete().eq('target_table', target).eq('target_id', id);
     if (error) throw new Error(error.message);
     this.dropLocal('edit_locks', target + ':' + id); this.emit({ table: 'edit_locks' });
+  }
+  // Smart add's AI and link reader (the smart-add edge function). Not set up → the rules work alone.
+  async smartAdd(body) {
+    try {
+      const { data, error } = await this.sb.functions.invoke('smart-add', { body });
+      if (error) return { note: 'the AI isn’t set up yet, or didn’t answer' };
+      return data;
+    } catch (e) { return { note: isNetErr(e) ? 'offline' : 'the AI didn’t answer' }; }
   }
   async setRole(userId, role) {
     const { error } = await this.sb.rpc('set_role', { p_user: userId, p_role: role });
@@ -633,6 +641,7 @@ class DemoStore extends BaseStore {
   }
 
   setRoom() { this.presence = this.presence || []; }
+  async smartAdd() { return null; }
   async lock(target, id, weddingId) { if (!this.isLocked(target, id)) this.cache.edit_locks.push({ id: target + ':' + id, target_table: target, target_id: id, wedding_id: weddingId || null, created_by: this.me.id, created_at: nowIso() }); this.save(); this.emit({ table: 'edit_locks' }); }
   async unlock(target, id) { this.dropLocal('edit_locks', target + ':' + id); this.save(); this.emit({ table: 'edit_locks' }); }
   async setRole(userId, role) { this.upsertLocal('members', { user_id: userId, role }); this.save(); this.emit({ table: 'members' }); }

@@ -1,19 +1,20 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=48';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=48';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=48';
-import { isDecider, personInput } from './tools.js?v=48';
-import { suggestDue } from './planauto.js?v=48';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=48';
-import { addVendor } from './decisions.js?v=48';
-import { pickFiles, fetchPreview } from './board.js?v=48';
-import { chooseTabs } from './tabs.js?v=48';
-import { renderGlimpse } from './glimpse.js?v=48';
-import { planOf } from './map.js?v=48';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=48';
-import { sampleRows, isSample } from './samples.js?v=48';
+import { store } from './store.js?v=49';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=49';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=49';
+import { isDecider, personInput } from './tools.js?v=49';
+import { suggestDue } from './planauto.js?v=49';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=49';
+import { addVendor } from './decisions.js?v=49';
+import { pickFiles, fetchPreview } from './board.js?v=49';
+import { chooseTabs } from './tabs.js?v=49';
+import { smartBar, inboxSection } from './smartadd.js?v=49';
+import { renderGlimpse } from './glimpse.js?v=49';
+import { planOf } from './map.js?v=49';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=49';
+import { sampleRows, isSample } from './samples.js?v=49';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -21,7 +22,7 @@ const byPos = (a, b) => (a.position || 0) - (b.position || 0);
 
 /* ---------- Data ---------- */
 export const isOption = (i) => i && i.kind === 'option';
-export const optionsOf = (wid, stepId) => live(store.rows('board_items')).filter(i => isOption(i) && (!wid || i.wedding_id === wid) && (!stepId || (i.data || {}).step_id === stepId));
+export const optionsOf = (wid, stepId) => live(store.rows('board_items')).filter(i => isOption(i) && !(i.data || {}).inbox && (!wid || i.wedding_id === wid) && (!stepId || (i.data || {}).step_id === stepId));
 const reactions = (o) => (store.rows('reactions') || []).filter(r => r.item_id === o.id && r.target === 'swipe');
 export function votesOf(o) {
   const v = { love: [], maybe: [], no: [] };
@@ -642,10 +643,10 @@ export function openProfile(o, onVote) {
       h('div', { class: 'od-acts pf-acts' },
         isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
-        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=48').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
+        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=49').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
-        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=48').then(m => m.openHistory('option', cur)); } }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=49').then(m => m.openHistory('option', cur)); } }, '↺ History'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { close(); deleteOption(cur); } }, 'Delete'))));
   const bar = h('div', { class: 'pf-bar' },
@@ -769,10 +770,10 @@ export function renderChoose(root, w, params = {}) {
       h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
       (() => { const n = optionsOf(w.id).filter(isOpen).length; return n ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, n) }) : null; })(),
       null)));
-  root.append(chooseTabs(w, 'vote'));
+  root.append(chooseTabs(w, 'vote'), smartBar(w));
   const nfy = newForYou(w.id); if (nfy) root.append(nfy);
   const cats = categoriesOf(w);
-  if (!cats.length) { root.append(h('p', { class: 'muted' }, 'No categories yet. Mark a step in the plan as a big decision, or add an option to any step.')); return; }
+  if (!cats.length) { root.append(h('p', { class: 'muted' }, 'No categories yet. Mark a step in the plan as a big decision, or add an option to any step.')); const ib = inboxSection(w); if (ib) root.append(ib); return; }
   const tile = ({ step, area, stage, n }) => {
     const opts = optionsOf(w.id, step.id);
     const chosen = opts.find(o => (o.data || {}).status === 'chosen');
@@ -795,6 +796,7 @@ export function renderChoose(root, w, params = {}) {
     h('h2', { class: 'cat-h' }, 'Still needs options'),
     h('div', { class: 'cat-chips' }, empty.map(({ step }) => h('button', { type: 'button', class: 'lchip', title: 'Add an option for ' + step.title, onclick: () => editOption(w, step.id) }, '+ ' + step.title)))));
   if (done.length) root.append(h('h2', { class: 'cat-h' }, `Decided · ${done.length}`), h('section', { class: 'cat-grid' }, done.map(tile)));
+  const inbox = inboxSection(w); if (inbox) root.append(inbox);
 }
 
 /* ---------- One category: its options, votes, compare, inspiration ---------- */
