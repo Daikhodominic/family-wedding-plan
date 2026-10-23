@@ -209,26 +209,6 @@ input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range])
    Charani: the blue flower at dusk. Elow: the garden ceremony. Shared pages: white silk.
    Each photo sits under a veil of the wedding's colours so text always reads.
    ===================================================================== */
-.landing {
-  background: #121A26 url('../assets/photos/roses.jpg') 0% 50% / cover no-repeat !important;
-  justify-content: flex-end !important; padding: 40px 8vw !important;
-}
-.landing::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(12, 18, 28, 0) 0%, rgba(12, 18, 28, .25) 38%, rgba(12, 18, 28, .55) 100%); }
-.landing .bq { display: none !important; }
-.land-inner, .landing .gate-card {
-  width: min(520px, 100%); padding: 6vh 44px !important;
-  background: linear-gradient(160deg, rgba(40, 54, 78, .42), rgba(18, 24, 36, .38)) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3);
-  border: 1px solid rgba(233, 215, 168, .32) !important; outline: 1px solid rgba(233, 215, 168, .1) !important; outline-offset: 6px;
-  border-radius: 30px !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 40px 80px -40px rgba(0, 0, 0, .7) !important;
-}
-.landing .foil { font-size: clamp(46px, 8vh, 96px) !important; }
-@media (max-width: 760px) {
-  .landing { justify-content: center !important; align-items: flex-end !important; padding: 24px 16px 6vh !important; background-position: 12% 40% !important; }
-  .landing::before { background: linear-gradient(180deg, rgba(12, 18, 28, 0) 25%, rgba(12, 18, 28, .55) 100%); }
-  .land-inner, .landing .gate-card { padding: 34px 24px !important; }
-}
-
 /* Wedding pages */
 .space::before {
   content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
