@@ -1,7 +1,7 @@
 // Reactions, comments & suggestions, and option votes on mood board cards.
-import { store } from './store.js?v=30';
-import { h, toast, ago, ICONS } from './ui.js?v=30';
-import { live } from './app.js?v=30';
+import { store } from './store.js?v=31';
+import { h, toast, ago, ICONS } from './ui.js?v=31';
+import { live } from './app.js?v=31';
 
 export const EMOJI = ['❤️', '👍', '😍', '😂', '😮', '🙏'];
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };

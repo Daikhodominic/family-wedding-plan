@@ -1,26 +1,26 @@
-import { store, onStatus, syncState } from './store.js?v=30';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=30';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=30';
-import { renderBoard } from './board.js?v=30';
-import { renderTodo } from './todo.js?v=30';
-import { renderFiles } from './files.js?v=30';
-import { renderDecide } from './decide.js?v=30';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=30';
-import { clearPage, clearAll } from './clear.js?v=30';
-import { undoButtons } from './history.js?v=30';
-import { downloadBackup } from './tools.js?v=30';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=30';
-import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=30';
-import { announcementBars } from './planauto.js?v=30';
-import { renderPartner } from './partner.js?v=30';
-import { renderOverview, editDate } from './overview.js?v=30';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=30';
-import { renderLists } from './lists.js?v=30';
-import { planOf } from './map.js?v=30';
-import { openStep, closeDrawer } from './panel.js?v=30';
-import { waNumber } from './nudge.js?v=30';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=30';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=30';
+import { store, onStatus, syncState } from './store.js?v=31';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=31';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=31';
+import { renderBoard } from './board.js?v=31';
+import { renderTodo } from './todo.js?v=31';
+import { renderFiles } from './files.js?v=31';
+import { renderDecide } from './decide.js?v=31';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=31';
+import { clearPage, clearAll } from './clear.js?v=31';
+import { undoButtons } from './history.js?v=31';
+import { downloadBackup } from './tools.js?v=31';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=31';
+import { maybeWelcome, tip, toggleEasy, easyOn, applyEasy } from './guide.js?v=31';
+import { announcementBars } from './planauto.js?v=31';
+import { renderPartner } from './partner.js?v=31';
+import { renderOverview, editDate } from './overview.js?v=31';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=31';
+import { renderLists } from './lists.js?v=31';
+import { planOf } from './map.js?v=31';
+import { openStep, closeDrawer } from './panel.js?v=31';
+import { waNumber } from './nudge.js?v=31';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=31';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=31';
 
 const app = document.getElementById('app');
 
@@ -28,14 +28,16 @@ const app = document.getElementById('app');
    Each wedding re-points the --w-* tokens. "gold" is the accent metal:
    antique gold for Charani's dusty blue, rose gold for Elow's Chateau Rose. */
 export const THEMES = {
-  blue: { bg: '#E4EAF1', surface: '#FFFFFF', ink: '#16202B', muted: '#4A5663', line: '#BFCAD6', soft: '#D3DDE8', accent: '#2C4562', accentInk: '#FFFFFF', light: '#AFBEC8', deep: '#223650', gold: '#A87C22', goldLine: '#D9C597', goldFill: '#F6EBCF', deco: 'blue' },
-  rose: { bg: '#F1E3DD', surface: '#FFFFFF', ink: '#2A1A20', muted: '#5F4A53', line: '#D8BFB5', soft: '#F1DDD7', accent: '#6B3247', accentInk: '#FFFFFF', light: '#D9AFA6', deep: '#5A2536', gold: '#A46E55', goldLine: '#DFBCA9', goldFill: '#F7E5DA', deco: 'rose' }
+  blue: { bg: '#EEF5F3', surface: '#FFFFFF', ink: '#163144', muted: '#4A6170', line: '#C9D8DC', soft: '#E4EFEE', accent: '#163144', accentInk: '#FFFFFF', light: '#8FB0C8', deep: '#163144', gold: '#8E6E33', goldLine: '#E3D2AE', goldFill: '#F6EEDC', g0: '#1B405B', g1: '#3E6680', g2: '#9FB9C4', g3: '#DFF3EB', base: '#F4F8F6', pop: '#E89F7E', popInk: '#4A2412', champ: '#CBA86E', deco: 'blue' },
+  rose: { bg: '#FAF5F5', surface: '#FFFFFF', ink: '#4A2230', muted: '#6E4B56', line: '#ECD6DA', soft: '#F6E9EB', accent: '#4A2230', accentInk: '#FFFFFF', light: '#E3B8C2', deep: '#4A2230', gold: '#8E6E33', goldLine: '#E3D2AE', goldFill: '#F6EEDC', g0: '#8A5063', g1: '#9E6175', g2: '#E8CBD1', g3: '#F8F0F1', base: '#FCF9F9', pop: '#8FAE98', popInk: '#1F3A28', champ: '#CBA86E', deco: 'rose' },
 };
 export function themeOf(w) {
   const base = THEMES[w && w.theme] || THEMES.blue;
-  return { ...base, ...((w && w.theme_custom) || {}) };
+  // Colours saved before the frosted redesign (no v: 2) belonged to the old look, so they're ignored.
+  const c = (w && w.theme_custom) || {};
+  return c.v === 2 ? { ...base, ...c } : base;
 }
-const TOKEN = { bg: '--w-bg', surface: '--w-surface', ink: '--w-ink', muted: '--w-muted', line: '--w-line', soft: '--w-soft', accent: '--w-accent', accentInk: '--w-accent-ink', light: '--w-light', deep: '--w-deep', gold: '--gold', goldLine: '--gold-line', goldFill: '--gold-fill' };
+const TOKEN = { bg: '--w-bg', surface: '--w-surface', ink: '--w-ink', muted: '--w-muted', line: '--w-line', soft: '--w-soft', accent: '--w-accent', accentInk: '--w-accent-ink', light: '--w-light', deep: '--w-deep', gold: '--gold', goldLine: '--gold-line', goldFill: '--gold-fill', g0: '--w-g0', g1: '--w-g1', g2: '--w-g2', g3: '--w-g3', base: '--w-base', pop: '--w-pop', popInk: '--w-pop-ink', champ: '--champ' };
 export function applyTheme(t) {
   const el = document.body;
   for (const [k, v] of Object.entries(TOKEN)) { if (t && t[k]) el.style.setProperty(v, t[k]); else el.style.removeProperty(v); }
@@ -188,14 +190,15 @@ function emblem(w) {
   const t = themeOf(w);
   const days = daysUntil(w.wedding_date);
   const plan = planOf(w);
-  return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, 'aria-label': 'Open ' + w.couple, style: { '--e-deep': t.deep, '--e-gold': t.gold } },
-    monogram(w, 'xl'),
-    h('span', { class: 'emb-name' }, w.couple),
-    h('span', { class: 'emb-date' }, w.wedding_date ? fancyDate(w.wedding_date) : `${w.date_note || 'Date'} · date to be fixed`),
-    h('span', { class: 'emb-meta' },
-      w.wedding_date && days !== null ? h('span', {}, h('b', {}, String(Math.max(0, days))), days === 0 ? ' today' : days < 0 ? ' married' : days === 1 ? ' day to go' : ' days to go') : null,
-      plan.total ? h('span', { class: 'emb-prog' }, h('i', { style: { width: plan.pct + '%' } })) : null,
-      plan.total ? h('span', {}, plan.pct + '% there') : null));
+  const lit = Math.round((plan.pct || 0) / 100 * 16);
+  const big = w.wedding_date && days !== null ? String(Math.max(0, days)) : '—';
+  const unit = !w.wedding_date ? 'date to be fixed' : days === 0 ? 'today' : days < 0 ? 'married' : days === 1 ? 'day to go' : 'days to go';
+  return h('a', { class: 'emb ' + t.deco, href: '#/w/' + w.id, 'aria-label': 'Open ' + w.couple, style: { '--e0': t.g0, '--e1': t.g1, '--e2': t.g2 } },
+    h('span', { class: 'emb-top' }, h('span', { class: 'emb-name' }, w.couple), h('span', { class: 'emb-go', 'aria-hidden': 'true' }, '→')),
+    w.wedding_date ? h('span', { class: 'emb-count' }, h('b', {}, big), h('span', {}, unit)) : h('span', { class: 'emb-count tbd' }, h('span', {}, 'Date to be fixed')),
+    h('span', { class: 'emb-date' }, w.wedding_date ? fancyDate(w.wedding_date) : (w.date_note || 'Date to be fixed')),
+    h('span', { class: 'emb-bars', 'aria-hidden': 'true' }, Array.from({ length: 16 }, (_, i) => h('i', { class: i < lit ? 'on' : '', style: { height: (30 + ((i * 37) % 60)) + '%' } }))),
+    h('span', { class: 'emb-meta' }, plan.total ? `${plan.pct}% there · ${plan.total} steps` : 'No plan yet'));
 }
 
 export function feedList(items, { compact = false } = {}) {
@@ -283,7 +286,7 @@ function renderHome() {
         h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), undoButtons(), avatar())),
       newForYou(null),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
-        ws.length ? ws.flatMap((w, i) => i ? [h('span', { class: 'divider', 'aria-hidden': 'true' }, h('span'), h('i', {}, '✦'), h('span')), emblem(w)] : [emblem(w)])
+        ws.length ? ws.map(emblem)
           : h('p', { class: 'muted' }, store.me.isAdmin ? h('span', {}, 'No weddings yet. ', h('a', { href: '#/settings' }, 'Add one in Settings')) : 'No weddings yet.')),
       h('main', { class: 'home-row' }, changes, decide, coming)));
 }

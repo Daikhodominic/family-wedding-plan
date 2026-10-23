@@ -1,9 +1,9 @@
 // Progress tracking and the Map view of a wedding's pipeline.
-import { store } from './store.js?v=30';
-import { h, shortDate, daysUntil, ICONS } from './ui.js?v=30';
-import { openStep, lockIcon } from './panel.js?v=30';
-import { stepPicture, previewUrl } from './decisions.js?v=30';
-import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=30';
+import { store } from './store.js?v=31';
+import { h, shortDate, daysUntil, ICONS } from './ui.js?v=31';
+import { openStep, lockIcon } from './panel.js?v=31';
+import { stepPicture, previewUrl } from './decisions.js?v=31';
+import { addStepAt, addAreaTo, addStageTo, removeArea } from './addhere.js?v=31';
 
 const live = (rows) => rows.filter(r => !r.deleted_at);
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

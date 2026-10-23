@@ -1,10 +1,10 @@
-import { store } from './store.js?v=30';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=30';
-import { othersSummary, bringBackOthers } from './safety.js?v=30';
-import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=30';
-import { confirmAreaRestore, inr } from './budget.js?v=30';
-import { clearAll } from './clear.js?v=30';
-import { downloadBackup, decidesFor } from './tools.js?v=30';
+import { store } from './store.js?v=31';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=31';
+import { othersSummary, bringBackOthers } from './safety.js?v=31';
+import { weddings, wedding, themeOf, feedList, render, THEMES } from './app.js?v=31';
+import { confirmAreaRestore, inr } from './budget.js?v=31';
+import { clearAll } from './clear.js?v=31';
+import { downloadBackup, decidesFor } from './tools.js?v=31';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget area', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };
@@ -236,7 +236,7 @@ export function renderSettings() {
     const mono = h('input', { value: w.monogram, maxlength: 9, placeholder: 'e.g. C&A' });
     const date = h('input', { type: 'date', value: w.wedding_date || '' });
     const note = h('input', { value: w.date_note || '', placeholder: 'e.g. February – March 2027' });
-    const theme = h('select', {}, Object.keys(THEMES).map(k => h('option', { value: k, selected: w.theme === k ? true : null }, k === 'blue' ? 'Dusty blue (floral wreath)' : 'Rose & mauve (wax seal)')));
+    const theme = h('select', {}, Object.keys(THEMES).map(k => h('option', { value: k, selected: w.theme === k ? true : null }, k === 'blue' ? 'Slate & Mint (blue)' : 'Peony & Pearl (rose)')));
     const accent = h('input', { type: 'color', value: t.accent });
     const bg = h('input', { type: 'color', value: t.bg });
     const light = h('input', { type: 'color', value: t.light });
@@ -252,7 +252,7 @@ export function renderSettings() {
         h('button', {
           class: 'btn', type: 'button', style: { background: t.accent }, onclick: async () => {
             const base = THEMES[theme.value];
-            const custom = {};
+            const custom = { v: 2 };
             if (accent.value.toLowerCase() !== base.accent.toLowerCase()) custom.accent = accent.value;
             if (bg.value.toLowerCase() !== base.bg.toLowerCase()) custom.bg = bg.value;
             if (light.value.toLowerCase() !== base.light.toLowerCase()) custom.light = light.value;
@@ -279,7 +279,7 @@ export function renderSettings() {
   const nCouple = h('input', { maxlength: 80, placeholder: 'e.g. Engagement of …  or  Name & Name' });
   const nMono = h('input', { maxlength: 9, placeholder: 'e.g. A&B' });
   const nDate = h('input', { type: 'date' });
-  const nTheme = h('select', {}, h('option', { value: 'blue' }, 'Dusty blue (floral wreath)'), h('option', { value: 'rose' }, 'Rose & mauve (wax seal)'));
+  const nTheme = h('select', {}, h('option', { value: 'blue' }, 'Slate & Mint (blue)'), h('option', { value: 'rose' }, 'Peony & Pearl (rose)'));
   const nTpl = h('input', { type: 'checkbox', checked: true, id: 'new-tpl', style: { width: 'auto' } });
   const addSpace = h('section', { class: 'panel' },
     h('h2', { class: 'serif', style: { margin: '0 0 6px', fontWeight: 500, fontSize: '26px' } }, 'Add a wedding or event'),
