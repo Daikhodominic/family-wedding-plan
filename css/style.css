@@ -2596,3 +2596,24 @@ html body .btn.wa-btn:hover, html body .btn.wa-btn:focus-visible { background: l
 .sh-opt img, .sh-ph { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 255, 255, .06); }
 .sh-on { display: flex; flex-direction: column; font-weight: 600; font-size: 13.5px; }
 .sh-on small { font-weight: 400; color: #E9C98A; }
+
+/* ---------- Saving indicator: Saved · Saving… · Offline · N waiting (tap to see what) ---------- */
+button.sync { border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); border-radius: 999px; padding: 5px 10px; font: 500 12px var(--sans); color: #BDB4A8; cursor: pointer; }
+.sync.saved i { background: #6CC28F; }
+.sync.waiting, .sync.offline { color: #F3D9A0 !important; border-color: rgba(240, 180, 90, .5); background: rgba(240, 180, 90, .12); }
+.sync.waiting i { background: #F0B45A; animation: pulse 1.4s ease-in-out infinite; }
+@media (max-width: 760px) { .sync.waiting span, .sync.offline span { display: inline !important; } button.sync { padding: 6px 8px; } }
+.ob-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.ob-list small { color: #BDB4A8; }
+.warn-line { color: #F0A58A; font-size: 13px; }
+/* Version history */
+.vh-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.vh-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, .08); }
+.vh-tx { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.vh-tx small { color: #BDB4A8; }
+.vh-acts { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.bk { margin-top: 18px; } .bk-body { display: flex; flex-direction: column; gap: 10px; }
+.bk-list { margin: 0; padding: 0; list-style: none; }
+.bk-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, .08); font-size: 14px; }
+.bk-list small { color: #BDB4A8; }
+.bk .btn.small:not(.ghost) { align-self: flex-start; }

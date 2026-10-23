@@ -6,7 +6,7 @@ import { sampleRows } from './samples.js?v=47';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners'];  // tables added by later database updates
-const UNLOGGED = ['list_rows', 'reactions', 'announcement_seen', 'partner_links', 'partners'];
+const UNLOGGED = ['reactions', 'announcement_seen', 'partner_links', 'partners'];
 
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -83,13 +83,19 @@ class LiveStore extends BaseStore {
   async init() {
     const { data } = await this.sb.auth.getSession();
     if (!data.session) return 'needs-join';
-    return (await this.loadMe()) ? 'ready' : 'needs-join';
+    if (await this.loadMe()) return 'ready';
+    // No internet: open with the copy saved on this phone instead of asking to join again.
+    if (this._netDown) { try { const sn = JSON.parse(localStorage.getItem(SNAP) || 'null'); if (sn && sn.me && sn.user === data.session.user.id) { this.me = sn.me; this.offlineStart = true; return 'ready'; } } catch (e) { /* no saved copy */ } }
+    return 'needs-join';
   }
 
   async loadMe() {
-    const { data: u } = await this.sb.auth.getUser();
+    this._netDown = false;
+    const { data: u, error: ue } = await this.sb.auth.getUser();
+    if (ue && isNetErr(ue)) { this._netDown = true; return false; }
     if (!u || !u.user) return false;
     const { data, error } = await this.sb.from('members').select('*').eq('user_id', u.user.id).maybeSingle();
+    if (error && isNetErr(error)) { this._netDown = true; return false; }
     if (error || !data) return false;
     this.me = { id: data.user_id, name: data.name, isAdmin: data.is_admin, isDecider: !!(data.is_admin || data.is_decider), deciderFor: data.decider_for || [], phone: data.phone || '', lastSeen: Number(data.last_seen_activity) || 0 };
     return true;
@@ -123,12 +129,15 @@ class LiveStore extends BaseStore {
     tables.forEach((t, i) => {
       const r = results[i];
       if (r.error) {
+        if (isNetErr(r.error)) { const e = new Error('offline'); e.offline = true; throw e; }
         if (OPTIONAL.includes(t)) { this.cache[t] = []; this.missing[t] = true; if (t === 'todos') this.todosMissing = true; return; }
         throw new Error(r.error.message);
       }
       this.cache[t] = r.data || [];
     });
+    this.reapplyOutbox();
     this.subscribe();
+    setTimeout(() => this.flush(), 500);
     this.saveSnapshot();
   }
 
@@ -151,11 +160,30 @@ class LiveStore extends BaseStore {
       .subscribe();
   }
 
+  // Every change shows at once. If the internet is down it waits in an outbox on this phone
+  // and is sent, in order, as soon as the connection is back — nothing typed offline is lost.
+  async _send(op, revert) {
+    let res;
+    try { res = await this._exec(op); } catch (e) { res = { error: e }; }
+    const err = res && res.error;
+    if (!err) return;
+    if (isNetErr(err)) { this.queueOp(op); return; }
+    if (revert) { revert(); this.emit({ table: op.table }); }
+    throw new Error(err.message || String(err));
+  }
+  _exec(op) {
+    const q = this.sb.from(op.table);
+    if (op.t === 'upsert') return q.upsert(op.rows, { onConflict: 'id', ignoreDuplicates: true }); // insert; a retried row that already arrived is skipped
+    if (op.t === 'update') return q.update(op.patch).eq('id', op.id);
+    if (op.t === 'updateIn') return q.update(op.patch).in('id', op.ids);
+    if (op.t === 'delete') return q.delete().eq('id', op.id);
+    return Promise.resolve({ error: { message: 'unknown change' } });
+  }
+
   async insert(table, row) {
     const full = table === 'weddings' ? { ...row } : { id: uid(), created_at: nowIso(), created_by: this.me && this.me.id, ...row };
     this.upsertLocal(table, full); this.emit({ table });
-    const { error } = await this.sb.from(table).insert(full);
-    if (error) { this.dropLocal(table, full.id); this.emit({ table }); throw new Error(error.message); }
+    await this._send({ t: 'upsert', table, rows: [full] }, () => this.dropLocal(table, full.id));
     return full;
   }
 
@@ -164,18 +192,14 @@ class LiveStore extends BaseStore {
     const full = rows.map(row => ({ id: uid(), created_at: nowIso(), created_by: this.me && this.me.id, ...row }));
     for (const r of full) this.upsertLocal(table, r);
     this.emit({ table });
-    for (let i = 0; i < full.length; i += 200) {
-      const { error } = await this.sb.from(table).insert(full.slice(i, i + 200));
-      if (error) { for (const r of full) this.dropLocal(table, r.id); this.emit({ table }); throw new Error(error.message); }
-    }
+    for (let i = 0; i < full.length; i += 200) await this._send({ t: 'upsert', table, rows: full.slice(i, i + 200) }, () => { for (const r of full) this.dropLocal(table, r.id); });
     return full;
   }
 
   async update(table, id, patch) {
     const before = { ...this.find(table, id) };
     this.upsertLocal(table, { id, ...patch }); this.emit({ table });
-    const { error } = await this.sb.from(table).update(patch).eq('id', id);
-    if (error) { this.upsertLocal(table, before); this.emit({ table }); throw new Error(error.message); }
+    await this._send({ t: 'update', table, id, patch }, () => this.upsertLocal(table, before));
   }
 
   remove(table, id) { return this.update(table, id, { deleted_at: nowIso(), deleted_by: this.me && this.me.id }); }
@@ -186,10 +210,7 @@ class LiveStore extends BaseStore {
     if (!ids.length) return;
     for (const id of ids) this.upsertLocal(table, { id, ...patch });
     this.emit({ table });
-    for (let i = 0; i < ids.length; i += 150) {
-      const { error } = await this.sb.from(table).update(patch).in('id', ids.slice(i, i + 150));
-      if (error) throw new Error(error.message);
-    }
+    for (let i = 0; i < ids.length; i += 150) await this._send({ t: 'updateIn', table, ids: ids.slice(i, i + 150), patch });
   }
   removeMany(table, ids, ts = nowIso()) { return this.patchMany(table, ids, { deleted_at: ts, deleted_by: this.me && this.me.id }); }
   restoreMany(table, ids) { return this.patchMany(table, ids, { deleted_at: null, deleted_by: null }); }
@@ -201,6 +222,28 @@ class LiveStore extends BaseStore {
     this.dropLocal(table, id); this.dropChildren(table, id); this.emit({ table });
     const paths = row ? [row.path, row.thumb, row.data && row.data.path, row.data && row.data.thumb].filter(Boolean) : [];
     if (paths.length) await this.sb.storage.from('media').remove(paths);
+  }
+
+  // Automatic backups live in the photo storage under backups/ (members can read; only the admin can delete).
+  async saveBackup(name, json) {
+    const { error } = await this.sb.storage.from('media').upload('backups/' + name, new Blob([json], { type: 'application/json' }), { contentType: 'application/json', upsert: false });
+    if (error) throw new Error(error.message);
+  }
+  async listBackups() {
+    const { data, error } = await this.sb.storage.from('media').list('backups', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
+    if (error) throw new Error(error.message);
+    return (data || []).filter(o => /\.json$/.test(o.name)).map(o => ({ name: o.name, path: 'backups/' + o.name, size: (o.metadata && o.metadata.size) || 0 }));
+  }
+  async removeBackups(paths) { if (paths.length) await this.sb.storage.from('media').remove(paths); }
+
+  // Past changes for version history, straight from the database (the app only keeps the newest 500 in memory).
+  async history({ entity, ids, weddingId }) {
+    let q = this.sb.from('activity').select('*').eq('entity', entity);
+    if (ids) q = q.in('entity_id', ids.map(String));
+    if (weddingId) q = q.eq('wedding_id', weddingId);
+    const { data, error } = await q.order('id', { ascending: false }).limit(1000);
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   async addTemplate(weddingId) {
@@ -220,8 +263,7 @@ class LiveStore extends BaseStore {
   async del(table, id) {
     const before = this.find(table, id);
     this.dropLocal(table, id); this.emit({ table });
-    const { error } = await this.sb.from(table).delete().eq('id', id);
-    if (error) { if (before) this.upsertLocal(table, before); this.emit({ table }); throw new Error(error.message); }
+    await this._send({ t: 'delete', table, id }, () => { if (before) this.upsertLocal(table, before); });
   }
 
   async downloadUrl(path, name) {
@@ -300,13 +342,57 @@ for (const m of ['insert', 'update', 'patchMany', 'del', 'purge']) {
     try { return await f.apply(this, a); } finally { this.pending--; syncStatus(this); this.saveSnapshot(); }
   };
 }
+/* ---------- The outbox: changes made without internet ---------- */
+const OUTBOX = 'fwp-outbox-v1';
+const isNetErr = (e) => !navigator.onLine || /failed to fetch|networkerror|load failed|fetch failed|network request failed|timed? ?out/i.test(String((e && (e.message || e)) || ''));
+LiveStore.prototype.loadOutbox = function () { try { this.outbox = JSON.parse(localStorage.getItem(OUTBOX) || '[]'); } catch (e) { this.outbox = []; } return this.outbox; };
+LiveStore.prototype.saveOutbox = function () { try { localStorage.setItem(OUTBOX, JSON.stringify(this.outbox || [])); } catch (e) { /* storage full: keeps working in memory */ } syncStatus(this); };
+LiveStore.prototype.queueOp = function (op) {
+  (this.outbox || this.loadOutbox()).push({ ...op, at: nowIso(), by: this.me && this.me.name });
+  this.saveOutbox();
+  clearTimeout(this._flushT); this._flushT = setTimeout(() => this.flush(), 15000);
+};
+// After loading fresh data, put back what's still waiting, so the screen keeps showing it.
+LiveStore.prototype.reapplyOutbox = function () {
+  for (const op of this.outbox || this.loadOutbox()) {
+    if (!this.cache[op.table]) continue;
+    if (op.t === 'upsert') op.rows.forEach(r => this.upsertLocal(op.table, r));
+    else if (op.t === 'update') this.upsertLocal(op.table, { id: op.id, ...op.patch });
+    else if (op.t === 'updateIn') op.ids.forEach(id => this.upsertLocal(op.table, { id, ...op.patch }));
+    else if (op.t === 'delete') this.dropLocal(op.table, op.id);
+  }
+};
+LiveStore.prototype.flush = async function () {
+  if (this._flushing || !(this.outbox || this.loadOutbox()).length || !navigator.onLine) return;
+  this._flushing = true;
+  try {
+    while (this.outbox.length) {
+      const op = this.outbox[0];
+      let res; try { res = await this._exec(op); } catch (e) { res = { error: e }; }
+      if (res && res.error) {
+        if (isNetErr(res.error)) break; // still offline — try again later
+        (this.failed || (this.failed = [])).push({ ...op, error: res.error.message || String(res.error) }); // refused by the database: set aside, don't block the rest
+      }
+      this.outbox.shift(); this.saveOutbox();
+    }
+  } finally { this._flushing = false; }
+  if (this.outbox.length) { clearTimeout(this._flushT); this._flushT = setTimeout(() => this.flush(), 20000); }
+  else this.emit({ table: 'outbox' });
+};
+window.addEventListener('online', () => { if (store && store.flush) setTimeout(() => store.flush(), 800); });
+// What's waiting, in words.
+export function outboxItems(st = store) {
+  const label = (t) => ({ steps: 'Step', todos: 'To-do', board_items: 'Card / option', list_rows: 'List row', lists: 'List', comments: 'Comment', reactions: 'Vote', budget_items: 'Payment', budget_areas: 'Budget line', files: 'File', areas: 'Section', stages: 'Stage' }[t] || t);
+  const what = (op) => { const r = op.rows && op.rows[0]; const d = (r && (r.data || {})) || {}; const name = (r && (r.title || r.body || r.name || d.title || d.text || (r.cells || []).filter(Boolean)[0])) || (op.patch && (op.patch.title || (op.patch.data && op.patch.data.title))) || ''; return String(name).slice(0, 60); };
+  return ((st && st.outbox) || []).map(op => ({ kind: label(op.table), action: op.t === 'upsert' ? 'added' : op.t === 'delete' ? 'deleted' : (op.patch && 'deleted_at' in op.patch && op.patch.deleted_at) ? 'moved to the Bin' : 'changed', name: what(op), at: op.at }));
+}
 const SNAP = 'fwp-live-copy-v1';
 LiveStore.prototype.saveSnapshot = function () {
   clearTimeout(this._snapT);
   this._snapT = setTimeout(() => {
     try {
       const cache = { ...this.cache, activity: (this.cache.activity || []).slice(0, 200) };
-      localStorage.setItem(SNAP, JSON.stringify({ user: this.me && this.me.id, at: Date.now(), cache, missing: this.missing }));
+      localStorage.setItem(SNAP, JSON.stringify({ user: this.me && this.me.id, me: this.me, at: Date.now(), cache, missing: this.missing }));
     } catch (e) { /* too big or blocked — fine, it just loads normally */ }
   }, 1500);
 };
@@ -315,12 +401,13 @@ LiveStore.prototype.hydrate = function () {
     const s = JSON.parse(localStorage.getItem(SNAP) || 'null');
     if (!s || !this.me || s.user !== this.me.id) return false;
     this.cache = { ...this.cache, ...s.cache }; this.missing = s.missing || {};
+    this.reapplyOutbox();
     return true;
   } catch (e) { return false; }
 };
 const statusFns = new Set();
 export const onStatus = (fn) => { statusFns.add(fn); return () => statusFns.delete(fn); };
-export function syncState(st = store) { return !navigator.onLine ? 'offline' : (st && st.pending) ? 'saving' : 'saved'; }
+export function syncState(st = store) { return !navigator.onLine ? 'offline' : (st && st.outbox && st.outbox.length) ? 'waiting' : (st && st.pending) ? 'saving' : 'saved'; }
 function syncStatus(st) { const v = syncState(st); for (const fn of statusFns) fn(v); }
 window.addEventListener('online', () => syncStatus(store));
 window.addEventListener('offline', () => syncStatus(store));
@@ -462,6 +549,8 @@ class DemoStore extends BaseStore {
       }
       if (!Object.keys(changes).length) return;
     }
+    if (action === 'purge' && before) changes._old = before;               // so a deleted row can be brought back
+    if (action === 'create' && after && after.list_id) changes._new = { list_id: after.list_id };
     const r = after || before;
     const label = r.title || r.couple || (r.data && (r.data.title || r.data.text)) || null;
     this.cache.activity.unshift({
@@ -526,7 +615,11 @@ class DemoStore extends BaseStore {
     this.save(); this.emit({ table: 'stages' });
   }
   async removeMember(userId) { this.dropLocal('members', userId); this.save(); this.emit({ table: 'members' }); }
-  async del(table, id) { this.dropLocal(table, id); this.save(); this.emit({ table }); }
+  async del(table, id) { const before = this.find(table, id); this.dropLocal(table, id); if (before && !UNLOGGED.includes(table)) this.log('purge', table, before, null); this.save(); this.emit({ table }); }
+  async saveBackup(name, json) { this.blobs.set('backups/' + name, URL.createObjectURL(new Blob([json], { type: 'application/json' }))); this._bsize = { ...(this._bsize || {}), ['backups/' + name]: json.length }; }
+  async listBackups() { return [...this.blobs.keys()].filter(k => k.startsWith('backups/')).sort().reverse().map(p => ({ name: p.slice(8), path: p, size: (this._bsize || {})[p] || 0 })); }
+  async removeBackups(paths) { for (const p of paths) this.blobs.delete(p); }
+  async history({ entity, ids, weddingId }) { return (this.cache.activity || []).filter(a => a.entity === entity && (!ids || ids.includes(a.entity_id)) && (!weddingId || a.wedding_id === weddingId)); }
   async downloadUrl(path) { return this.blobs.get(path) || ''; }
   async markSeen(activityId) {
     if (activityId <= this.me.lastSeen) return;

@@ -641,6 +641,7 @@ export function openProfile(o, onVote) {
         pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=47').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
+        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=47').then(m => m.openHistory('option', cur)); } }, '↺ History'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { close(); deleteOption(cur); } }, 'Delete'))));
   const bar = h('div', { class: 'pf-bar' },

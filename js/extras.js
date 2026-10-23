@@ -1,4 +1,5 @@
 import { storagePanel } from './storage.js?v=47';
+import { backupsPanel } from './backups.js?v=47';
 import { store } from './store.js?v=47';
 import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=47';
 import { othersSummary, bringBackOthers } from './safety.js?v=47';
@@ -332,5 +333,6 @@ export function renderSettings() {
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Only you can see this page.'),
     h('div', { class: 'settings-grid' }, cards),
     h('div', { class: 'settings-grid' }, pass, people),
+    backupsPanel(),
     storagePanel());
 }

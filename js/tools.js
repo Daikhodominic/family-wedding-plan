@@ -68,13 +68,17 @@ export function downloadText(name, text, type = 'text/plain') {
   const a = h('a', { href: URL.createObjectURL(blob), download: name });
   document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
-export function downloadBackup() {
+// Everything in one JSON text (photos not included).
+export function backupJson() {
   const skip = new Set(['activity']);
   const data = {};
   for (const [t, rows] of Object.entries(store.cache || {})) if (!skip.has(t)) data[t] = rows;
   data.activity = (store.rows('activity') || []).slice(0, 500);
+  return JSON.stringify({ made: new Date().toISOString(), by: store.me && store.me.name, data }, null, 1);
+}
+export function downloadBackup() {
   const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-  const json = JSON.stringify({ made: new Date().toISOString(), by: store.me && store.me.name, data }, null, 1);
+  const json = backupJson();
   modal({ title: 'Download a backup', body: h('p', { class: 'muted', style: { margin: 0 } }, 'The plan, lists, votes, budget and comments — on their own (small), or with every photo and file too (bigger, takes a while).'),
     actions: [{ label: 'Just the data', kind: 'ghost', onClick: () => { downloadText(`wedding-war-room-backup-${stamp}.json`, json, 'application/json'); toast('Backup downloaded — keep it somewhere safe'); } },
       { label: 'With all photos (.zip)', onClick: () => { import('./downloads.js?v=47').then(m => m.backupWithPhotos(json, stamp)); } }] });

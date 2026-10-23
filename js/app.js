@@ -1,4 +1,4 @@
-import { store, onStatus, syncState } from './store.js?v=47';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=47';
 import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=47';
 import { renderPipeline, renderPlanHead } from './pipeline.js?v=47';
 import { renderBoard } from './board.js?v=47';
@@ -132,13 +132,23 @@ function pageClearItems(item) {
 }
 
 // "Saved" / "Saving…" / "Offline — will save when you're back online"
-const SYNC = { saved: ['Saved', 'Everything is saved'], saving: ['Saving…', 'Saving your change'], offline: ['Offline', 'No internet — changes won’t save until you’re back online'] };
+const SYNC = { saved: ['Saved', 'Everything is saved'], saving: ['Saving…', 'Saving your change'], offline: ['Offline', 'No internet — your changes are kept on this phone and sent when you’re back online'], waiting: ['Waiting', 'Some changes are kept on this phone, waiting to be sent'] };
+const syncText = (v) => v === 'waiting' || (v === 'offline' && (store.outbox || []).length) ? `${(store.outbox || []).length} waiting` : SYNC[v][0];
+// What hasn't reached the family yet.
+function showOutbox() {
+  const items = outboxItems();
+  modal({ title: items.length ? `${items.length} ${items.length === 1 ? 'change' : 'changes'} waiting to be sent` : 'Everything is saved',
+    body: [h('p', { class: 'muted', style: { marginTop: 0 } }, items.length ? (navigator.onLine ? 'Sending now…' : 'You’re offline. These are kept on this phone and go out by themselves when the internet is back — you can close the app.') : 'All your changes have reached the family.'),
+      items.length ? h('ul', { class: 'ob-list' }, items.map(x => h('li', {}, h('b', {}, `${x.kind} ${x.action}`), x.name ? h('span', {}, ' — ' + x.name) : null, h('small', {}, ' · ' + ago(x.at))))) : null,
+      (store.failed || []).length ? h('p', { class: 'warn-line' }, `${store.failed.length} could not be saved (the database refused them) — they show in the console for the admin.`) : null],
+    actions: [items.length && navigator.onLine ? { label: 'Send now', onClick: () => { store.flush(); } } : null, { label: 'OK', onClick: () => { } }].filter(Boolean) });
+}
 function syncPill() {
   if (store.mode !== 'live') return null;
   const v = syncState();
-  return h('span', { class: 'sync ' + v, title: SYNC[v][1], 'aria-live': 'polite' }, h('i'), h('span', {}, SYNC[v][0]));
+  return h('button', { type: 'button', class: 'sync ' + v, title: SYNC[v][1], 'aria-live': 'polite', onclick: showOutbox }, h('i'), h('span', {}, syncText(v)));
 }
-onStatus((v) => document.querySelectorAll('.sync').forEach(el => { el.className = 'sync ' + v; el.title = SYNC[v][1]; el.lastChild.textContent = SYNC[v][0]; }));
+onStatus((v) => document.querySelectorAll('.sync').forEach(el => { el.className = 'sync ' + v; el.title = SYNC[v][1]; el.lastChild.textContent = syncText(v); }));
 
 function avatar() {
   const n = unread().length;
@@ -287,7 +297,7 @@ function renderHome() {
       h('header', { class: 'home-top' },
         h('a', { class: 'brand', href: '#/' }, 'The Wedding War Room'),
         greeting(),
-        h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), undoButtons(), avatar())),
+        h('span', { class: 'home-top-r' }, h('span', { class: 'today' }, todayLabel()), syncPill(), undoButtons(), avatar())),
       newForYou(null),
       installOffer(),
       h('section', { class: 'emblems' + (ws.length > 2 ? ' many' : '') },
@@ -368,6 +378,7 @@ function pageBar() {
     h('div', { class: 'wrap pbar-in' },
       h('a', { class: 'brand', href: '#/home' }, h('span', { class: 'pbar-back', html: ICONS.back }), 'The Wedding War Room'),
       h('nav', { class: 'pnav', 'aria-label': 'Weddings' }, weddings().map(w => h('a', { href: '#/w/' + w.id, style: { color: themeOf(w).deep } }, w.couple))),
+      syncPill(),
       undoButtons(),
       avatar()));
 }
@@ -480,8 +491,14 @@ async function boot() {
     booted = true;
     if (state !== 'ready') { if (!onLandingNow()) render(); return; }
     // Show the saved copy straight away, then bring in the latest from the internet.
-    if (store.hydrate && store.hydrate() && !onLandingNow()) render();
-    await store.loadAll();
+    const hadCopy = !!(store.hydrate && store.hydrate());
+    if (hadCopy && !onLandingNow()) render();
+    try { await store.loadAll(); }
+    catch (e) {
+      // Offline but there's a copy on this phone: keep working with it; it catches up when the internet is back.
+      if (e.offline && hadCopy) { booted = true; toast('No internet — showing what’s saved on this phone. Changes are kept and sent later.'); if (!onLandingNow()) render(); window.addEventListener('online', () => store.loadAll().then(() => render()).catch(() => { }), { once: true }); return; }
+      throw e;
+    }
   } catch (e) {
     console.error(e);
     app.replaceChildren(h('div', { class: 'landing' }, h('div', { class: 'gate-card' }, h('h1', { class: 'foil' }, 'Could not open the plans'), h('p', { class: 'land-sub' }, e.message || 'Check your internet connection and reload the page.'), h('button', { class: 'enter solid', onclick: () => location.reload() }, 'Try again'))));
@@ -489,6 +506,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
+  import('./backups.js?v=47').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

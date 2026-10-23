@@ -12,6 +12,7 @@ const KINDS = {
   board: { label: 'Mood board', blurb: 'Photos, galleries, videos and files on the mood boards.' },
   files: { label: 'Files', blurb: 'Documents and photos under Lists & files, and on plan steps.' },
   bin: { label: 'In the Bin', blurb: 'Photos and files of things that were deleted. Clearing removes them for good.', clear: true },
+  backups: { label: 'Backups', blurb: 'The weekly automatic backups (the newest 8 are kept).' },
   unused: { label: 'Not used anywhere', blurb: 'Left over from uploads that were replaced or never saved. Safe to clear.', clear: true },
   notchosen: { label: 'Options not chosen', blurb: 'Photos of options that lost out, in categories that are final. Clearing deletes those options for good.', clear: true }
 };
@@ -85,7 +86,7 @@ export function storagePanel() {
       const { kindOf, rowsOf } = survey();
       const sums = Object.fromEntries(Object.keys(KINDS).map(k => [k, { n: 0, size: 0, paths: [] }]));
       let total = 0;
-      for (const f of files) { const k = kindOf.get(f.path) || 'unused'; total += f.size; sums[k].n++; sums[k].size += f.size; sums[k].paths.push(f.path); }
+      for (const f of files) { const k = kindOf.get(f.path) || (f.path.startsWith('backups/') ? 'backups' : 'unused'); total += f.size; sums[k].n++; sums[k].size += f.size; sums[k].paths.push(f.path); }
       const pct = Math.min(100, total / LIMIT * 100);
       const clear = async (k) => {
         const s = sums[k], rows = rowsOf[k] || [];

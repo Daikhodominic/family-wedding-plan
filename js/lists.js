@@ -124,6 +124,7 @@ function renderListPage(root, w, l) {
       h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'List'), title, h('div', { class: 'lp-sum' }, listSummary(l).join(' · '), step ? ` · for “${step.title}”` : '')),
       h('div', { class: 'ph-right' },
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
+        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=47').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
         h('button', { type: 'button', class: 'btn ghost wa-btn', onclick: () => sendList(store.find('lists', l.id) || l) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send on WhatsApp'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => printList(store.find('lists', l.id) || l) }, 'Print or save as PDF'),
