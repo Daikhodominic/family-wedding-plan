@@ -2240,3 +2240,85 @@ body[data-theme=rose] .pv-hero::after { background-image: url('../assets/arch_ro
   .marea { width: 100% !important; }
   .madd.area { align-self: flex-start; }
 }
+
+/* =====================================================================
+   Type & alignment pass (23 Oct 2026)
+   Cormorant's old-style figures made numbers jump up and down (₹22,00,000, "29 to do"),
+   the script couple name was unreadable when cut short, and a few labels sat on top of each other.
+   ===================================================================== */
+body { font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+:is(h1, h2, h3, h4, .page-title, .foil, .stat b, .fb-big, .oh-count b, .emb-days, .pv-stats b) { font-variant-numeric: lining-nums proportional-nums; }
+.stat b, .fb-big, .bsum b, .money, td, .ltable td, .mt-row span { font-variant-numeric: lining-nums tabular-nums; }
+/* Headings a touch heavier, so the serif reads on the dark grounds instead of looking faint */
+:is(body[data-page=space], body[data-page=home], body[data-page=page], body[data-page=partner]) :is(h1, h2, .page-title) { font-weight: 500 !important; letter-spacing: 0; text-wrap: balance; }
+:is(body[data-page=space], body[data-page=home], body[data-page=page], body[data-page=partner]) :is(h3, h4) { text-wrap: balance; }
+p, .hint, .tip { text-wrap: pretty; }
+
+/* Header: the couple in the serif (not the script) so a long name stays readable, everything on one line */
+.shead-in { gap: 10px !important; }
+.shead-names { flex: 1 1 auto; min-width: 0; }
+.shead-couple { font-family: var(--serif) !important; font-weight: 600; font-size: 21px !important; letter-spacing: .01em; line-height: 1.15; display: block; }
+.shead-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.shead-sub .date-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.shead-in > :not(.shead-names) { flex: none; }
+@media (max-width: 400px) {
+  .shead-couple { font-size: 19px !important; }
+  .shead .ur-btn { width: 32px !important; min-width: 32px; padding: 0 !important; }
+  .shead-mono .mono, .shead-mono > * { transform: scale(.92); }
+}
+/* Page bar: the brand stays on one line */
+.pbar .brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto; }
+@media (max-width: 400px) { .pbar .brand { font-size: 10px !important; letter-spacing: .12em !important; } }
+@media (max-width: 480px) { .ohero .oh-date { font-size: 22px !important; } }
+
+/* Family budget: each wedding's name was drawn in its light-theme ink — invisible on the dark */
+.fbcard .fb-t { color: #F1E3C2 !important; font-family: var(--serif); font-weight: 600; font-size: 22px; }
+
+/* Choose: the Compare tick sits on the photo, clear of the title */
+.opt-card { position: relative; }
+.opt-card .oc-pick { position: absolute !important; top: 10px; left: 10px; right: auto; margin: 0 !important; z-index: 3; padding: 5px 10px 5px 8px !important; background: rgba(10, 14, 24, .62) !important; color: #F3ECE0 !important; border: 1px solid rgba(255, 255, 255, .18); font-size: 12px !important; font-weight: 500; }
+.opt-card .oc-pick input { width: 16px !important; height: 16px !important; margin: 0; accent-color: #D9B470; }
+
+/* Swipe card: the photo counter moves to the bottom right, away from the couple's chip */
+.sw-count-pic { top: auto !important; bottom: 14px; right: 14px; }
+.sw-rate { max-width: calc(100% - 96px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Plan: the step beads line up under the area's name */
+.beads { margin-left: 80px !important; margin-top: 8px !important; }
+/* The progress line's stage names: small caps, not italic, so they line up with their segments */
+.jstage-name { font-family: var(--sans) !important; font-style: normal !important; font-size: 10.5px !important; letter-spacing: .14em; text-transform: uppercase; color: #BDB4A8 !important; }
+
+/* Home: the date under each couple fits on fewer lines */
+@media (max-width: 400px) { .emb .emb-date { letter-spacing: .16em !important; font-size: 10px !important; } }
+
+/* ---------- Lists: invitations & meat (Naga custom lists) ---------- */
+.customs { margin-bottom: 26px; }
+.cust-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.cust-tile { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; padding: 14px 16px; border-radius: 18px; font: inherit; color: #F3ECE0; text-decoration: none; cursor: pointer;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .04)); border: 1px dashed rgba(217, 180, 112, .45); }
+.cust-tile.made { border-style: solid; border-color: rgba(255, 255, 255, .14); border-top-color: rgba(217, 180, 112, .45); }
+.cust-ic { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; background: rgba(217, 180, 112, .14); border: 1px solid rgba(217, 180, 112, .35); color: #E9C98A; }
+.cust-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cust-tx b { font-family: var(--serif); font-weight: 600; font-size: 19px; line-height: 1.15; color: #F1E3C2; }
+.cust-side { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #D9B470; }
+.cust-b { font-size: 13px; color: #BDB4A8; line-height: 1.35; }
+.cust-go { font-size: 13px; font-weight: 600; color: #E9C98A; white-space: nowrap; }
+@media (max-width: 400px) { .cust-tile { grid-template-columns: 40px minmax(0, 1fr); } .cust-go { grid-column: 2; } .cust-ic { width: 40px; height: 40px; } }
+
+/* Printing any page: dark ink on white paper (the dark look would print as pale text) */
+@media print {
+  html, body { background: #fff !important; color: #111 !important; }
+  body::before, body::after, .space::after, .space-flora, .snav, .shead, .pbar, .tip { display: none !important; }
+  * { color: #111 !important; -webkit-text-fill-color: #111 !important; background: transparent !important; box-shadow: none !important; text-shadow: none !important; }
+  .ltable td, .ltable th { border: 1px solid #bbb !important; }
+}
+:is(body[data-page=space], body) textarea.ltitle.lt-page { resize: none; overflow: hidden; line-height: 1.15; min-height: 0; display: block; color: #F1E3C2 !important; background: transparent !important; border: 0 !important; border-bottom: 1px solid transparent !important; box-shadow: none !important; padding: 0 0 4px !important; }
+textarea.ltitle.lt-page:focus { border-bottom-color: rgba(217, 180, 112, .5) !important; }
+/* On a phone the list scrolls sideways with the name column pinned, so every cell is wide enough to read */
+@media (max-width: 760px) {
+  .ltable.big td input { min-width: 128px; }
+  .ltable.big td.tickcol, .ltable.big th.tickcol { min-width: 64px; }
+  .ltable.big th:nth-child(2), .ltable.big td:nth-child(2) { position: sticky; left: 0; z-index: 2; background: #1E2638 !important; box-shadow: 6px 0 10px -8px rgba(0, 0, 0, .7); }
+  body[data-theme=rose] .ltable.big th:nth-child(2), body[data-theme=rose] .ltable.big td:nth-child(2) { background: #1D3A30 !important; }
+  .ltable.big td:nth-child(2) input { min-width: 140px; font-weight: 500; }
+}

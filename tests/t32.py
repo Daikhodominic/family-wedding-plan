@@ -16,13 +16,13 @@ async def main():
         await pg.fill('.modal input[type=tel]', '12'); await pg.click('.modal-actions .btn:has-text("Save")'); await pg.wait_for_timeout(300)
         print('bad number keeps modal', await pg.locator('.modal').count())
         await pg.fill('.modal input[type=tel]', '98765 43210'); await pg.click('.modal-actions .btn:has-text("Save")'); await pg.wait_for_timeout(400)
-        print('phone saved', await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=41'); return store.me.phone}"))
+        print('phone saved', await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=42'); return store.me.phone}"))
         # give Charani a number (as if she saved it)
-        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=41'); store.upsertLocal('members',{user_id:'demo-charani',phone:'9000000001'}); store.save(); store.emit({table:'members'});}")
+        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=42'); store.upsertLocal('members',{user_id:'demo-charani',phone:'9000000001'}); store.save(); store.emit({table:'members'});}")
         # step drawer button
         await pg.goto(B+'#/w/charani/plan'); await pg.wait_for_timeout(900)
         await pg.click('.fold-all button >> nth=0'); await pg.wait_for_timeout(300)
-        sid = await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=41'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&!x.locked_at&&!x.deleted_at&&x.status!=='done'); await store.update('steps',s.id,{owner:'Charani'}); return s.id}")
+        sid = await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=42'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&!x.locked_at&&!x.deleted_at&&x.status!=='done'); await store.update('steps',s.id,{owner:'Charani'}); return s.id}")
         await pg.goto(B+f'#/w/charani/plan?open={sid}'); await pg.wait_for_timeout(1200)
         print('drawer wa', await pg.locator('.drawer .d-wa .wa-btn').inner_text())
         await pg.click('.drawer .d-wa .wa-btn'); await pg.wait_for_timeout(200)
@@ -44,7 +44,7 @@ async def main():
         await pg.click('.avatar'); await pg.click('.menu-pop .mi:has-text("Notifications")'); await pg.wait_for_timeout(300)
         await pg.screenshot(path='shots/notify_sheet.png')
         await pg.click('.modal-actions .btn:has-text("Turn on")'); await pg.wait_for_timeout(500)
-        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=41'); const s=store.rows('steps').find(x=>x.wedding_id==='elow'&&!x.deleted_at);
+        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=42'); const s=store.rows('steps').find(x=>x.wedding_id==='elow'&&!x.deleted_at);
            store.simulateRemote('board_items',{id:crypto.randomUUID(),wedding_id:'elow',kind:'option',created_by:'demo-elow',data:{step_id:s.id,title:'Rose cake',rate:'₹6,000',images:[]}});
            store.simulateRemote('steps',{...s, owner:'You'},'UPDATE'); }""")
         await pg.wait_for_timeout(3500)

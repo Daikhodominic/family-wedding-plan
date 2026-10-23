@@ -1,15 +1,15 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | maybe | no — open to everyone.
-import { store } from './store.js?v=41';
-import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=41';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=41';
-import { isDecider } from './tools.js?v=41';
-import { addVendor } from './decisions.js?v=41';
-import { pickFiles, fetchPreview } from './board.js?v=41';
-import { planOf } from './map.js?v=41';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=41';
-import { sampleRows, isSample } from './samples.js?v=41';
+import { store } from './store.js?v=42';
+import { h, toast, modal, field, ICONS, compressImage, confirmBox, hostOf, safeUrl, buzz } from './ui.js?v=42';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=42';
+import { isDecider } from './tools.js?v=42';
+import { addVendor } from './decisions.js?v=42';
+import { pickFiles, fetchPreview } from './board.js?v=42';
+import { planOf } from './map.js?v=42';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=42';
+import { sampleRows, isSample } from './samples.js?v=42';
 
 const VOTES = ['love', 'maybe', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };

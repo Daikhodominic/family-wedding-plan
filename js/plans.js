@@ -2,15 +2,68 @@
 // Each step: [title, note, big decision?, suggested?]. Suggested steps came from
 // Claude's review of Catholic weddings in Nagaland and Manipur; the rest are the family's own list.
 // Each to-do: [title, due date, where it belongs].
-import { store } from './store.js?v=41';
-import { h, toast, modal , ICONS } from './ui.js?v=41';
-import { live } from './app.js?v=41';
-import { SECTIONS } from './clear.js?v=41';
-import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=41';
+import { store } from './store.js?v=42';
+import { h, toast, modal , ICONS } from './ui.js?v=42';
+import { live } from './app.js?v=42';
+import { SECTIONS } from './clear.js?v=42';
+import { othersGate, byOthers, keepOthersSteps } from './safety.js?v=42';
+import { customLists } from './customs.js?v=42';
 
 const S = (title, note = '', gate = false, sugg = false) => [title, note, gate, sugg];
 
 export const PLANS = {
+  // Charani & Adahrii: our family is the bride's side. Added to the plan alongside what's there — nothing is replaced.
+  charani: {
+    addOnly: true,
+    label: 'Charani’s preparations',
+    offer: 'Charani’s preparations are ready.',
+    marker: 'Resize the ring',
+    dateNote: 'Dates count back from the wedding on 7 December — change any of them.',
+    stages: [
+      ['Before', [
+        ['Bride’s preparations (Charani)', [
+          S('Resize the ring', 'Take it to the jeweller with the right size; allow a week or two.'),
+          S('Stitch the wedding dress and gown', 'Book the tailor, fittings, and the final fitting a week or two before.', true),
+          S('Trousseau: buy and market', 'Everything Charani takes with her — clothes, shoes, toiletries, small things. The list is under Lists.'),
+          S('Clothes gifts for the groom’s family', 'Traditional wear for Adahrii’s family — who gets what. The list is under Lists.'),
+          S('Boutonnieres for both families', 'For the men and boys on both sides — the girls’ side and the boys’ side.'),
+          S('Flower girls’ dresses', 'Stitched — measurements from each girl’s family.'),
+          S('Bridesmaids’ dresses', 'Stitched — fabric, colour and measurements.'),
+          S('Choose the make-up artist', 'Add a few as options under Choose so the family can compare.', true),
+          S('Bridal gifts for the new home', 'What Charani takes to her new house: a custom-built almirah, a fridge, a washing machine, bedspreads and blankets. The list is under Lists.'),
+          S('Custom-built almirah', 'Order early from the carpenter — making it takes weeks. Size it for the room in the new house.', true),
+          S('Fridge and washing machine', 'Buy, and arrange delivery to the new house.')
+        ]],
+        ['Invitations & meat', [
+          S('Invitation list: bride’s side (Charani)', 'Everyone from our side to invite. The list is under Lists.'),
+          S('Send the invitation list to Adahrii’s family', 'Open the list and tap “Send on WhatsApp”, or print it.'),
+          S('Meat list: bride’s side (Charani)', 'The elders and relatives who receive meat — pig head for the grandparents, legs for the uncles, and so on.'),
+          S('Send the meat list to Adahrii’s family', 'Open the list and tap “Send on WhatsApp”, or print it.')
+        ]]
+      ]]
+    ],
+    todos: [
+      ['Order the custom-built almirah from the carpenter', '2026-10-30', 'Bride’s preparations'],
+      ['Book the make-up artist', '2026-11-01', 'Bride’s preparations'],
+      ['Give the dress and gown to the tailor', '2026-11-01', 'Bride’s preparations'],
+      ['Send the bride’s side invitation list to Adahrii’s family', '2026-11-05', 'Invitations & meat'],
+      ['Take the ring to be resized', '2026-11-10', 'Bride’s preparations'],
+      ['Flower girls’ and bridesmaids’ dresses to the tailor', '2026-11-10', 'Bride’s preparations'],
+      ['Send the meat list to Adahrii’s family', '2026-11-20', 'Invitations & meat'],
+      ['Buy the fridge and washing machine', '2026-11-25', 'Bride’s preparations'],
+      ['Final fitting: dress and gown', '2026-11-25', 'Bride’s preparations'],
+      ['Boutonnieres ready for both families', '2026-12-01', 'Bride’s preparations'],
+      ['Deliver the almirah, fridge and washing machine to the new house', '2026-12-01', 'Bride’s preparations']
+    ],
+    lists: [
+      { step: 'Bridal gifts for the new home', title: 'Bridal gifts for the new home', columns: ['Item', 'Details', 'Qty', 'Price (₹)', 'Bought', 'Delivered', 'Notes'],
+        rows: [['Almirah (custom-built)', 'Order from the carpenter; size for the room', '1'], ['Fridge', '', '1'], ['Washing machine', '', '1'], ['Bedspreads', '', ''], ['Blankets', '', '']] },
+      { step: 'Trousseau: buy and market', title: 'Trousseau', columns: ['Item', 'Qty', 'Price (₹)', 'Bought', 'Notes'] },
+      { step: 'Clothes gifts for the groom’s family', title: 'Clothes gifts for the groom’s family', columns: ['Name', 'Relation', 'Traditional wear', 'Price (₹)', 'Bought', 'Packed', 'Notes'] },
+      { step: 'Invitation list: bride’s side (Charani)', custom: 'invite' },
+      { step: 'Meat list: bride’s side (Charani)', custom: 'meat' }
+    ]
+  },
   elow: {
     label: 'Elow & Maniziia — full checklist',
     marker: 'Maniziia: preparation to join the Catholic Church',
@@ -48,7 +101,9 @@ export const PLANS = {
           S('Formal visit and proposal between the families', 'The Mao way — ask the elders on both sides how it’s done.', false, true),
           S('Customary agreement between the families', 'If your communities have one — what is given and when.', false, true),
           S('Gifts for the bride’s family', 'Traditional shawls — ask which are right for a Mao family. List to be made.'),
-          S('Meat gift for the family and elders', 'Make the list of who receives it.')
+          S('Meat gift for the family and elders', 'Make the list of who receives it.'),
+          S('Meat list: groom’s side (Elow)', 'Elders and relatives on our side who receive meat — pig head for the grandparents, legs for the uncles, and so on. The list is under Lists.'),
+          S('Meat list: bride’s side (Maniziia)', 'The elders and relatives on Maniziia’s side who receive meat. Fill it in with her family.')
         ]],
         ['Clothes & rings', [
           S('Rings', '', true),
@@ -62,6 +117,8 @@ export const PLANS = {
         ]],
         ['Invitations & guests', [
           S('Invitation list / guest list'),
+          S('Invitation list: groom’s side (Elow)', 'Everyone from our side to invite. The list is under Lists.'),
+          S('Invitation list: bride’s side (Maniziia)', 'Get the list from Maniziia’s family and put it in, so the head count covers both sides.'),
           S('Head count', 'Drives food, meat, chairs, tents and cars — needed early.', false, true),
           S('Wedding cards', 'Printing usually takes 2–3 weeks.', true),
           S('Delivering the invitations', 'Who takes cards to whom, by hand or by message.', false, true),
@@ -219,6 +276,12 @@ export const PLANS = {
       ['Thanksgiving service', '2027-02-14', 'After'],
       ['Thank-you visits and calls', '2027-02-20', 'After'],
       ['Return visit to the bride’s family', '2027-02-20', 'After']
+    ],
+    lists: [
+      { step: 'Invitation list: groom’s side (Elow)', custom: 'invite', side: 'groom' },
+      { step: 'Invitation list: bride’s side (Maniziia)', custom: 'invite', side: 'bride' },
+      { step: 'Meat list: groom’s side (Elow)', custom: 'meat', side: 'groom' },
+      { step: 'Meat list: bride’s side (Maniziia)', custom: 'meat', side: 'bride' }
     ]
   }
 };
@@ -243,6 +306,25 @@ export const planLoaded = (w) => { const p = planFor(w); if (!p) return true; if
 const uid = () => crypto.randomUUID();
 const stepRow = (w, aid, [title, note, gate, sugg], ti) => ({ id: uid(), wedding_id: w.id, area_id: aid, title, notes: (sugg ? '✦ Suggested. ' : '') + (note || ''), owner: '', due: null, status: 'todo', position: (ti + 1) * 1000, gate: !!gate });
 const todoRows = (w, p, list) => list.map(([title, due, where], i) => ({ id: uid(), wedding_id: w.id, title, notes: where, owner: '', due, status: 'todo', position: (i + 1) * 1000 }));
+
+// Lists that belong to plan steps (the bridal gifts, the invitation and meat lists …), made once and linked to their step.
+// A list already there with the same name — even one in the Bin — is left alone.
+async function addLists(w, p, steps) {
+  if (!p.lists || (store.missing && store.missing.lists)) return 0;
+  const have = new Set((store.rows('lists') || []).filter(l => l.wedding_id === w.id).map(l => l.title));
+  const stepId = (t) => { const x = steps.find(s => s.title === t) || live(store.rows('steps')).find(s => s.wedding_id === w.id && s.title === t); return x ? x.id : null; };
+  const specs = customLists(w), all = specs.main.concat(specs.extra);
+  let n = 0;
+  for (const L of p.lists) {
+    let title = L.title, columns = L.columns;
+    if (L.custom) { const c = all.find(x => x.kind === L.custom && (!L.side || x.side === L.side)); if (!c) continue; title = c.title; columns = c.columns; }
+    if (have.has(title)) continue;
+    const list = await store.insert('lists', { wedding_id: w.id, step_id: stepId(L.step), title, columns });
+    if (L.rows && L.rows.length) await store.insertMany('list_rows', L.rows.map((cells, i) => ({ list_id: list.id, wedding_id: w.id, cells: columns.map((_, j) => cells[j] || ''), position: (i + 1) * 1000 })));
+    have.add(title); n++;
+  }
+  return n;
+}
 
 async function freshLoad(w, p, clear, keep) {
   const ts = new Date().toISOString();
@@ -271,7 +353,8 @@ async function freshLoad(w, p, clear, keep) {
   await store.insertMany('steps', steps);
   if (hasTodos()) await store.insertMany('todos', todoRows(w, p, p.todos));
   if (othersSteps.length) await keepOthersSteps(w.id, othersSteps);
-  return { steps: steps.length, todos: hasTodos() ? p.todos.length : 0 };
+  const lists = await addLists(w, p, steps);
+  return { steps: steps.length, todos: hasTodos() ? p.todos.length : 0, lists };
 }
 
 async function topUp(w, p) {
@@ -290,19 +373,21 @@ async function topUp(w, p) {
   if (newAreas.length) await store.insertMany('areas', newAreas);
   if (steps.length) await store.insertMany('steps', steps);
   if (m.todos.length) await store.insertMany('todos', todoRows(w, p, m.todos));
-  return { steps: steps.length, todos: m.todos.length };
+  const lists = await addLists(w, p, steps);
+  return { steps: steps.length, todos: m.todos.length, lists };
 }
 
 export function loadPlan(w) {
   const p = planFor(w); if (!p) return;
-  const fresh = !loaded(w, p);
-  const done = (r) => toast(`Done — ${r.steps} steps${r.todos ? ` and ${r.todos} to-dos` : ''} are in`);
+  const fresh = !p.addOnly && !loaded(w, p);
+  const done = (r) => toast(`Done — ${r.steps} steps${r.todos ? `, ${r.todos} to-dos` : ''}${r.lists ? ` and ${r.lists} lists` : ''} are in`);
   const fail = (e) => { console.error(e); toast(e.message || 'That did not load. Check your connection and try again.', 'error'); };
   if (!fresh) {
     const m = missingFor(w, p);
     modal({
-      title: 'Add the new items?',
-      body: h('p', { class: 'muted', style: { margin: 0 } }, `${m.steps.length} new steps${m.todos.length ? ` and ${m.todos.length} dated to-dos` : ''} will be added. Nothing you’ve already done or changed is touched.`),
+      title: p.addOnly && !loaded(w, p) ? `Add ${p.label}?` : 'Add the new items?',
+      body: [h('p', { class: 'muted', style: { margin: 0 } }, `${m.steps.length} new steps${m.todos.length ? ` and ${m.todos.length} dated to-dos` : ''}${p.lists ? ', with their lists,' : ''} will be added. Nothing you’ve already done or changed is touched.`),
+        p.addOnly && p.dateNote ? h('p', { class: 'hint', style: { margin: '8px 0 0' } }, p.dateNote) : null],
       actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, { label: 'Add them', onClick: () => store.batch(() => topUp(w, p)).then(done).catch(fail) }]
     });
     return;
@@ -335,12 +420,12 @@ function autoTopUp(w, p) {
 export function planOffer(w) {
   const p = planFor(w);
   if (!p || !store.me || !store.me.isAdmin || planLoaded(w)) return null;
-  const fresh = !loaded(w, p);
-  if (!fresh && store.mode === 'live') { autoTopUp(w, p); return null; }
+  const fresh = !p.addOnly && !loaded(w, p);
+  if (!fresh && loaded(w, p) && store.mode === 'live') { autoTopUp(w, p); return null; }
   const m = fresh ? null : missingFor(w, p);
   return h('section', { class: 'tip auto' }, h('span', { class: 'tip-i', html: ICONS.sparkle }),
     fresh
       ? h('span', {}, h('b', {}, 'The full checklist is ready. '), `${stepCount(p)} steps${hasTodos() ? ` and ${p.todos.length} dated to-dos` : ''} — it replaces the sample content.`)
-      : h('span', {}, h('b', {}, 'New items are ready. '), `${m.steps.length} steps${m.todos.length ? ` and ${m.todos.length} to-dos` : ''} to add to the plan.`),
+      : h('span', {}, h('b', {}, (p.addOnly && !loaded(w, p) ? p.offer : 'New items are ready.') + ' '), `${m.steps.length} steps${m.todos.length ? ` and ${m.todos.length} to-dos` : ''} to add to the plan.`),
     h('button', { type: 'button', class: 'tip-x', onclick: () => loadPlan(w) }, fresh ? 'Load it' : 'Add them'));
 }

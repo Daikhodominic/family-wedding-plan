@@ -24,7 +24,7 @@ const I = {
 };
 const RULES = [
   [/money|budget|cost|pay|account/i, 'money'], [/church|sacrament|priest|mass|banns|service/i, 'church'], [/famil|custom|elder|tradition/i, 'family'],
-  [/ring/i, 'rings'], [/cloth|attire|dress|gown|suit|shawl/i, 'dress'], [/invit|guest|card/i, 'invite'], [/home|bedroom|house/i, 'home'],
+  [/ring/i, 'rings'], [/cloth|attire|dress|gown|suit|shawl|bride|trousseau/i, 'dress'], [/invit|guest|card/i, 'invite'], [/home|bedroom|house/i, 'home'],
   [/décor|decor|setup|flower|bouquet/i, 'decor'], [/music|song|choir|band/i, 'music'], [/photo|video/i, 'camera'], [/food|menu|cater|cake|meat|kitchen/i, 'food'],
   [/transport|shopping|car|vehicle|travel/i, 'car'], [/in charge|people|volunteer|host|who does/i, 'people'], [/thank|visit/i, 'heart'],
   [/wrap|after|final|return|settle/i, 'check'], [/venue|location|place/i, 'pin'], [/date|booking|calendar|schedule/i, 'calendar'], [/gift/i, 'gift'],

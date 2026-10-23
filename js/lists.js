@@ -1,11 +1,12 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { store } from './store.js?v=41';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=41';
-import { live } from './app.js?v=41';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=41';
-import { renderFiles } from './files.js?v=41';
-import { copyList, otherWeddings } from './planauto.js?v=41';
+import { store } from './store.js?v=42';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=42';
+import { live } from './app.js?v=42';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=42';
+import { renderFiles } from './files.js?v=42';
+import { copyList, otherWeddings } from './planauto.js?v=42';
+import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=42';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -13,7 +14,7 @@ const rowsOf = (l) => live(store.rows('list_rows') || []).filter(r => r.list_id 
 
 // Columns that are yes/no become tick boxes; number columns get totals.
 const isTick = (c) => /^(confirmed|bought|packed|sent|card sent|ready|done|paid|given|booked|arranged|rsvp|yes\/no|delivered|collected)$/i.test(c.trim());
-const isNum = (c) => /^(count|qty|quantity|seats|people|guests|no\.?|price.*|cost.*|amount.*|₹.*)$/i.test(c.trim());
+const isNum = (c) => /^(count|qty|quantity|seats|people|guests|no\.?|price.*|cost.*|amount.*|₹.*|weight.*|kg.*)$/i.test(c.trim());
 const ticked = (v) => /^(y|yes|✓|true|1|done|x)$/i.test(String(v || '').trim());
 const num = (v) => { const n = parseFloat(String(v || '').replace(/[₹,\s]/g, '')); return isFinite(n) ? n : 0; };
 
@@ -21,9 +22,11 @@ export function listSummary(l) {
   const rows = rowsOf(l), cols = l.columns || [];
   const bits = [`${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`];
   cols.forEach((c, i) => {
-    if (isNum(c)) { const t = rows.reduce((s, r) => s + num((r.cells || [])[i]), 0); if (t) bits.push(/price|cost|amount|₹/i.test(c) ? `₹${Math.round(t).toLocaleString('en-IN')} in total` : /^count$/i.test(c.trim()) ? `${t} people` : `${t} ${c.toLowerCase()}`); }
+    if (isNum(c)) { const t = rows.reduce((s, r) => s + num((r.cells || [])[i]), 0); if (t) bits.push(/price|cost|amount|₹/i.test(c) ? `₹${Math.round(t).toLocaleString('en-IN')} in total` : /kg|weight/i.test(c) ? `${t} kg in total` : /^count$/i.test(c.trim()) ? `${t} people` : `${t} ${c.toLowerCase()}`); }
     if (isTick(c) && rows.length) bits.push(`${rows.filter(r => ticked((r.cells || [])[i])).length} of ${rows.length} ${c.toLowerCase()}`);
   });
+  const tally = shareTally(l);
+  if (tally.length) bits.push(tally.join(', '));
   return bits;
 }
 
@@ -34,7 +37,9 @@ export function renderLists(root, w, params) {
   if (params.list) { const l = store.find('lists', params.list); if (l && !l.deleted_at) { renderListPage(root, w, l); return; } }
   const lists = live(store.rows('lists') || []).filter(l => l.wedding_id === w.id).sort((a, b) => a.title.localeCompare(b.title));
   root.append(secHead('Lists and files', 'Lists & files', h('button', { class: 'btn', type: 'button', onclick: () => newList(w.id, null) }, '+ New list'), h('a', { class: 'btn ghost', href: '#files', onclick: (e) => { e.preventDefault(); const f = document.getElementById('files'); if (f) f.scrollIntoView({ behavior: 'smooth' }); } }, 'Files ↓')));
-  if (lists.length) root.append(h('div', { class: 'lgrid' }, lists.map(l => {
+  root.append(customsSection(w, lists, fail));
+  const others = lists.filter(l => !isCustom(l));
+  if (others.length) root.append(h('div', { class: 'lgrid' }, others.map(l => {
     const step = l.step_id ? store.find('steps', l.step_id) : null;
     const s = listSummary(l);
     return h('a', { class: 'lcard', href: `#/w/${w.id}/lists?list=${l.id}` },
@@ -98,7 +103,8 @@ function renderListPage(root, w, l) {
         cols.map((c, i) => {
           const v = (r.cells || [])[i] ?? '';
           if (isTick(c)) return h('td', { class: 'tickcol' }, h('button', { type: 'button', class: 'lt-tick' + (ticked(v) ? ' on' : ''), 'aria-label': `${c}: ${ticked(v) ? 'yes' : 'no'}, row ${ri + 1}`, html: ticked(v) ? ICONS.check : '', onclick: () => saveCell(r, i, ticked(v) ? '' : 'Yes') }));
-          return h('td', {}, h('input', { value: v, 'aria-label': `${c}, row ${ri + 1}`, inputmode: isNum(c) ? 'decimal' : null, onchange: (e) => saveCell(r, i, e.target.value), onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); const next = e.target.closest('tr').nextElementSibling; if (next) { const ni = next.querySelectorAll('td input')[i] || next.querySelector('input'); if (ni) { e.target.blur(); ni.focus(); return; } } e.target.blur(); } } }));
+          const sg = suggestFor(c);
+          return h('td', {}, h('input', { value: v, list: sg ? 'sg-' + sg : null, 'aria-label': `${c}, row ${ri + 1}`, inputmode: isNum(c) ? 'decimal' : null, onchange: (e) => saveCell(r, i, e.target.value), onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); const next = e.target.closest('tr').nextElementSibling; if (next) { const ni = next.querySelectorAll('td input')[i] || next.querySelector('input'); if (ni) { e.target.blur(); ni.focus(); return; } } e.target.blur(); } } }));
         }),
         h('td', { class: 'act' }, h('button', { type: 'button', class: 'icon-btn', 'aria-label': `Delete row ${ri + 1}`, html: ICONS.trash, onclick: () => store.del('list_rows', r.id).catch(fail) })));
     })),
@@ -108,7 +114,10 @@ function renderListPage(root, w, l) {
 
   const search = h('input', { type: 'search', value: q, placeholder: 'Find in this list…', 'aria-label': 'Find in this list', oninput: (e) => { q = e.target.value; const term = q.trim().toLowerCase(); document.querySelectorAll('.ltable.big tbody tr').forEach(tr => { const t = [...tr.querySelectorAll('input')].map(i => i.value).join(' ').toLowerCase(); tr.hidden = !!term && !t.includes(term); }); } });
   const step = l.step_id ? store.find('steps', l.step_id) : null;
-  const title = h('input', { class: 'ltitle lt-page', value: l.title, maxlength: 80, 'aria-label': 'List name', onchange: (e) => { const v = e.target.value.trim(); if (v && v !== l.title) store.update('lists', l.id, { title: v }).catch(fail); } });
+  // The name wraps onto a second line on a phone instead of being cut off.
+  const grow = (t) => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
+  const title = h('textarea', { class: 'ltitle lt-page', rows: 1, maxlength: 80, 'aria-label': 'List name', oninput: (e) => grow(e.target), onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }, onchange: (e) => { const v = e.target.value.replace(/\s+/g, ' ').trim(); if (v && v !== l.title) store.update('lists', l.id, { title: v }).catch(fail); } });
+  title.value = l.title; requestAnimationFrame(() => grow(title));
   root.append(
     h('a', { class: 'back-link', href: `#/w/${w.id}/lists` }, h('span', { html: ICONS.back }), 'All lists'),
     h('div', { class: 'lpage-head' },
@@ -116,10 +125,12 @@ function renderListPage(root, w, l) {
       h('div', { class: 'ph-right' },
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
-        h('button', { type: 'button', class: 'btn ghost', onclick: () => window.print() }, 'Print'),
+        h('button', { type: 'button', class: 'btn ghost wa-btn', onclick: () => sendList(store.find('lists', l.id) || l) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send on WhatsApp'),
+        h('button', { type: 'button', class: 'btn ghost', onclick: () => printList(store.find('lists', l.id) || l) }, 'Print or save as PDF'),
         ...otherWeddings(w.id).map(o => h('button', { type: 'button', class: 'btn ghost', onclick: () => copyList(l, o.id) }, 'Copy to ' + o.couple.split('&')[0].trim())),
         h('button', { type: 'button', class: 'btn ghost', style: { color: 'var(--warn)' }, onclick: async () => { if (await confirmBox('Move this list to the Bin?', 'Anyone can restore it from the Bin.', 'Move to Bin')) { await store.remove('lists', l.id).then(() => { toast('Moved to the Bin'); location.hash = `#/w/${w.id}/lists`; }).catch(fail); } } }, 'Move to Bin'))),
     h('div', { class: 'lp-tools' }, h('label', { class: 'find-in' }, h('span', { html: ICONS.search }), search), h('span', { class: 'hint', style: { margin: 0 } }, 'Tap a column name to rename it. Press Enter to jump to the next row.')),
     h('div', { class: 'ltable-wrap lt-page' }, all.length ? table : h('div', { class: 'lp-empty' }, h('p', {}, 'Nothing here yet.'), h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add the first row'))),
-    all.length ? h('button', { type: 'button', class: 'dashed', style: { marginTop: '10px' }, onclick: addRow }, '+ Add a row') : null);
+    all.length ? h('button', { type: 'button', class: 'dashed', style: { marginTop: '10px' }, onclick: addRow }, '+ Add a row') : null,
+    ...Object.entries(SUGGEST).map(([k, opts]) => h('datalist', { id: 'sg-' + k }, opts.map(o => h('option', { value: o })))));
 }
