@@ -91,42 +91,91 @@ language sql stable security definer set search_path = public as $$
      and exists (select 1 from public.edit_locks where target_table = p_table and target_id = p_id);
 $$;
 
--- Restrictive policies are added on top of the existing ones: a change must pass both.
--- (Written without any dollar signs inside, so the Supabase editor reads it correctly.)
-do $do$
-declare
-  r record;
-  lock_kind text;
-begin
-  for r in select * from (values
-      ('stages', 'null::text'),
-      ('areas', 'id::text'),
-      ('steps', 'area_id::text'),
-      ('todos', 'null::text'),
-      ('board_items', 'null::text'),
-      ('files', 'null::text'),
-      ('lists', 'id::text'),
-      ('list_rows', 'list_id::text'),
-      ('budgets', 'id::text'),
-      ('budget_areas', 'budget_id::text'),
-      ('budget_items', 'budget_id::text'),
-      ('weddings', 'null::text')
-    ) as t(tbl, held_col)
-  loop
-    if to_regclass('public.' || r.tbl) is null then continue; end if;
-    lock_kind := case when r.tbl in ('steps', 'areas') then 'areas' when r.tbl in ('lists', 'list_rows') then 'lists' else 'budgets' end;
-    execute format('drop policy if exists %I on public.%I', 'role insert ' || r.tbl, r.tbl);
-    execute format('drop policy if exists %I on public.%I', 'role update ' || r.tbl, r.tbl);
-    execute format('drop policy if exists %I on public.%I', 'role delete ' || r.tbl, r.tbl);
-    execute format('create policy %I on public.%I as restrictive for insert to authenticated with check (public.may_write(%L) and not public.is_held(%L, %s))',
-      'role insert ' || r.tbl, r.tbl, r.tbl, lock_kind, r.held_col);
-    execute format('create policy %I on public.%I as restrictive for update to authenticated using (public.may_write(%L) and not public.is_held(%L, %s)) with check (public.may_write(%L) and not public.is_held(%L, %s))',
-      'role update ' || r.tbl, r.tbl, r.tbl, lock_kind, r.held_col, r.tbl, lock_kind, r.held_col);
-    execute format('create policy %I on public.%I as restrictive for delete to authenticated using (public.may_write(%L) and not public.is_held(%L, %s))',
-      'role delete ' || r.tbl, r.tbl, r.tbl, lock_kind, r.held_col);
-  end loop;
-end
-$do$;
+-- Restrictive policies on top of the existing ones: a change must pass both.
+-- (Written out table by table, with no DO block, so the Supabase editor reads it correctly.)
+drop policy if exists "role insert stages" on public.stages;
+drop policy if exists "role update stages" on public.stages;
+drop policy if exists "role delete stages" on public.stages;
+create policy "role insert stages" on public.stages as restrictive for insert to authenticated with check (public.may_write('stages') and not public.is_held('budgets', null::text));
+create policy "role update stages" on public.stages as restrictive for update to authenticated using (public.may_write('stages') and not public.is_held('budgets', null::text)) with check (public.may_write('stages') and not public.is_held('budgets', null::text));
+create policy "role delete stages" on public.stages as restrictive for delete to authenticated using (public.may_write('stages') and not public.is_held('budgets', null::text));
+
+drop policy if exists "role insert areas" on public.areas;
+drop policy if exists "role update areas" on public.areas;
+drop policy if exists "role delete areas" on public.areas;
+create policy "role insert areas" on public.areas as restrictive for insert to authenticated with check (public.may_write('areas') and not public.is_held('areas', id::text));
+create policy "role update areas" on public.areas as restrictive for update to authenticated using (public.may_write('areas') and not public.is_held('areas', id::text)) with check (public.may_write('areas') and not public.is_held('areas', id::text));
+create policy "role delete areas" on public.areas as restrictive for delete to authenticated using (public.may_write('areas') and not public.is_held('areas', id::text));
+
+drop policy if exists "role insert steps" on public.steps;
+drop policy if exists "role update steps" on public.steps;
+drop policy if exists "role delete steps" on public.steps;
+create policy "role insert steps" on public.steps as restrictive for insert to authenticated with check (public.may_write('steps') and not public.is_held('areas', area_id::text));
+create policy "role update steps" on public.steps as restrictive for update to authenticated using (public.may_write('steps') and not public.is_held('areas', area_id::text)) with check (public.may_write('steps') and not public.is_held('areas', area_id::text));
+create policy "role delete steps" on public.steps as restrictive for delete to authenticated using (public.may_write('steps') and not public.is_held('areas', area_id::text));
+
+drop policy if exists "role insert todos" on public.todos;
+drop policy if exists "role update todos" on public.todos;
+drop policy if exists "role delete todos" on public.todos;
+create policy "role insert todos" on public.todos as restrictive for insert to authenticated with check (public.may_write('todos') and not public.is_held('budgets', null::text));
+create policy "role update todos" on public.todos as restrictive for update to authenticated using (public.may_write('todos') and not public.is_held('budgets', null::text)) with check (public.may_write('todos') and not public.is_held('budgets', null::text));
+create policy "role delete todos" on public.todos as restrictive for delete to authenticated using (public.may_write('todos') and not public.is_held('budgets', null::text));
+
+drop policy if exists "role insert board_items" on public.board_items;
+drop policy if exists "role update board_items" on public.board_items;
+drop policy if exists "role delete board_items" on public.board_items;
+create policy "role insert board_items" on public.board_items as restrictive for insert to authenticated with check (public.may_write('board_items') and not public.is_held('budgets', null::text));
+create policy "role update board_items" on public.board_items as restrictive for update to authenticated using (public.may_write('board_items') and not public.is_held('budgets', null::text)) with check (public.may_write('board_items') and not public.is_held('budgets', null::text));
+create policy "role delete board_items" on public.board_items as restrictive for delete to authenticated using (public.may_write('board_items') and not public.is_held('budgets', null::text));
+
+drop policy if exists "role insert files" on public.files;
+drop policy if exists "role update files" on public.files;
+drop policy if exists "role delete files" on public.files;
+create policy "role insert files" on public.files as restrictive for insert to authenticated with check (public.may_write('files') and not public.is_held('budgets', null::text));
+create policy "role update files" on public.files as restrictive for update to authenticated using (public.may_write('files') and not public.is_held('budgets', null::text)) with check (public.may_write('files') and not public.is_held('budgets', null::text));
+create policy "role delete files" on public.files as restrictive for delete to authenticated using (public.may_write('files') and not public.is_held('budgets', null::text));
+
+drop policy if exists "role insert lists" on public.lists;
+drop policy if exists "role update lists" on public.lists;
+drop policy if exists "role delete lists" on public.lists;
+create policy "role insert lists" on public.lists as restrictive for insert to authenticated with check (public.may_write('lists') and not public.is_held('lists', id::text));
+create policy "role update lists" on public.lists as restrictive for update to authenticated using (public.may_write('lists') and not public.is_held('lists', id::text)) with check (public.may_write('lists') and not public.is_held('lists', id::text));
+create policy "role delete lists" on public.lists as restrictive for delete to authenticated using (public.may_write('lists') and not public.is_held('lists', id::text));
+
+drop policy if exists "role insert list_rows" on public.list_rows;
+drop policy if exists "role update list_rows" on public.list_rows;
+drop policy if exists "role delete list_rows" on public.list_rows;
+create policy "role insert list_rows" on public.list_rows as restrictive for insert to authenticated with check (public.may_write('list_rows') and not public.is_held('lists', list_id::text));
+create policy "role update list_rows" on public.list_rows as restrictive for update to authenticated using (public.may_write('list_rows') and not public.is_held('lists', list_id::text)) with check (public.may_write('list_rows') and not public.is_held('lists', list_id::text));
+create policy "role delete list_rows" on public.list_rows as restrictive for delete to authenticated using (public.may_write('list_rows') and not public.is_held('lists', list_id::text));
+
+drop policy if exists "role insert budgets" on public.budgets;
+drop policy if exists "role update budgets" on public.budgets;
+drop policy if exists "role delete budgets" on public.budgets;
+create policy "role insert budgets" on public.budgets as restrictive for insert to authenticated with check (public.may_write('budgets') and not public.is_held('budgets', id::text));
+create policy "role update budgets" on public.budgets as restrictive for update to authenticated using (public.may_write('budgets') and not public.is_held('budgets', id::text)) with check (public.may_write('budgets') and not public.is_held('budgets', id::text));
+create policy "role delete budgets" on public.budgets as restrictive for delete to authenticated using (public.may_write('budgets') and not public.is_held('budgets', id::text));
+
+drop policy if exists "role insert budget_areas" on public.budget_areas;
+drop policy if exists "role update budget_areas" on public.budget_areas;
+drop policy if exists "role delete budget_areas" on public.budget_areas;
+create policy "role insert budget_areas" on public.budget_areas as restrictive for insert to authenticated with check (public.may_write('budget_areas') and not public.is_held('budgets', budget_id::text));
+create policy "role update budget_areas" on public.budget_areas as restrictive for update to authenticated using (public.may_write('budget_areas') and not public.is_held('budgets', budget_id::text)) with check (public.may_write('budget_areas') and not public.is_held('budgets', budget_id::text));
+create policy "role delete budget_areas" on public.budget_areas as restrictive for delete to authenticated using (public.may_write('budget_areas') and not public.is_held('budgets', budget_id::text));
+
+drop policy if exists "role insert budget_items" on public.budget_items;
+drop policy if exists "role update budget_items" on public.budget_items;
+drop policy if exists "role delete budget_items" on public.budget_items;
+create policy "role insert budget_items" on public.budget_items as restrictive for insert to authenticated with check (public.may_write('budget_items') and not public.is_held('budgets', budget_id::text));
+create policy "role update budget_items" on public.budget_items as restrictive for update to authenticated using (public.may_write('budget_items') and not public.is_held('budgets', budget_id::text)) with check (public.may_write('budget_items') and not public.is_held('budgets', budget_id::text));
+create policy "role delete budget_items" on public.budget_items as restrictive for delete to authenticated using (public.may_write('budget_items') and not public.is_held('budgets', budget_id::text));
+
+drop policy if exists "role insert weddings" on public.weddings;
+drop policy if exists "role update weddings" on public.weddings;
+drop policy if exists "role delete weddings" on public.weddings;
+create policy "role insert weddings" on public.weddings as restrictive for insert to authenticated with check (public.may_write('weddings') and not public.is_held('budgets', null::text));
+create policy "role update weddings" on public.weddings as restrictive for update to authenticated using (public.may_write('weddings') and not public.is_held('budgets', null::text)) with check (public.may_write('weddings') and not public.is_held('budgets', null::text));
+create policy "role delete weddings" on public.weddings as restrictive for delete to authenticated using (public.may_write('weddings') and not public.is_held('budgets', null::text));
 
 -- Storage: View-only people can't upload or delete files.
 drop policy if exists "role uploads media" on storage.objects;
@@ -192,9 +241,5 @@ end $$;
 drop trigger if exists list_rows_log on public.list_rows;
 create trigger list_rows_log after insert or update or delete on public.list_rows for each row execute function public.log_change();
 
--- Live updates for locks.
-do $do$
-begin
-  begin alter publication supabase_realtime add table public.edit_locks; exception when duplicate_object then null; end;
-end
-$do$;
+-- Live updates for locks. (If this last line says the table is already a member, that's fine — it was added before.)
+alter publication supabase_realtime add table public.edit_locks;

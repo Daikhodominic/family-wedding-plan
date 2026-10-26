@@ -29,7 +29,7 @@ create policy "admin reads nightly backups" on public.nightly_backups for select
 
 -- 3. Making one copy. Tables that aren't there yet are skipped.
 create or replace function public.take_nightly_backup() returns bigint
-language plpgsql security definer set search_path = public as $fn$
+language plpgsql security definer set search_path = public as $$
 declare
   t text;
   part jsonb;
@@ -58,33 +58,33 @@ begin
   delete from public.nightly_backups where id not in (select id from public.nightly_backups order by taken_at desc limit 14);
   return new_id;
 end;
-$fn$;
+$$;
 revoke all on function public.take_nightly_backup() from public, anon, authenticated;
 
 -- The admin can also make one straight away (Settings → Backups & space → "Make a nightly copy now").
 create or replace function public.take_backup_now() returns bigint
-language plpgsql security definer set search_path = public as $fn$
+language plpgsql security definer set search_path = public as $$
 begin
   if not public.is_admin() then raise exception 'Only the admin can do this'; end if;
   return public.take_nightly_backup();
 end;
-$fn$;
+$$;
 grant execute on function public.take_backup_now() to authenticated;
 
 -- The list without the (big) contents, for the Settings page.
 create or replace function public.list_nightly_backups() returns table (id bigint, taken_at timestamptz, tables int, rows_total int, size_kb int)
-language sql stable security definer set search_path = public as $fn$
+language sql stable security definer set search_path = public as $$
   select b.id, b.taken_at, b.tables, b.rows_total, (octet_length(b.data::text) / 1024)::int
   from public.nightly_backups b where public.is_admin() order by b.taken_at desc;
-$fn$;
+$$;
 grant execute on function public.list_nightly_backups() to authenticated;
 
 -- One copy's contents, to download.
 create or replace function public.get_nightly_backup(p_id bigint) returns jsonb
-language sql stable security definer set search_path = public as $fn$
+language sql stable security definer set search_path = public as $$
   select jsonb_build_object('made', b.taken_at, 'by', 'Nightly copy (automatic)', 'data', b.data)
   from public.nightly_backups b where b.id = p_id and public.is_admin();
-$fn$;
+$$;
 grant execute on function public.get_nightly_backup(bigint) to authenticated;
 
 -- 4. Every night at 21:30 UTC = 3:00 am in India. Re-running this replaces the old schedule.
