@@ -1,21 +1,22 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=53';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=53';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=53';
-import { isDecider, personInput } from './tools.js?v=53';
-import { suggestDue } from './planauto.js?v=53';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=53';
-import { addVendor } from './decisions.js?v=53';
-import { pickFiles, fetchPreview } from './board.js?v=53';
-import { chooseTabs } from './tabs.js?v=53';
-import { areaIcon } from './areaicons.js?v=53';
-import { smartBar, inboxSection } from './smartadd.js?v=53';
-import { renderGlimpse } from './glimpse.js?v=53';
-import { planOf } from './map.js?v=53';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=53';
-import { sampleRows, isSample } from './samples.js?v=53';
+import { store } from './store.js?v=54';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=54';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=54';
+import { isDecider, personInput } from './tools.js?v=54';
+import { suggestDue } from './planauto.js?v=54';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=54';
+import { addVendor } from './decisions.js?v=54';
+import { pickFiles, fetchPreview } from './board.js?v=54';
+import { chooseTabs } from './tabs.js?v=54';
+import { areaIcon } from './areaicons.js?v=54';
+import { smartBar, inboxSection } from './smartadd.js?v=54';
+import { renderGlimpse } from './glimpse.js?v=54';
+import { fileTile } from './panel.js?v=54';
+import { planOf } from './map.js?v=54';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=54';
+import { sampleRows, isSample } from './samples.js?v=54';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -619,6 +620,8 @@ function deckCard(o, rest, onVote) {
 
 /* ---------- The profile: every photo and detail of one option, Bumble style ----------
    Scroll down through it; push sideways (or use the buttons) to decide. */
+// Quotes, brochures and menus kept on an option (Smart add puts them in the step's files too).
+export const docsOf = (o) => ((o.data || {}).docs || []).map(id => store.find('files', id)).filter(f => f && !f.deleted_at);
 export function openProfile(o, onVote) {
   const old = document.querySelector('.pf-wrap'); if (old) old.remove();
   const cur = store.find('board_items', o.id) || o; const d = cur.data || {}; const w = wedding(cur.wedding_id); const s = stepOf(cur);
@@ -637,6 +640,8 @@ export function openProfile(o, onVote) {
       d.notes ? h('p', { class: 'pf-notes' }, d.notes) : null,
       gallery ? h('h3', { class: 'pf-h' }, rest.length === 1 ? 'One more photo' : `${rest.length} more photos`) : null,
       gallery,
+      docsOf(cur).length ? h('h3', { class: 'pf-h' }, docsOf(cur).length === 1 ? 'Document' : `${docsOf(cur).length} documents`) : null,
+      docsOf(cur).length ? h('div', { class: 'd-files pf-docs' }, docsOf(cur).map(f => fileTile(f))) : null,
       (d.links || []).length ? h('div', { class: 'od-links' }, (d.links || []).map(linkTile)) : null,
       d.phone ? h('div', { class: 'od-phone' }, h('a', { class: 'btn small ghost', href: 'tel:' + d.phone.replace(/[^\d+]/g, '') }, '☏ ' + d.phone), waLink(d.phone) ? waButton({ label: 'Ask them on WhatsApp', phone: d.phone, cls: 'ghost', text: () => vendorMessage(cur, s && s.title) }) : null) : null,
       h('p', { class: 'pf-who' }, v.total ? VOTES.filter(k => v[k].length).map(k => `${{ love: '♥', no: '✕' }[k]} ${v[k].join(', ')}`).join('  ·  ') : 'No votes yet — be the first.'),
@@ -644,12 +649,12 @@ export function openProfile(o, onVote) {
       h('div', { class: 'od-acts pf-acts' },
         isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
-        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=53').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
-        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
-        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
-        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=53').then(m => m.openHistory('option', cur)); } }, '↺ History'),
+        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=54').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
+        h('button', { type: 'button', class: 'btn ghost small', 'data-edit': '', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
+        h('button', { type: 'button', class: 'btn ghost small', 'data-edit': '', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
+        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=54').then(m => m.openHistory('option', cur)); } }, '↺ History'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,
-        h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { close(); deleteOption(cur); } }, 'Delete'))));
+        h('button', { type: 'button', class: 'btn ghost small', 'data-edit': '', style: { color: 'var(--warn)' }, onclick: () => { close(); deleteOption(cur); } }, 'Delete'))));
   const bar = h('div', { class: 'pf-bar' },
     h('button', { type: 'button', class: 'sw-btn no' + (mine === 'no' ? ' on' : ''), 'aria-label': 'Not this', html: ICONS.nope, onclick: () => decideNow('no') }),
     h('button', { type: 'button', class: 'pf-close', onclick: close }, 'Back'),
@@ -694,7 +699,7 @@ export function renderSwipe(root, opts = {}) {
       h('div', { class: 'sw-done-acts' },
         undoStack.length ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { const lv = undoStack.pop(); undoVote(lv.o, redraw); } }, '↶ Undo last') : null,
         w ? h('a', { class: 'btn', href: `#/w/${w.id}/choose` }, 'See all categories') : weddings().map(x => h('a', { class: 'btn ghost', href: `#/w/${x.id}/choose` }, (x.couple || '').split('&')[0].trim() + '’s choices')),
-        w ? h('button', { type: 'button', class: 'btn ghost', onclick: () => editOption(w, step && step.id) }, '+ Add an option') : null),
+        w ? h('button', { type: 'button', class: 'btn ghost', 'data-edit': '', onclick: () => editOption(w, step && step.id) }, '+ Add an option') : null),
       all.length ? h('div', { class: 'sw-done-wa' }, h('span', { class: 'muted' }, 'Get the others to vote too:'), waButton({ label: 'Ask the family on WhatsApp', small: false, text: () => swipeMessage(w && w.id, all.length) })) : null));
     return;
   }
@@ -770,7 +775,7 @@ export function renderChoose(root, w, params = {}) {
   root.append(h('header', { class: 'ch-head' },
     h('h1', { class: 'ed-h ch-title' }, h('span', { class: 'ed-caps' }, 'Choose'), ' ', h('span', { class: 'ed-script' }, 'together')),
     h('div', { class: 'ch-acts' },
-      h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
+      h('button', { type: 'button', class: 'btn', 'data-edit': '', onclick: () => editOption(w) }, '+ Add an option'),
       nOpen ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, nOpen) }) : null)));
   root.append(chooseTabs(w, 'vote'), smartBar(w));
   const cats = categoriesOf(w);
@@ -872,7 +877,7 @@ export function renderOptions(root, w, stepId) {
       catMeta(w, step)),
     h('div', { class: 'ph-right' },
       fresh ? h('a', { class: 'btn', href: `#/w/${w.id}/swipe?step=${step.id}` }, `Swipe · ${fresh} new`) : null,
-      h('button', { type: 'button', class: fresh ? 'btn ghost' : 'btn', onclick: () => editOption(w, step.id) }, '+ Add an option'),
+      h('button', { type: 'button', class: fresh ? 'btn ghost' : 'btn', 'data-edit': '', onclick: () => editOption(w, step.id) }, '+ Add an option'),
       opts.some(o => ((o.data || {}).images || []).length) ? h('button', { type: 'button', class: 'btn ghost', title: 'Download all the photos in this category as one .zip', onclick: () => downloadZip(optionPhotos(opts), step.title) }, '⬇ Photos') : null,
       opts.length && !fresh && (!step.locked_at || store.me.isAdmin) ? h('button', { type: 'button', class: 'btn ghost', onclick: () => swipeAgain(w, step) }, step.locked_at ? '↻ New round' : '↻ Swipe again') : null,
       opts.length >= 2 ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { const sel = opts.filter(o => picking.has(o.id)); openCompare(sel.length >= 2 ? sel : opts.filter(isOpen).slice(0, 3)); } }, picking.size >= 2 ? `Compare ${picking.size}` : 'Compare the top 3') : null)));

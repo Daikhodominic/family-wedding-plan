@@ -1,20 +1,20 @@
 // Today: the first page of each wedding, laid out like a wedding website.
 // The couple's photo with their monogram, the countdown, what's for you today, what's still to
 // decide (with photos), this week, the family, and what's already settled.
-import { store } from './store.js?v=53';
-import { h, toast, daysUntil, shortDate, ICONS, popMenu, modal, uploadPhoto, buzz } from './ui.js?v=53';
-import { live, stepVisible, render } from './app.js?v=53';
-import { openStep } from './panel.js?v=53';
-import { planOf } from './map.js?v=53';
-import { editStep } from './pipeline.js?v=53';
-import { jobsFor, isDone } from './myjobs.js?v=53';
-import { isDecider, samePerson, siteLink, share } from './tools.js?v=53';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=53';
-import { planOffer } from './plans.js?v=53';
-import { categoriesOf, optionsOf, votesOf, firstPic, pendingFor, photoEl } from './swipe.js?v=53';
-import { waButton, jobsMessage } from './nudge.js?v=53';
-import { areaIcon } from './areaicons.js?v=53';
-import { editDate, partnerLinks, partnerSugg } from './overview.js?v=53';
+import { store } from './store.js?v=54';
+import { h, toast, daysUntil, shortDate, ICONS, popMenu, modal, uploadPhoto, buzz } from './ui.js?v=54';
+import { live, stepVisible, render } from './app.js?v=54';
+import { openStep } from './panel.js?v=54';
+import { planOf } from './map.js?v=54';
+import { editStep } from './pipeline.js?v=54';
+import { jobsFor, isDone } from './myjobs.js?v=54';
+import { isDecider, samePerson, siteLink, share } from './tools.js?v=54';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=54';
+import { planOffer } from './plans.js?v=54';
+import { categoriesOf, optionsOf, votesOf, firstPic, pendingFor, photoEl } from './swipe.js?v=54';
+import { waButton, jobsMessage } from './nudge.js?v=54';
+import { areaIcon } from './areaicons.js?v=54';
+import { editDate, partnerLinks, partnerSugg } from './overview.js?v=54';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const first = (n) => String(n || '').trim().split(/\s+/)[0];
@@ -110,7 +110,7 @@ export function renderToday(root, w, params = {}) {
   const moreBtn = h('button', { type: 'button', class: 'ed-more', 'aria-haspopup': 'menu', onclick: () => popMenu(moreBtn, [
     { icon: 'comment', label: 'Share this week on WhatsApp', onClick: () => shareWeek(w) },
     { icon: 'plan', label: 'Add dates to my calendar', onClick: () => calendarFor(w) },
-    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=53').then(m => m.memoryBook(w)) },
+    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=54').then(m => m.memoryBook(w)) },
     isDecider() ? { icon: 'note', label: 'Post an announcement', onClick: () => newAnnouncement(w) } : null,
     isDecider() ? { icon: 'user', label: 'Share with the partner family', onClick: () => partnerLinks(w) } : { icon: 'user', label: 'What the partner family sees', href: `#/p/preview-${w.id}` },
     me.isAdmin ? { icon: 'image', label: coverSrc(w) ? 'Change the cover photo' : 'Add a cover photo', onClick: () => changeCover(w) } : null,
@@ -134,10 +134,10 @@ export function renderToday(root, w, params = {}) {
   const othersSoon = open.filter(x => String(x.owner || '').trim() && !(me && samePerson(x.owner, me.name)) && x.due && daysUntil(x.due) <= 7).sort((a, b) => a.due.localeCompare(b.due));
   for (const t of mine.slice(0, 2)) rows.push(h('div', { class: 'ed-row' }, dateTile(t.due),
     h('button', { type: 'button', class: 'ed-row-tx', onclick: () => openTask(t) }, h('b', {}, t.title), h('span', { class: t.due && daysUntil(t.due) < 0 ? 'late' : '' }, t.due ? (daysUntil(t.due) < 0 ? 'Overdue since ' + shortDate(t.due) : 'Yours · due ' + shortDate(t.due)) : 'Yours · no date yet')),
-    h('button', { type: 'button', class: 'ed-btn', onclick: () => { buzz(); setTask(t, { status: 'done' }).then(() => toast('Done ✓')).catch(fail); } }, 'Done')));
+    h('button', { type: 'button', class: 'ed-btn', 'data-edit': '', onclick: () => { buzz(); setTask(t, { status: 'done' }).then(() => toast('Done ✓')).catch(fail); } }, 'Done')));
   if (soonNobody[0] && rows.length < 3) { const t = soonNobody[0]; rows.push(h('div', { class: 'ed-row' }, dateTile(t.due),
     h('button', { type: 'button', class: 'ed-row-tx', onclick: () => openTask(t) }, h('b', {}, t.title), h('span', { class: 'ed-warn' }, soonNobody.length > 1 ? `No one in charge · and ${soonNobody.length - 1} more` : 'No one in charge yet')),
-    h('button', { type: 'button', class: 'ed-btn', onclick: () => setTask(t, { owner: me.name }).then(() => toast('It’s yours — thank you')).catch(fail) }, 'Take it'))); }
+    h('button', { type: 'button', class: 'ed-btn', 'data-edit': '', onclick: () => setTask(t, { owner: me.name }).then(() => toast('It’s yours — thank you')).catch(fail) }, 'Take it'))); }
   if (othersSoon[0] && rows.length < 3) { const t = othersSoon[0]; rows.push(h('div', { class: 'ed-row' }, dateTile(t.due),
     h('button', { type: 'button', class: 'ed-row-tx', onclick: () => openTask(t) }, h('b', {}, t.title), h('span', {}, `${t.owner} is in charge`)),
     waButton({ label: 'Nudge', to: t.owner, cls: 'ed-btn ghost', text: () => jobsMessage(t.owner, [t], w.id) }))); }
@@ -173,7 +173,7 @@ export function renderToday(root, w, params = {}) {
   /* ---------- This week ---------- */
   const week = open.filter(x => x.due && daysUntil(x.due) <= 7).sort((a, b) => a.due.localeCompare(b.due));
   const later = week.length ? [] : open.filter(x => x.due && daysUntil(x.due) <= 30).sort((a, b) => a.due.localeCompare(b.due));
-  const showWeek = (week.length ? week : later).slice(0, 5);
+  const showWeek = (week.length ? week : later).slice(0, matchMedia('(max-width: 700px)').matches ? 3 : 5);
   if (showWeek.length) pair.append(h('section', { class: 'ed-sec' },
     week.length ? edHead('This', 'week') : edHead('Coming', 'up'),
     h('div', { class: 'ed-thread-list' }, showWeek.map(t => { const d = d8(t.due), late = daysUntil(t.due) < 0;
@@ -185,6 +185,9 @@ export function renderToday(root, w, params = {}) {
 
   if (band) root.append(band);
 
+  // On phones, everything below the band folds away behind one line, so Today stays short.
+  const phone = matchMedia('(max-width: 700px)').matches;
+  const tail = []; const labels = [];
   /* ---------- The family ---------- */
   const members = (store.rows('members') || []).filter(m => m.name);
   if (members.length) {
@@ -197,25 +200,29 @@ export function renderToday(root, w, params = {}) {
         h('small', {}, js.length ? `${js.length} ${js.length === 1 ? 'job' : 'jobs'}` : '—'));
     };
     const sorted = [...members].sort((a, b) => jobsOf(b).length - jobsOf(a).length);
-    root.append(h('section', { class: 'ed-sec ed-narrow' }, edHead('The', 'family'),
+    labels.push('the family'); tail.push(h('section', { class: 'ed-sec ed-narrow' }, edHead('The', 'family'),
       h('div', { class: 'ed-people' }, sorted.slice(0, 7).map(person),
         h('button', { type: 'button', class: 'ed-person invite', onclick: () => share(`Join our wedding planning for ${w.couple}. Ask me for the family passcode.`, siteLink('')) }, h('span', { class: 'ed-av' }, '+'), h('b', {}, 'Invite'), h('small', {}, 'family')))));
   }
 
   // Partner family's suggestions, and "looks finished" nudges for the admin.
-  const ps = partnerSugg(w); if (ps) root.append(h('div', { class: 'ed-narrow' }, ps));
+  const ps = partnerSugg(w); if (ps) { labels.push('partner ideas'); tail.push(h('div', { class: 'ed-narrow' }, ps)); }
   const lf = looksFinished(w);
-  if (lf.length) root.append(h('section', { class: 'ed-sec ed-narrow' }, edHead('Looks', 'finished'),
+  if (lf.length) labels.push('looks finished'), tail.push(h('section', { class: 'ed-sec ed-narrow' }, edHead('Looks', 'finished'),
     h('div', { class: 'ed-card' }, lf.slice(0, 3).map(({ s, why }) => h('div', { class: 'ed-row' }, h('span', { class: 'ed-tile' }, h('span', { class: 'ed-tile-ic', html: ICONS.check })),
       h('button', { type: 'button', class: 'ed-row-tx', onclick: () => openStep(s.id) }, h('b', {}, s.title), h('span', {}, 'Because ' + why)),
-      h('button', { type: 'button', class: 'ed-btn', onclick: () => store.update('steps', s.id, { status: 'done' }).then(() => toast('Done ✓')).catch(fail) }, 'Tick it'))))));
+      h('button', { type: 'button', class: 'ed-btn', 'data-edit': '', onclick: () => store.update('steps', s.id, { status: 'done' }).then(() => toast('Done ✓')).catch(fail) }, 'Tick it'))))));
 
   /* ---------- Already settled ---------- */
-  if (finals.length) root.append(h('section', { class: 'ed-settled' },
+  if (finals.length) labels.push('already settled'), tail.push(h('section', { class: 'ed-settled' },
     h('span', { class: 'ed-thread', 'aria-hidden': 'true' }),
     h('small', {}, 'Already settled'),
     h('p', {}, finals.map(s => ((s.lock_note && s.lock_note.with) ? `${s.title} — ${s.lock_note.with}` : s.title)).join(' · ')),
     h('a', { class: 'ed-link', href: `#/w/${w.id}/choose?view=glimpse` }, 'See them at a glance')));
+  if (phone && tail.length) {
+    const say = labels.length > 1 ? labels.slice(0, -1).join(', ') + ' and ' + labels[labels.length - 1] : labels[0];
+    root.append(h('details', { class: 'ed-fold' }, h('summary', {}, h('span', {}, 'More'), h('small', {}, say.charAt(0).toUpperCase() + say.slice(1))), tail));
+  } else root.append(...tail);
 }
 
 // A photo that falls back to the section's drawing if it can't be loaded.

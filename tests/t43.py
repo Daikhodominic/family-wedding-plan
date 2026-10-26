@@ -2,7 +2,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-S="import('./js/store.js?v=53').then(m=>m.store)"
+S="import('./js/store.js?v=54').then(m=>m.store)"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':1280,'height':900})
@@ -14,7 +14,7 @@ async def main():
         # 1. @mention makes a job for that person
         await pg.goto(B+'#/w/elow/board'); await pg.wait_for_timeout(900)
         item = await pg.evaluate(f"async()=>{{const s=await {S}; return s.rows('board_items').find(i=>i.wedding_id==='elow'&&!i.deleted_at&&i.kind!=='shape'&&i.kind!=='connector').id}}")
-        await pg.evaluate(f"async()=>{{const m=await import('./js/feedback.js?v=53'); m.openThread('{item}')}}"); await pg.wait_for_timeout(500)
+        await pg.evaluate(f"async()=>{{const m=await import('./js/feedback.js?v=54'); m.openThread('{item}')}}"); await pg.wait_for_timeout(500)
         print('mention chips', await pg.locator('.mention-row .lchip').all_inner_texts())
         await pg.locator('.mention-row .lchip:has-text("Elow Daikho")').click()
         await pg.locator('.composer textarea').type('can you call them tomorrow?')

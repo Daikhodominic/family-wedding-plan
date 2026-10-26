@@ -1,5 +1,7 @@
 // Smart add — the AI and link reader behind the "Smart add" bar.
 // Deploy:  supabase functions deploy smart-add
+// Reads: pasted text, website links, Instagram business profiles, pictures, and documents — PDFs whole
+// (Gemini reads scanned pages too) plus the words the phone already pulled out of Word, Excel, PowerPoint and text files.
 // Secrets (set in Supabase → Edge Functions → Secrets, never in the app or chat):
 //   GEMINI_API_KEY        free key from Google AI Studio (Gemini Flash-Lite)          — main AI
 //   CF_ACCOUNT_ID, CF_API_TOKEN   Cloudflare Workers AI (free tier)                   — backup AI
@@ -18,7 +20,9 @@ const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { sta
 const env = (k: string) => Deno.env.get(k) || '';
 
 type Img = { b64: string; mime: string };
-type Body = { text?: string; links?: string[]; images?: Img[]; categories?: { id: string; title: string }[] };
+type Doc = { name?: string; text?: string; b64?: string; mime?: string };
+type Body = { text?: string; links?: string[]; images?: Img[]; docs?: Doc[]; categories?: { id: string; title: string }[] };
+const pdfsOf = (b: Body) => (b.docs || []).slice(0, 8).filter(d => d.b64 && d.mime === 'application/pdf');
 
 // ---------- Reading links ----------
 async function readWebsite(url: string) {
@@ -66,6 +70,7 @@ const SCHEMA = {
       phone: { type: 'string' }, whatsapp: { type: 'string' }, instagram: { type: 'string' }, website: { type: 'string' }, email: { type: 'string' },
       price_text: { type: 'string' }, price_value: { type: 'number' }, location: { type: 'string' }, notes: { type: 'string' },
       images: { type: 'array', items: { type: 'integer' } },
+      documents: { type: 'array', items: { type: 'integer' } },
       crops: { type: 'array', items: { type: 'object', properties: { image: { type: 'integer' }, box: { type: 'array', items: { type: 'integer' } } } } }
     }, required: ['name', 'confidence'] } }
   }, required: ['vendors']
@@ -79,6 +84,8 @@ Rules:
 - price_value in rupees (85k = 85000, 1.2 lakh = 120000). price_text as written, with "per plate" etc. if given.
 - phone in +91 form when it's an Indian mobile. instagram as the handle without @.
 - images: indexes (from 0) of the attached images that show this vendor's work or details.
+- documents: indexes (from 0, as numbered in DOCUMENTS) of the documents that are about this vendor — a quote, brochure, menu or price list.
+- A document from one vendor (a quote, brochure, menu) is ONE vendor even if it lists many items or packages; put the packages and prices in notes and the main or starting price in price_value. A document that is a list of several different vendors gives one entry per vendor.
 - crops: for screenshots, the box [ymin, xmin, ymax, xmax] on a 0–1000 scale around each actual photo of their work, leaving out phone status bars, app buttons and text. Only for screenshots.
 - notes: one or two short lines on what they offer, in plain words, from the material.
 CATEGORIES: ${JSON.stringify(b.categories || [])}
@@ -86,12 +93,13 @@ PASTED TEXT:
 ${(b.text || '').slice(0, 8000)}
 WEBSITES READ: ${JSON.stringify(sites).slice(0, 12000)}
 INSTAGRAM PROFILES: ${JSON.stringify(ig.map((x: any) => ({ ...x, photos: undefined }))).slice(0, 8000)}
-IMAGES ATTACHED: ${(b.images || []).length}`;
+IMAGES ATTACHED: ${(b.images || []).length}
+DOCUMENTS (the words read from each; a PDF numbered here may also be attached whole, after the images, in the same order): ${JSON.stringify((b.docs || []).slice(0, 8).map((d, i) => ({ index: i, file: d.name || '', attached_whole: !!(d.b64 && d.mime === 'application/pdf'), words: (d.text || '').slice(0, 6000) }))).slice(0, 30000)}`;
 }
 
 async function gemini(b: Body, text: string) {
   const key = env('GEMINI_API_KEY'); if (!key) throw new Error('no-gemini');
-  const parts: unknown[] = [{ text }, ...(b.images || []).slice(0, 8).map(i => ({ inline_data: { mime_type: i.mime || 'image/jpeg', data: i.b64 } }))];
+  const parts: unknown[] = [{ text }, ...(b.images || []).slice(0, 8).map(i => ({ inline_data: { mime_type: i.mime || 'image/jpeg', data: i.b64 } })), ...pdfsOf(b).map(d => ({ inline_data: { mime_type: 'application/pdf', data: d.b64 } }))];
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: SCHEMA } })

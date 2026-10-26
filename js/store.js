@@ -1,8 +1,8 @@
 // The data layer. Two interchangeable backends:
 //  - LiveStore talks to Supabase (the real, shared family site)
 //  - DemoStore keeps sample data in this browser only (for previews)
-import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=53';
-import { sampleRows } from './samples.js?v=53';
+import { SUPABASE_URL, SUPABASE_KEY, MODE } from './config.js?v=54';
+import { sampleRows } from './samples.js?v=54';
 
 export const TABLES = ['weddings', 'stages', 'areas', 'steps', 'todos', 'board_items', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'edit_locks', 'activity', 'members'];
 const OPTIONAL = ['todos', 'files', 'lists', 'list_rows', 'budgets', 'budget_areas', 'budget_items', 'comments', 'reactions', 'announcements', 'announcement_seen', 'partner_links', 'partners', 'edit_locks'];  // tables added by later database updates
@@ -313,6 +313,14 @@ class LiveStore extends BaseStore {
     return (data || []).filter(o => /\.json$/.test(o.name)).map(o => ({ name: o.name, path: 'backups/' + o.name, size: (o.metadata && o.metadata.size) || 0 }));
   }
   async removeBackups(paths) { if (paths.length) await this.sb.storage.from('media').remove(paths); }
+  // Nightly copies made by the database itself (update 15). null = update 15 not run yet.
+  async nightlyBackups() {
+    const { data, error } = await this.sb.rpc('list_nightly_backups');
+    if (error) { if (/does not exist|could not find|schema cache/i.test(error.message)) return null; throw new Error(error.message); }
+    return Array.isArray(data) ? data : [];
+  }
+  async nightlyBackup(id) { const { data, error } = await this.sb.rpc('get_nightly_backup', { p_id: id }); if (error) throw new Error(error.message); return data; }
+  async nightlyNow() { const { error } = await this.sb.rpc('take_backup_now'); if (error) throw new Error(error.message); }
 
   // Past changes for version history, straight from the database (the app only keeps the newest 500 in memory).
   async history({ entity, ids, weddingId }) {
@@ -709,6 +717,9 @@ class DemoStore extends BaseStore {
   async saveBackup(name, json) { this.blobs.set('backups/' + name, URL.createObjectURL(new Blob([json], { type: 'application/json' }))); this._bsize = { ...(this._bsize || {}), ['backups/' + name]: json.length }; }
   async listBackups() { return [...this.blobs.keys()].filter(k => k.startsWith('backups/')).sort().reverse().map(p => ({ name: p.slice(8), path: p, size: (this._bsize || {})[p] || 0 })); }
   async removeBackups(paths) { for (const p of paths) this.blobs.delete(p); }
+  async nightlyBackups() { return this._nightly || (this._nightly = [{ id: 1, taken_at: new Date(Date.now() - 5 * 3600e3).toISOString(), tables: 21, rows_total: Object.values(this.cache).reduce((n, r) => n + (r || []).length, 0), size_kb: 48 }]); }
+  async nightlyBackup() { return { made: new Date().toISOString(), by: 'Nightly copy (automatic)', data: this.cache }; }
+  async nightlyNow() { (this._nightly = this._nightly || []).unshift({ id: Date.now(), taken_at: new Date().toISOString(), tables: 21, rows_total: 0, size_kb: 48 }); }
   async history({ entity, ids, weddingId }) { return (this.cache.activity || []).filter(a => a.entity === entity && (!ids || ids.includes(a.entity_id)) && (!weddingId || a.wedding_id === weddingId)); }
   async downloadUrl(path) { return this.blobs.get(path) || ''; }
   async markSeen(activityId) {

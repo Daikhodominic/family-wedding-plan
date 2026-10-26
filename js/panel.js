@@ -1,16 +1,16 @@
 // The side panel that opens when you tap a step: details, lock, files and lists.
-import { duplicateStep } from './duplicate.js?v=53';
-import { store } from './store.js?v=53';
-import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=53';
-import { addStepAt } from './addhere.js?v=53';
-import { uploadFile, pickFiles } from './board.js?v=53';
-import { isDecider, deciderNames, personInput } from './tools.js?v=53';
-import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=53';
-import { voteCounts, optionKey } from './feedback.js?v=53';
-import { suggestDue } from './planauto.js?v=53';
-import { guestCount } from './boardauto.js?v=53';
-import { optionsOf, pendingFor, votesOf, editOption, wantsOptions } from './swipe.js?v=53';
-import { stepWaButton } from './nudge.js?v=53';
+import { duplicateStep } from './duplicate.js?v=54';
+import { store } from './store.js?v=54';
+import { h, toast, modal, field, confirmBox, ICONS, shortDate, longDate, ago, prettySize, fileExt, dragToClose, buzz } from './ui.js?v=54';
+import { addStepAt } from './addhere.js?v=54';
+import { uploadFile, pickFiles } from './board.js?v=54';
+import { isDecider, deciderNames, personInput } from './tools.js?v=54';
+import { cardsForStep, cardTitle, chooseOption, openIdeas, afterFinal, stepPicture, previewUrl } from './decisions.js?v=54';
+import { voteCounts, optionKey } from './feedback.js?v=54';
+import { suggestDue } from './planauto.js?v=54';
+import { guestCount } from './boardauto.js?v=54';
+import { optionsOf, pendingFor, votesOf, editOption, wantsOptions } from './swipe.js?v=54';
+import { stepWaButton } from './nudge.js?v=54';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 export const LIST_TEMPLATES = {
@@ -134,7 +134,7 @@ export function openStep(stepId) {
     if (!s || s.deleted_at) { close(); return; }
     const area = store.find('areas', s.area_id), stage = area && store.find('stages', area.stage_id);
     const locked = !!s.locked_at;
-    const canEdit = !locked || store.me.isAdmin;
+    const canEdit = (!locked || store.me.isAdmin) && store.may('steps', s) === true; // view / lists-only people see it read-only
     const set = (patch) => store.update('steps', s.id, patch).catch(fail);
     const files = live(store.rows('files')).filter(f => f.step_id === s.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     const lists = live(store.rows('lists')).filter(l => l.step_id === s.id);
@@ -180,22 +180,23 @@ export function openStep(stepId) {
       lockBlock = h('div', { class: 'd-lock' },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
           isDecider() ? h('button', { type: 'button', class: 'btn', style: { background: 'var(--gold)' }, onclick: () => { lockForm = true; draw(); } }, h('span', { html: lockIcon(18) }), 'Make it final') : h('span', { class: 'ft-sub' }, `Only the Deciders (${deciderNames()}) can make this final.`),
-          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Big decision'),
-          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', checked: wantsOptions(s) ? true : null, onchange: (e) => set({ lock_note: { ...(s.lock_note || {}), choose: e.target.checked } }) }), 'Choose between options')),
+          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', disabled: !canEdit ? true : null, checked: s.gate ? true : null, onchange: (e) => set({ gate: e.target.checked }) }), 'Big decision'),
+          h('label', { class: 'd-check' }, h('input', { type: 'checkbox', disabled: !canEdit ? true : null, checked: wantsOptions(s) ? true : null, onchange: (e) => set({ lock_note: { ...(s.lock_note || {}), choose: e.target.checked } }) }), 'Choose between options')),
         h('div', { class: 'ft-sub', style: { marginTop: '6px' } }, 'Make it final once it’s confirmed — a vendor booked, a menu agreed. “Big decision”: one of the main choices — it waits on Today and shows as a gold ◆ on the map. “Choose between options”: it gets a place in Choose so the family can add options and vote.'));
     }
 
     const owner = personInput(s.owner || '', { disabled: !canEdit ? true : null, onchange: (e) => set({ owner: e.target.value.trim() }) });
     const due = h('input', { type: 'date', value: s.due || '', disabled: !canEdit ? true : null, onchange: (e) => set({ due: e.target.value || null }) });
-    const notes = h('textarea', { rows: 3, placeholder: 'Details, decisions, phone numbers…', onchange: (e) => set({ notes: e.target.value }) }); notes.value = s.notes || '';
+    const notes = h('textarea', { rows: 3, disabled: !canEdit ? true : null, placeholder: 'Details, decisions, phone numbers…', onchange: (e) => set({ notes: e.target.value }) }); notes.value = s.notes || '';
 
     const dropZone = h('div', { class: 'd-files' }, files.length ? files.map(f => fileTile(f)) : h('div', { class: 'ft-sub' }, 'No files yet. Add photos, PDFs, quotes, receipts or spreadsheets.'));
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('over'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('over'); if (e.dataTransfer.files.length) uploadTo(s.wedding_id, s.id, [...e.dataTransfer.files]); });
 
+    const roNote = store.may('steps', s) !== true ? h('p', { class: 'hint ro-note d-ro' }, store.roleOf(store.me) === 'lists' ? 'You can add files and lists here, comment and vote. Ask the admin to change the step.' : 'You can look, comment and vote. Ask the admin if something needs changing.') : null;
     root.replaceChildren(
-      grab,
+      grab, roNote,
       h('div', { class: 'd-top' },
         h('div', { class: 'ft-sub' }, [stage && stage.title, area && area.title].filter(Boolean).join(' › ')),
         h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', html: ICONS.close, onclick: () => close() })),
@@ -211,10 +212,10 @@ export function openStep(stepId) {
         optionsSection(s),
         boardSection(s, area),
         h('section', { class: 'd-sec' },
-          h('div', { class: 'd-sec-h' }, h('h3', {}, 'Files'), missing.files ? null : h('button', { type: 'button', class: 'btn small soft', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(s.wedding_id, s.id, fs); } }, '+ Upload')),
+          h('div', { class: 'd-sec-h' }, h('h3', {}, 'Files'), missing.files || store.may('files', {}) !== true ? null : h('button', { type: 'button', class: 'btn small soft', onclick: async () => { const fs = await pickFiles('*/*'); if (fs.length) uploadTo(s.wedding_id, s.id, fs); } }, '+ Upload')),
           missing.files ? h('div', { class: 'ft-sub' }, 'Files need database update 4.') : dropZone),
         h('section', { class: 'd-sec' },
-          h('div', { class: 'd-sec-h' }, h('h3', {}, 'Lists'), missing.lists ? null : h('button', { type: 'button', class: 'btn small soft', onclick: () => newList(s.wedding_id, s.id) }, '+ New list')),
+          h('div', { class: 'd-sec-h' }, h('h3', {}, 'Lists'), missing.lists || store.may('lists', {}) !== true ? null : h('button', { type: 'button', class: 'btn small soft', onclick: () => newList(s.wedding_id, s.id) }, '+ New list')),
           missing.lists ? h('div', { class: 'ft-sub' }, 'Lists need database update 4.') : lists.length ? h('div', {}, lists.map(l => listRow(l))) : h('div', { class: 'ft-sub' }, 'No lists yet. Start a guest list, invitation list or shopping list.')),
         h('div', { class: 'd-foot' },
           h('span', { class: 'ft-sub' }, s.created_by ? 'Added by ' + (store.memberName(s.created_by) || 'someone') : 'From the starting plan'),
@@ -256,7 +257,7 @@ function optionsSection(s) {
   const lead = opts.filter(o => (o.data || {}).status !== 'not').sort((a, b) => votesOf(b).score - votesOf(a).score)[0];
   return h('section', { class: 'd-sec' },
     h('div', { class: 'd-sec-h' }, h('h3', {}, 'Options'),
-      h('button', { type: 'button', class: 'btn small soft', onclick: () => { if (current) current.close(); editOption(w, s.id); } }, '+ Add an option')),
+      h('button', { type: 'button', class: 'btn small soft', 'data-edit': '', onclick: () => { if (current) current.close(); editOption(w, s.id); } }, '+ Add an option')),
     opts.length ? h('a', { class: 'd-opts', href: `#/w/${s.wedding_id}/options?step=${s.id}`, onclick: () => { if (current) current.close(); } },
       h('b', {}, `${opts.length} ${opts.length === 1 ? 'option' : 'options'}`),
       h('span', {}, chosen ? '✓ Chosen: ' + ((chosen.data || {}).title || '') : lead && votesOf(lead).total ? 'Leading: ' + ((lead.data || {}).title || '') : 'No votes yet'),

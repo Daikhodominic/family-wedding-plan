@@ -1,13 +1,16 @@
 // Smart add: one bar for links, messages, photos and screenshots. Each wedding has its own.
-// 1. Fixed rules read what they can be sure of (smartparse.js).
+// 1. Fixed rules read what they can be sure of (smartparse.js). Documents (PDF, Word, Excel, PowerPoint, CSV,
+//    text) are read on the phone first (docread.js) and kept on the vendor, in its step's files.
 // 2. If the family's AI is set up, it reads links, Instagram business profiles and screenshots, and fills
 //    only what the rules left empty. Only vendor content is sent; nothing is looked up by name.
 // 3. Each vendor is matched to one already here (same phone, Instagram or name) and placed in a step.
 //    Anything it isn't sure about waits in the Inbox, and corrections teach it for next time.
-import { store } from './store.js?v=53';
-import { h, toast, modal, uploadPhoto, ICONS, buzz } from './ui.js?v=53';
-import { live, render, wedding, weddings, stepVisible } from './app.js?v=53';
-import * as P from './smartparse.js?v=53';
+import { store } from './store.js?v=54';
+import { h, toast, modal, uploadPhoto, ICONS, buzz } from './ui.js?v=54';
+import { live, render, wedding, weddings, stepVisible } from './app.js?v=54';
+import * as P from './smartparse.js?v=54';
+import { readDoc, docKind, nameFromFile } from './docread.js?v=54';
+import { uploadFile } from './board.js?v=54';
 
 /* ---------- Settings (per wedding, on this device) ---------- */
 const MODES = { ask: 'Always ask', sure: 'File when sure', all: 'File everything' };
@@ -80,19 +83,49 @@ async function venueOf(w) {
 
 /* ---------- Reading ---------- */
 // Everything found, before anything is saved: [{ v (what was read), files, stepId, sure, match, other }]
-async function readAll(w, text, files, say) {
+const GENERIC = /^(quotation|quote|estimate|invoice|bill|receipt|menu|wedding menu|brochure|price ?list|rate ?card|packages?|proposal|catalogu?e|terms( and conditions)?|dear sir\/?madam|to whom it may concern)[\s:.-]*$/i;
+const HEADER = /\b(vendor|name|business|phone|mobile|contact|rate|price|cost|amount|notes?|category|type)\b/i;
+async function readAll(w, text, all, say) {
+  const files = all.filter(f => docKind(f) === 'image'), docs = all.filter(f => docKind(f) !== 'image');
   const pieces = P.splitVendors(text);
   let found = pieces.map(p => P.readPiece(p));
+  // Documents: the words are read here; a short one may list several vendors, a long one is about one.
+  if (docs.length) say('Reading the documents…');
+  const read = await Promise.all(docs.map(readDoc));
+  const warn = read.filter(d => d.error).map(d => d.error);
+  read.forEach((d, i) => {
+    if (d.kind === 'pdf' && !d.text && !d.b64) warn.push(`${d.name}: no words found in it (a scan?) and it’s too big for the AI — it’s kept on the vendor.`);
+    if (!d.text) return;
+    let ps;
+    if (/\.(xlsx|csv|tsv)$/i.test(d.name) || d.kind === 'xlsx') {
+      // A table: one vendor per row; a header row (Vendor | Phone | Rate) is skipped.
+      const rows = d.text.split('\n').map(r => r.trim()).filter(Boolean);
+      if (rows.length && !/\d/.test(rows[0]) && HEADER.test(rows[0])) rows.shift();
+      ps = rows.map(r => r.replace(/\s*\|\s*/g, ', '));
+    } else ps = d.text.length < 1500 ? P.splitVendors(d.text) : [d.text];
+    for (let p of ps) {
+      // A heading like "Quotation" or "Menu" isn't the vendor's name.
+      while (GENERIC.test(p.split('\n')[0].trim()) && p.includes('\n')) p = p.slice(p.indexOf('\n') + 1);
+      const v = P.readPiece(p);
+      if (!v.name || GENERIC.test(v.name)) { v.name = nameFromFile(d.name); v.nameFromHandle = true; }
+      v.docIdx = [i]; found.push(v);
+    }
+  });
+  // A PDF with no words read here (a scan) still makes a vendor, named from the file if possible; so does any
+  // file when nothing else was found. Other files that can't be read are kept on the first vendor.
+  read.forEach((d, i) => { if (!found.some(v => (v.docIdx || []).includes(i)) && (d.kind === 'pdf' || !found.length)) { const v = P.readPiece(''); v.name = nameFromFile(d.name); v.nameFromHandle = true; v.docIdx = [i]; found.push(v); } });
   const links = [...new Set(found.flatMap(v => v.links))];
   const metas = await Promise.all(files.map(f => smallB64(f).catch(() => null)));
   const steps = stepsOf(w);
   let ai = null, extra = null;
-  const wantAI = store.mode !== 'demo' && (files.length || links.length || found.some(v => !v.name || !v.kind));
+  const wantAI = store.mode !== 'demo' && (files.length || docs.length || links.length || found.some(v => !v.name || !v.kind));
   if (wantAI) {
-    say('Reading the links and pictures…');
+    say(docs.length ? 'The AI is reading the documents…' : 'Reading the links and pictures…');
     try {
       let clean = text; for (const u of String(text).match(/\bhttps?:\/\/\S+/g) || []) clean = clean.replace(u, P.cleanLink(u.replace(/[.,;:!?…)\]]+$/, '')));
-      extra = await store.smartAdd({ text: clean.slice(0, 8000), links, images: metas.filter(Boolean).map(m => ({ b64: m.b64, mime: m.mime })), categories: steps.map(s => ({ id: s.id, title: `${s.title} (${s.area})` })) });
+      let room = 10 * 1024 * 1024; // whole PDFs sent to the AI, at most this much in one go
+      const docsForAI = read.map(d => { const keep = d.b64 && d.b64.length <= room; if (keep) room -= d.b64.length; return { name: d.name, text: (d.text || '').slice(0, 6000), b64: keep ? d.b64 : undefined, mime: keep ? d.mime : undefined }; });
+      extra = await store.smartAdd({ text: clean.slice(0, 8000), links, images: metas.filter(Boolean).map(m => ({ b64: m.b64, mime: m.mime })), docs: docsForAI, categories: steps.map(s => ({ id: s.id, title: `${s.title} (${s.area})` })) });
       ai = extra && extra.ai && extra.ai.vendors || null;
     } catch (e) { extra = { note: e.message }; }
   }
@@ -110,10 +143,12 @@ async function readAll(w, text, files, say) {
     v.aiStep = a.category_id && steps.some(s => s.id === a.category_id) ? a.category_id : null;
     v.aiSure = typeof a.confidence === 'number' ? a.confidence : 0;
     v.imageIdx = Array.isArray(a.images) ? a.images : null; v.crops = Array.isArray(a.crops) ? a.crops : [];
+    if (Array.isArray(a.documents) && a.documents.length) v.docIdx = a.documents.filter(n => Number.isInteger(n) && n >= 0 && n < docs.length);
   };
   if (ai) for (const a of ai) {
     const x = { name: a.name, phones: a.phone ? P.phonesIn(a.phone) : [], handles: a.instagram ? [a.instagram.replace(/^@/, '').toLowerCase()] : [] };
-    const v = found.find(f => P.sameVendor(f, x));
+    const v = found.find(f => P.sameVendor(f, x)) || (Array.isArray(a.documents) && a.documents.length ? found.find(f => (!f.name || f.nameFromHandle) && (f.docIdx || []).some(n => a.documents.includes(n)) && !f.aiFilled) : null);
+    if (v) v.aiFilled = true;
     if (v) fill(v, a); else { const n = P.readPiece(''); n.text = [a.name, a.notes].filter(Boolean).join('\n'); fill(n, a); found.push(n); }
   }
   // Instagram profiles read through Meta: name, bio, website and a few photos.
@@ -137,7 +172,9 @@ async function readAll(w, text, files, say) {
   if (!found.length && files.length) found.push(Object.assign(P.readPiece(''), { name: '' }));
   // Pictures: the AI says whose they are; otherwise all go to the only vendor, or to the first.
   const out = [];
-  for (const v of found) out.push({ v, files: [], igPhotos: igPhotos.filter(x => x.v === v).map(x => x.ph) });
+  for (const v of found) out.push({ v, files: [], docs: [], igPhotos: igPhotos.filter(x => x.v === v).map(x => x.ph) });
+  // Documents stay with the vendor they came from (or the one the AI says), else the first.
+  docs.forEach((f, i) => { const owner = out.find(o => (o.v.docIdx || []).includes(i)) || out[0]; if (owner) owner.docs.push(f); });
   for (let i = 0; i < files.length; i++) {
     const owner = out.find(o => o.v.imageIdx && o.v.imageIdx.includes(i)) || out[0];
     if (!owner) continue;
@@ -162,8 +199,8 @@ async function readAll(w, text, files, say) {
     if (venue && v.location) { const g = await geocode(v.location + ', India'); if (g) v.km = P.km(venue, g); }
   }
   // Repeats within this one paste are merged.
-  for (let i = out.length - 1; i > 0; i--) { const j = out.slice(0, i).findIndex(o => P.sameVendor(o.v, out[i].v)); if (j >= 0) { out[j].files.push(...out[i].files); out.splice(i, 1); } }
-  return { out, note: extra && extra.note, used: extra && extra.used };
+  for (let i = out.length - 1; i > 0; i--) { const j = out.slice(0, i).findIndex(o => P.sameVendor(o.v, out[i].v)); if (j >= 0) { out[j].files.push(...out[i].files); out[j].docs.push(...out[i].docs.filter(f => !out[j].docs.includes(f))); out.splice(i, 1); } }
+  return { out, warn, note: extra && extra.note, used: extra && extra.used };
 }
 
 /* ---------- Saving ---------- */
@@ -173,15 +210,23 @@ async function save(w, o, { inbox = false } = {}) {
   const images = [];
   for (const f of o.files) images.push({ path: await uploadPhoto(store, f) });
   for (const [i, p] of (o.igPhotos || []).entries()) { try { images.push({ path: await uploadPhoto(store, b64File(p, i)), from: p.permalink }); } catch (e) { /* skip */ } }
+  // Documents go in the step's files too, so they're found from the plan as well as on the vendor.
+  const stepFor = o.match && o.useMatch !== false ? ((store.find('board_items', o.match.id) || o.match).data || {}).step_id : (o.stepId || o.guess || null);
+  const docIds = [];
+  for (const f of o.docs || []) {
+    const r = await uploadFile(f); const d = r.data;
+    const row = await store.insert('files', { wedding_id: w.id, step_id: stepFor || null, title: f.name, path: d.path, thumb: r.kind === 'image' ? d.path : (d.thumb || null), mime: f.type || '', size: f.size, pages: d.pages || null });
+    docIds.push(row.id);
+  }
   const smart = { kind: v.kind || '', location: v.location || '', km: v.km ?? null, email: (v.emails || [])[0] || '', added: new Date().toISOString() };
   const rate = v.price ? P.priceLabel(v.price) : '';
   const phone = v.phone ? P.prettyPhone(v.phone) : '';
   if (o.match && o.useMatch !== false) {
     const cur = store.find('board_items', o.match.id) || o.match; const d = cur.data || {};
-    await store.update('board_items', cur.id, { data: { ...d, phone: d.phone || phone, rate: d.rate || rate, notes: d.notes || v.notes || '', links: [...new Set([...(d.links || []), ...v.links])], images: [...(d.images || []), ...images], smart: { ...(d.smart || {}), ...Object.fromEntries(Object.entries(smart).filter(([, x]) => x)) } } });
+    await store.update('board_items', cur.id, { data: { ...d, phone: d.phone || phone, rate: d.rate || rate, notes: d.notes || v.notes || '', links: [...new Set([...(d.links || []), ...v.links])], images: [...(d.images || []), ...images], docs: [...(d.docs || []), ...docIds], smart: { ...(d.smart || {}), ...Object.fromEntries(Object.entries(smart).filter(([, x]) => x)) } } });
     return 'updated';
   }
-  const data = { step_id: o.stepId || o.guess || null, title: v.name || 'New vendor', rate, phone, notes: v.notes || '', links: v.links, images, status: 'open', smart };
+  const data = { step_id: o.stepId || o.guess || null, title: v.name || 'New vendor', rate, phone, notes: v.notes || '', links: v.links, images, docs: docIds, status: 'open', smart };
   if (inbox || !o.stepId) data.inbox = true;
   await store.insert('board_items', { wedding_id: w.id, kind: 'option', x: 0, y: 0, w: 280, z: 1, data });
   return data.inbox ? 'inbox' : 'added';
@@ -207,7 +252,8 @@ function review(w, res, onDone) {
       v.handle ? h('span', { class: 'sa-chip ig' }, '@' + v.handle) : null,
       ...v.links.filter(l => P.linkKind(l) !== 'instagram').slice(0, 3).map(l => h('span', { class: 'sa-chip' }, P.linkKind(l) === 'map' ? '📍 Map' : new URL(l).hostname.replace(/^www\./, ''))),
       v.location ? h('span', { class: 'sa-chip' }, '📍 ' + v.location + (v.km != null ? ` · ${v.km} km from the venue` : '')) : null,
-      (v.emails || [])[0] ? h('span', { class: 'sa-chip' }, v.emails[0]) : null];
+      (v.emails || [])[0] ? h('span', { class: 'sa-chip' }, v.emails[0]) : null,
+      ...(o.docs || []).map(f => h('span', { class: 'sa-chip doc' }, '📄 ' + f.name))];
     const sure = o.match ? 'match' : o.sure >= SURE ? 'sure' : 'check';
     const useOther = o.other ? h('button', { type: 'button', class: 'btn ghost small', onclick: (e) => {
       const d = o.other.data || {}; if (!v.phone && d.phone) { v.phone = P.phonesIn(d.phone)[0] || ''; }
@@ -232,6 +278,7 @@ function review(w, res, onDone) {
   const m = modal({
     title: out.length === 1 ? 'Found 1 vendor' : `Found ${out.length} vendors`, wide: true,
     body: [res.note ? h('p', { class: 'hint', style: { marginTop: 0 } }, 'Read with the fixed rules only (' + res.note.replace(/\.$/, '') + ').') : res.used ? h('p', { class: 'hint', style: { marginTop: 0 } }, 'Read with the rules first, then the AI for anything they missed. Check the ones marked “Check this”.') : null,
+      (res.warn || []).length ? h('ul', { class: 'hint sa-warn' }, res.warn.map(x => h('li', {}, x))) : null,
       h('div', { class: 'sa-list' }, cards)],
     actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, { label: out.length === 1 ? 'Add it' : 'Add them', onClick: async () => {
       const keep = out.filter(o => o.keep); if (!keep.length) return;
@@ -251,17 +298,26 @@ function groupBy(steps) { const g = new Map(); for (const s of steps) { const k 
 let draft = {}, pending = {}; // per wedding: typed text, attached files
 export function smartBar(w) {
   const files = pending[w.id] || (pending[w.id] = []);
-  const box = h('textarea', { class: 'sa-input', rows: 1, placeholder: 'Smart add — paste a vendor’s message, Instagram or website link, or add screenshots…', 'aria-label': 'Smart add' });
+  const box = h('textarea', { class: 'sa-input', rows: 1, placeholder: 'Smart add — paste a vendor’s message or link, or add screenshots, PDFs and documents…', 'aria-label': 'Smart add' });
   box.value = draft[w.id] || '';
   const grow = () => { box.style.height = 'auto'; box.style.height = Math.min(220, box.scrollHeight) + 'px'; };
   box.addEventListener('input', () => { draft[w.id] = box.value; grow(); });
   requestAnimationFrame(grow);
   const tray = h('div', { class: 'sa-tray' });
-  const drawTray = () => tray.replaceChildren(...files.map((f, i) => h('span', { class: 'sa-thumb' }, h('img', { src: URL.createObjectURL(f), alt: '' }), h('button', { type: 'button', 'aria-label': 'Remove', onclick: () => { files.splice(i, 1); drawTray(); } }, '×'))));
+  const drawTray = () => tray.replaceChildren(...files.map((f, i) => h('span', { class: 'sa-thumb' + (docKind(f) === 'image' ? '' : ' doc'), title: f.name },
+    docKind(f) === 'image' ? h('img', { src: URL.createObjectURL(f), alt: '' }) : h('span', { class: 'sa-doc' }, h('b', {}, ((/\.([a-z0-9]{1,5})$/i.exec(f.name) || [])[1] || 'file').toUpperCase()), h('span', {}, f.name)),
+    h('button', { type: 'button', 'aria-label': 'Remove ' + f.name, onclick: () => { files.splice(i, 1); drawTray(); } }, '×'))));
   drawTray();
-  const addFiles = (list) => { for (const f of list) if (/^image\//.test(f.type)) files.push(f); drawTray(); };
+  const addFiles = (list) => {
+    for (const f of list) {
+      if (f.size > 50 * 1024 * 1024) { toast(`${f.name} is bigger than 50 MB — add a link to it instead`, 'error'); continue; }
+      if (files.length >= 12) { toast('Up to 12 files at a time', 'error'); break; }
+      files.push(f);
+    }
+    drawTray();
+  };
   box.addEventListener('paste', (e) => { const fs = [...(e.clipboardData && e.clipboardData.files || [])]; if (fs.length) { e.preventDefault(); addFiles(fs); } });
-  const pick = h('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true, onchange: (e) => { addFiles([...e.target.files]); e.target.value = ''; } });
+  const pick = h('input', { type: 'file', accept: 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.md,.rtf,.vcf,application/pdf', multiple: true, hidden: true, onchange: (e) => { addFiles([...e.target.files]); e.target.value = ''; } });
   const status = h('span', { class: 'sa-status', 'aria-live': 'polite' });
   const go = async () => {
     const text = box.value.trim(); if (!text && !files.length) { box.focus(); return; }
@@ -270,6 +326,7 @@ export function smartBar(w) {
     try {
       const res = await readAll(w, text, [...files], (s) => { status.textContent = s; });
       if (!res.out.length) { status.textContent = ''; toast('Couldn’t find a vendor in that. Try adding a name, phone or link.', 'error'); return; }
+      if ((res.warn || []).length && modeOf(w.id) !== 'ask') toast(res.warn[0], 'error');
       const clear = () => { draft[w.id] = ''; files.length = 0; render(); };
       const mode = modeOf(w.id);
       const sure = res.out.filter(o => o.match ? true : o.sure >= SURE);
@@ -294,7 +351,7 @@ export function smartBar(w) {
   const bar = h('section', { class: 'sa-bar', 'data-fresh': '' },
     h('div', { class: 'sa-row' },
       h('span', { class: 'sa-ic', html: ICONS.sparkle, 'aria-hidden': 'true' }), box,
-      h('button', { type: 'button', class: 'icon-btn sa-pic', 'aria-label': 'Add photos or screenshots', html: ICONS.image, onclick: () => pick.click() }), pick,
+      h('button', { type: 'button', class: 'icon-btn sa-pic', 'aria-label': 'Add photos, screenshots, PDFs or documents', title: 'Photos, screenshots, PDFs, Word, Excel…', html: ICONS.image, onclick: () => pick.click() }), pick,
       run),
     tray,
     h('div', { class: 'sa-foot' }, status,
@@ -318,7 +375,7 @@ function settings(w) {
     h('ul', { class: 'hint' }, h('li', {}, 'Always ask — you check every vendor before it’s added.'), h('li', {}, 'File when sure — the sure ones go straight in; you check the rest.'), h('li', {}, 'File everything — all go in; anything unsure waits in the Inbox.')),
     h('div', { class: 'field' }, h('label', {}, 'The venue (for “km from the venue”)'), venue, h('div', { class: 'hint' }, 'Uses OpenStreetMap. Only the vendor’s town or address is looked up.')),
     learned ? h('p', { class: 'hint' }, `It has learned from ${learned} corrections in this wedding. `, h('button', { type: 'button', class: 'link-btn', onclick: (e) => { put('learn', w.id, {}); e.currentTarget.parentNode.textContent = 'Forgotten.'; } }, 'Forget them')) : null,
-    h('p', { class: 'hint' }, store.mode === 'demo' ? 'In the sample, only the fixed rules run. With the family’s AI set up, it also reads links, Instagram business profiles and screenshots.' : 'Links, Instagram business profiles and screenshots are read by the family’s AI when the admin has set it up.')],
+    h('p', { class: 'hint' }, store.mode === 'demo' ? 'In the sample, only the fixed rules run (they read the words in PDFs, Word, Excel and text files too). With the family’s AI set up, it also reads links, Instagram business profiles, screenshots and scanned PDFs.' : 'The words in PDFs, Word, Excel, PowerPoint and text files are read on this device. Links, Instagram business profiles, screenshots and scanned PDFs are read by the family’s AI when the admin has set it up.')],
   actions: [{ label: 'Cancel', kind: 'ghost', onClick: () => { } }, { label: 'Save', onClick: () => { put('mode', w.id, mode); const q = venue.value.trim(); const old = get('venue', w.id, null); if (!old || old.q !== q) put('venue', w.id, q ? { q } : null); render(); } }] });
 }
 
@@ -330,7 +387,7 @@ export function inboxSection(w) {
     h('h2', { class: 'cat-h' }, `Inbox · ${items.length}`, h('span', { class: 'muted', style: { fontSize: '14px', fontWeight: 400, marginLeft: '10px' } }, 'Smart add wasn’t sure where these go')),
     h('div', { class: 'sa-ilist' }, items.map(o => {
       const d = o.data || {}; const guess = steps.find(s => s.id === d.step_id);
-      const place = async (stepId) => { learn(w.id, { name: d.title, handle: (d.links || []).map(P.igHandleOf).find(Boolean), kind: (d.smart || {}).kind }, stepId); const { inbox, ...rest } = d; await store.update('board_items', o.id, { data: { ...rest, step_id: stepId } }).then(() => toast('Moved — it’ll remember for next time')).catch(e => toast(e.message, 'error')); };
+      const place = async (stepId) => { learn(w.id, { name: d.title, handle: (d.links || []).map(P.igHandleOf).find(Boolean), kind: (d.smart || {}).kind }, stepId); const { inbox, ...rest } = d; for (const fid of d.docs || []) { const f = store.find('files', fid); if (f && !f.step_id) store.update('files', fid, { step_id: stepId }).catch(() => { }); } await store.update('board_items', o.id, { data: { ...rest, step_id: stepId } }).then(() => toast('Moved — it’ll remember for next time')).catch(e => toast(e.message, 'error')); };
       const sel = h('select', { 'aria-label': 'Put it in', onchange: (e) => e.target.value && place(e.target.value) },
         h('option', { value: '' }, 'Put it in…'), groupBy(steps).map(([stage, list]) => h('optgroup', { label: stage }, list.map(s => h('option', { value: s.id }, `${s.title} · ${s.area}`)))));
       return h('div', { class: 'sa-irow' },

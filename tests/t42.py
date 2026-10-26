@@ -11,9 +11,9 @@ async def main():
         await pg.goto(B+'#/settings?tab=data'); await pg.wait_for_timeout(1200)
         print('before', await pg.locator('.bk-body').inner_text())
         await pg.locator('.bk button:has-text("Back up now")').click(); await pg.wait_for_timeout(1500)
-        print('list', await pg.locator('.bk-list li').all_inner_texts())
-        assert await pg.locator('.bk-list li').count()==1
-        async with pg.expect_download() as dl: await pg.locator('.bk-list button:has-text("Download")').click()
+        print('list', await pg.locator('.bk-body .bk-list li').all_inner_texts())
+        assert await pg.locator('.bk-body .bk-list li').count()==1
+        async with pg.expect_download() as dl: await pg.locator('.bk-body .bk-list button:has-text("Download")').click()
         data=json.load(open(await (await dl.value).path())); print('backup tables', len(data['data']), 'steps', len(data['data']['steps']))
         await pg.locator('.stg button:has-text("Count again")').click(); await pg.wait_for_timeout(1200)
         rows=[t.split('\n')[0] for t in await pg.locator('.stg-row').all_inner_texts()]

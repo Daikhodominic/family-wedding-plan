@@ -1,14 +1,14 @@
-import { chooseTabs } from './tabs.js?v=53';
-import { store } from './store.js?v=53';
-import { h, modal, field, toast, ICONS, instaEmbed, instaPost, compressImage, uploadPhoto, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=53';
-import { live, ui, render, wedding } from './app.js?v=53';
-import { cardsToOptions } from './swipe.js?v=53';
-import { downloadZip, boardFiles } from './downloads.js?v=53';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=53';
-import { together } from './history.js?v=53';
-import { isDecider } from './tools.js?v=53';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=53';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=53';
+import { chooseTabs } from './tabs.js?v=54';
+import { store } from './store.js?v=54';
+import { h, modal, field, toast, ICONS, instaEmbed, instaPost, compressImage, uploadPhoto, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=54';
+import { live, ui, render, wedding } from './app.js?v=54';
+import { cardsToOptions } from './swipe.js?v=54';
+import { downloadZip, boardFiles } from './downloads.js?v=54';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=54';
+import { together } from './history.js?v=54';
+import { isDecider } from './tools.js?v=54';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=54';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=54';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },
@@ -417,7 +417,7 @@ function cardBody(item) {
         })) : h('div', { class: 'by' }, 'No options yet — tap the pencil to add them.'),
         (() => { const ins = compareInsight(item); return ins ? h('div', { class: 'cmp-ins' }, ins.text) : null; })(),
         readyToDecide(item) && isDecider() ? h('div', { class: 'ready-tag' }, '✦ Lots of votes — ready to decide?') : null,
-        h('button', { type: 'button', class: 'pill', style: { marginTop: '8px' }, title: 'Comparisons now live in Choose, where everyone can swipe and vote', onclick: (e) => { e.stopPropagation(); cardsToOptions(wedding(item.wedding_id), [item]); } }, 'Move these to Choose →'),
+        h('button', { type: 'button', class: 'pill', 'data-edit': '', style: { marginTop: '8px' }, title: 'Comparisons now live in Choose, where everyone can swipe and vote', onclick: (e) => { e.stopPropagation(); cardsToOptions(wedding(item.wedding_id), [item]); } }, 'Move these to Choose →'),
         byline);
     }
   }
@@ -454,10 +454,10 @@ function cardEl(item, w, onMove) {
   const handle = h('div', { class: 'handle', title: 'Drag to move' },
     h('span', { class: 'kind' }, KIND[item.kind] ? KIND[item.kind].label : ''),
     board.multi.has(item.id) ? h('span', { class: 'pick-tick', 'aria-label': 'Selected', html: ICONS.check }) : null,
-    h('button', { type: 'button', 'aria-label': 'Edit', html: ICONS.edit, onclick: (e) => { e.stopPropagation(); editItem(item, w); } }),
-    h('button', { type: 'button', 'aria-label': 'More: status, pin to a step, make a job, share', title: 'Status, pin to a step, make a job, share', html: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></svg>', onclick: (e) => { e.stopPropagation(); cardMenu(item, w, cardExtras(item, w)); } }),
+    h('button', { type: 'button', 'data-edit': '', 'aria-label': 'Edit', html: ICONS.edit, onclick: (e) => { e.stopPropagation(); editItem(item, w); } }),
+    h('button', { type: 'button', 'data-edit': '', 'aria-label': 'More: status, pin to a step, make a job, share', title: 'Status, pin to a step, make a job, share', html: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></svg>', onclick: (e) => { e.stopPropagation(); cardMenu(item, w, cardExtras(item, w)); } }),
     h('button', {
-      type: 'button', 'aria-label': 'Move to Bin', html: ICONS.trash, onclick: (e) => {
+      type: 'button', 'data-edit': '', 'aria-label': 'Move to Bin', html: ICONS.trash, onclick: (e) => {
         e.stopPropagation();
         store.remove('board_items', item.id).then(() => toast('Moved to the Bin — restore it from there anytime')).catch(fail);
       }
@@ -803,7 +803,7 @@ export function renderBoard(root, w, params) {
       board.full ? null : chooseTabs(w, 'board'),
       h('div', { class: 'plan-head board-bar' },
         h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'Ideas and samples'), h('h1', {}, 'Mood board')),
-        h('div', { class: 'ph-right' }, layoutSeg, h('button', { type: 'button', class: 'btn ghost', title: 'Arrange every section into neat columns — chosen first', onclick: () => tidyUp(w, cardEls) }, 'Tidy up'), h('button', { type: 'button', class: 'btn ghost', title: 'Download every photo and file on this board as one .zip', onclick: () => downloadZip(boardFiles(items), `${w.couple} mood board`) }, '⬇ Photos'), topAdd())),
+        h('div', { class: 'ph-right' }, layoutSeg, h('button', { type: 'button', class: 'btn ghost', 'data-edit': '', title: 'Arrange every section into neat columns — chosen first', onclick: () => tidyUp(w, cardEls) }, 'Tidy up'), h('button', { type: 'button', class: 'btn ghost', title: 'Download every photo and file on this board as one .zip', onclick: () => downloadZip(boardFiles(items), `${w.couple} mood board`) }, '⬇ Photos'), topAdd())),
       findBar(),
       h('p', { class: 'board-hint' }, board.multi.size ? `${board.multi.size} selected · drag any of them to move them together · Esc to clear` : hint)),
     h('div', { class: 'wrap board-holder' }, view, h('div', { class: 'drop-hint', 'aria-hidden': 'true' }, h('span', {}, 'Drop to add to the board')), drawBar, selBar, zoomBar, fab, addMenu)));

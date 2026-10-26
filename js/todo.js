@@ -1,9 +1,9 @@
-import { store } from './store.js?v=53';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=53';
-import { live, ui, render, stepVisible } from './app.js?v=53';
-import { editStep } from './pipeline.js?v=53';
-import { personInput } from './tools.js?v=53';
-import { jobsFor, jobSections, isDone } from './myjobs.js?v=53';
+import { store } from './store.js?v=54';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=54';
+import { live, ui, render, stepVisible } from './app.js?v=54';
+import { editStep } from './pipeline.js?v=54';
+import { personInput } from './tools.js?v=54';
+import { jobsFor, jobSections, isDone } from './myjobs.js?v=54';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 let showDone = false;   // the Done section starts folded
@@ -38,6 +38,7 @@ export function renderTodo(root, w, params) {
 
   // Quick add
   const input = h('input', { placeholder: 'Add a to-do and press Enter…', maxlength: 200, 'aria-label': 'New to-do' });
+  const canAdd = store.may('todos', {}) === true;
   const who = personInput(person || '', { placeholder: 'Who (optional)', 'aria-label': 'Person in charge', style: { maxWidth: '200px' } });
   const due = h('input', { type: 'date', 'aria-label': 'Due date', style: { maxWidth: '170px' } });
   const add = async () => {
@@ -58,7 +59,7 @@ export function renderTodo(root, w, params) {
     h('p', { class: 'hint' }, openCount ? `${openCount} still to do. Quick jobs that don’t need a place in the plan.` : 'All done. Add quick jobs that don’t need a place in the plan.'),
     h('div', { class: 'todo-grid' },
       h('div', { class: 'panel', style: { padding: '18px 20px' } },
-        h('div', { class: 'add-line', style: { flexWrap: 'wrap', marginTop: 0 } }, input, who, due, h('button', { class: 'btn small', type: 'button', onclick: add }, 'Add')),
+        canAdd ? h('div', { class: 'add-line', style: { flexWrap: 'wrap', marginTop: 0 } }, input, who, due, h('button', { class: 'btn small', type: 'button', onclick: add }, 'Add')) : null,
         h('div', { class: 'filters' },
           owners.length ? h('span', { class: 'muted', style: { alignSelf: 'center', fontSize: '13px', margin: '0 4px 0 0' } }, 'Show:') : null,
           owners.length ? [['', 'Anyone'], ...owners.map(o => [o, o])].map(([k, l]) => h('button', { class: 'filter', type: 'button', 'aria-pressed': String(person === k), onclick: () => { person = k; render(); } }, l)) : null),
@@ -124,5 +125,5 @@ function todoEl(t) {
       t.notes ? h('span', { class: 'sub' }, t.notes.length > 90 ? t.notes.slice(0, 88) + '…' : t.notes) : null),
     h('span', { style: { display: 'flex', alignItems: 'center', gap: '4px' } },
       t.status === 'doing' ? h('span', { class: 'chip doing' }, STATUS.doing) : null,
-      h('button', { class: 'icon-btn', type: 'button', 'aria-label': `Move “${t.title}” to the Bin`, html: ICONS.trash, style: { color: 'var(--w-muted)' }, onclick: () => store.remove('todos', t.id).then(() => toast('Moved to the Bin')).catch(fail) })));
+      h('button', { class: 'icon-btn', 'data-edit': '', type: 'button', 'aria-label': `Move “${t.title}” to the Bin`, html: ICONS.trash, style: { color: 'var(--w-muted)' }, onclick: () => store.remove('todos', t.id).then(() => toast('Moved to the Bin')).catch(fail) })));
 }

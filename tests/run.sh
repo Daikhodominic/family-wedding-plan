@@ -17,6 +17,8 @@ timeout 300 python3 t43.py >/dev/null 2>&1 && echo "ok   t43" || { echo "FAIL t4
 timeout 300 python3 t44.py >/dev/null 2>&1 && echo "ok   t44" || { echo "FAIL t44"; fail=1; }
 timeout 300 python3 t45.py >/dev/null 2>&1 && echo "ok   t45" || { echo "FAIL t45"; fail=1; }
 timeout 300 python3 t46.py >/dev/null 2>&1 && echo "ok   t46" || { echo "FAIL t46"; fail=1; }
+timeout 300 python3 t47.py >/dev/null 2>&1 && echo "ok   t47" || { echo "FAIL t47"; fail=1; }
+timeout 300 python3 t48.py >/dev/null 2>&1 && echo "ok   t48" || { echo "FAIL t48"; fail=1; }
 timeout 300 python3 t31.py "$v" >/dev/null 2>&1 && echo "ok   t31" || { echo "FAIL t31"; fail=1; }
 [ "$started" = 1 ] && kill "$(cat /tmp/fwp-test-server.pid)" 2>/dev/null
 exit $fail

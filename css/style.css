@@ -3196,3 +3196,69 @@ body[data-look=ed] .menu-pop a.mi, body[data-look=ed] .menu-pop a.mi:visited { t
 body[data-look=ed] .menu-pop .mi:hover, body[data-look=ed] .menu-pop .mi:focus-visible { background: color-mix(in srgb, var(--e-accent) 8%, transparent) !important; }
 body[data-look=ed] .btn.danger { background: transparent !important; color: var(--e-warn) !important; border: 1px solid color-mix(in srgb, var(--e-warn) 55%, transparent) !important; box-shadow: none !important; }
 body[data-look=ed] .btn.danger:hover { background: color-mix(in srgb, var(--e-warn) 8%, transparent) !important; }
+
+/* Smart add: documents in the tray and on vendors */
+.sa-thumb.doc { width: auto; max-width: 180px; padding: 6px 26px 6px 8px; background: var(--e-card, #fff); border: 1px solid var(--e-line, rgba(0,0,0,.12)); display: flex; align-items: center; }
+.sa-doc { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 12.5px; }
+.sa-doc b { flex: none; font-size: 10px; letter-spacing: .06em; padding: 3px 5px; border-radius: 5px; background: var(--e-accent, #7D2B3F); color: #fff; }
+.sa-doc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sa-thumb.doc button { top: 50%; transform: translateY(-50%); }
+.sa-chip.doc { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sa-warn { margin: 0 0 10px; padding-left: 18px; color: var(--e-warn, #A23A2E); }
+.pf-docs { margin-bottom: 14px; }
+
+/* View-only and Lists-only people: buttons they can't use aren't shown (the database checks too) */
+body[data-role] [data-edit=""], body[data-role=view] [data-edit],
+body[data-role] :is(.sa-bar, .ch-chip, .plan-edit, .madd, .marea-x, .mgap, .ed-cover-btn, .add-btn, .dt.wide, .add-pop, .addmenu, .drag, .grip, .sa-inbox select, .sa-inbox .btn, .sa-inbox .icon-btn) { display: none !important; }
+body[data-role] :is(.tick, [data-ro]) { pointer-events: none !important; cursor: default !important; }
+body[data-role] .stat.as-btn { box-shadow: none; }
+.drawer :is(input, textarea, select):disabled { opacity: 1; background: transparent !important; border-color: transparent !important; box-shadow: none !important; -webkit-text-fill-color: currentColor; padding-left: 0; }
+.drawer .d-seg button:disabled:not(.on) { opacity: .45; }
+.d-ro { margin: 0 0 10px; }
+
+/* ---------- The new look on Home and the family pages (Edit history, Bin, Settings, My jobs, family budget) ---------- */
+/* Family pages belong to both weddings: a warm neutral (walnut ink, antique gold) instead of either couple's colour. */
+body[data-look=ed]:not([data-theme=rose]):not([data-theme=blue]) {
+  --e-bg: #F2EEE8; --e-card: #FCFAF6; --e-line: #E0D7CA; --e-line-soft: #EAE3D8;
+  --e-ink: #2B2621; --e-muted: #5D554C; --e-faint: #776E64;
+  --e-accent: #4A3A2C; --e-accent-soft: #EEE6DA; --e-script: #8A6B3A; --e-gold: #B39A6A;
+  --e-band: #2F2A25; --e-band-ink: #F2EEE8; --e-band-muted: #CFC6B8; --e-band-script: #E3C893;
+}
+body[data-look=ed][data-page=home] .home { background: transparent !important; }
+body[data-look=ed] .home-top .brand, body[data-look=ed] .page-bar .brand { color: var(--e-muted) !important; -webkit-text-fill-color: currentColor !important; }
+body[data-look=ed] .home-top-r, body[data-look=ed] .home-top .today { color: var(--e-muted) !important; }
+/* The two weddings: cream cards, each in its couple's colour */
+body[data-look=ed] .emb { background: var(--e-card) !important; border: 1px solid var(--e-line) !important; box-shadow: 0 1px 0 #E6DCCB, 0 22px 40px -30px rgba(60, 40, 25, .5) !important; color: var(--e-ink) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body[data-look=ed] .emb::before, body[data-look=ed] .emb::after { opacity: .0 !important; }
+body[data-look=ed] .emb .emb-name { color: var(--e-deep, var(--e-ink)) !important; -webkit-text-fill-color: currentColor !important; background: none !important; font-family: var(--serif); font-weight: 500; text-shadow: none !important; }
+body[data-look=ed] .emb .emb-date { color: var(--e-muted) !important; text-shadow: none !important; }
+body[data-look=ed] .emb .emb-meta, body[data-look=ed] .emb .emb-meta span { color: var(--e-muted) !important; text-shadow: none !important; }
+body[data-look=ed] .emb .emb-meta b { color: var(--e-deep, var(--e-ink)) !important; font-family: var(--serif); }
+body[data-look=ed] .emb .emb-prog { background: var(--e-line) !important; }
+body[data-look=ed] .emb .emb-prog i { background: var(--e-deep, var(--e-accent)) !important; }
+body[data-look=ed] .emb:hover { background: #FFFFFF !important; transform: translateY(-2px); }
+/* The rows under them */
+body[data-look=ed] :is(.hcol, .htile, .home-tiles > *) { background: var(--e-card) !important; border: 1px solid var(--e-line) !important; color: var(--e-ink) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: var(--glass-shadow) !important; }
+body[data-look=ed] :is(.hc-label, .hc-head, .htile small, .htile span) { color: var(--e-script) !important; -webkit-text-fill-color: currentColor !important; }
+body[data-look=ed] .htile b, body[data-look=ed] .htile strong { color: var(--e-ink) !important; -webkit-text-fill-color: currentColor !important; font-family: var(--serif); }
+body[data-look=ed] :is(.hc-foot, .hc-more) { color: var(--e-muted) !important; }
+body[data-look=ed] .home :is(.hrow b, .feed b) { color: var(--e-ink) !important; }
+/* Family pages */
+body[data-look=ed] .stat span, body[data-look=ed] .stat small { color: var(--e-muted) !important; -webkit-text-fill-color: currentColor !important; }
+@media (max-width: 560px) { body[data-look=ed] .sw-title { font-size: 26px !important; letter-spacing: .08em !important; } }
+body[data-look=ed] .pbar { background: color-mix(in srgb, var(--e-bg) 92%, transparent) !important; border-bottom: 1px solid var(--e-line) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+body[data-look=ed] .pbar .brand { color: var(--e-muted) !important; -webkit-text-fill-color: currentColor !important; background: none !important; }
+body[data-look=ed] .pbar .pbar-back { color: var(--e-accent) !important; }
+
+/* Today on phones: the lower half folds behind one line */
+.ed-fold { margin: 26px 16px 8px; border-top: 1px solid var(--e-line); }
+.ed-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 16px 4px; }
+.ed-fold > summary::-webkit-details-marker { display: none; }
+.ed-fold > summary span { font-family: var(--serif); font-size: 20px; letter-spacing: .18em; text-transform: uppercase; color: var(--e-ink); }
+.ed-fold > summary small { color: var(--e-muted); font-size: 13px; flex: 1; }
+.ed-fold > summary::after { content: '▾'; color: var(--e-accent); transition: transform .2s; }
+.ed-fold[open] > summary::after { transform: rotate(180deg); }
+.ed-fold > :not(summary) { margin-left: -16px; margin-right: -16px; }
+.bk-night { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--e-line, var(--line)); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.bk-night h3 { margin: 0; font-size: 16px; }
+.bk-night .bk-list { width: 100%; }

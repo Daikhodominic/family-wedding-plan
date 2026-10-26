@@ -10,7 +10,7 @@ async def main():
         if await pg.locator('details.setup-card:not([open]) summary').count(): await pg.click('details.setup-card summary')
         await pg.click('.tip.auto .tip-x:has-text("Load it")'); await pg.wait_for_timeout(300)
         await pg.click('.modal-actions .btn:has-text("Load the checklist")'); await pg.wait_for_timeout(1200)
-        n = await pg.evaluate("""async () => { const { store } = await import('./js/store.js?v=53'); const live = r => r.filter(x => !x.deleted_at);
+        n = await pg.evaluate("""async () => { const { store } = await import('./js/store.js?v=54'); const live = r => r.filter(x => !x.deleted_at);
           const st = live(store.rows('stages')).filter(s => s.wedding_id==='elow'); const ar = live(store.rows('areas')).filter(s => s.wedding_id==='elow'); const sp = live(store.rows('steps')).filter(s => s.wedding_id==='elow');
           const binned = store.rows('steps').filter(s => s.wedding_id==='elow' && s.deleted_at).length;
           return [st.map(s=>s.title), ar.length, sp.length, sp.filter(s=>s.gate).length, binned]; }""")

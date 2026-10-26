@@ -1,14 +1,14 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { duplicateList } from './duplicate.js?v=53';
-import { lockChip, lockButton } from './locks.js?v=53';
-import { store } from './store.js?v=53';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=53';
-import { live } from './app.js?v=53';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=53';
-import { renderFiles } from './files.js?v=53';
-import { copyList, otherWeddings } from './planauto.js?v=53';
-import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=53';
+import { duplicateList } from './duplicate.js?v=54';
+import { lockChip, lockButton } from './locks.js?v=54';
+import { store } from './store.js?v=54';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=54';
+import { live } from './app.js?v=54';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=54';
+import { renderFiles } from './files.js?v=54';
+import { copyList, otherWeddings } from './planauto.js?v=54';
+import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=54';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -38,7 +38,7 @@ export function renderLists(root, w, params) {
   if (store.missing && store.missing.lists) { root.append(h('div', { class: 'panel' }, h('p', { style: { margin: 0 } }, 'Lists need database update 4. Ask the admin to run it in Supabase, then reload.'))); return; }
   if (params.list) { const l = store.find('lists', params.list); if (l && !l.deleted_at) { renderListPage(root, w, l); return; } }
   const lists = live(store.rows('lists') || []).filter(l => l.wedding_id === w.id).sort((a, b) => a.title.localeCompare(b.title));
-  root.append(secHead('Lists and files', 'Lists & files', h('button', { class: 'btn', type: 'button', onclick: () => newList(w.id, null) }, '+ New list'), h('a', { class: 'btn ghost', href: '#files', onclick: (e) => { e.preventDefault(); const f = document.getElementById('files'); if (f) f.scrollIntoView({ behavior: 'smooth' }); } }, 'Files ↓')));
+  root.append(secHead('Lists and files', 'Lists & files', h('button', { class: 'btn', type: 'button', 'data-edit': 'lists', onclick: () => newList(w.id, null) }, '+ New list'), h('a', { class: 'btn ghost', href: '#files', onclick: (e) => { e.preventDefault(); const f = document.getElementById('files'); if (f) f.scrollIntoView({ behavior: 'smooth' }); } }, 'Files ↓')));
   root.append(customsSection(w, lists, fail));
   const others = lists.filter(l => !isCustom(l));
   if (others.length) root.append(h('div', { class: 'lgrid' }, others.map(l => {
@@ -57,7 +57,7 @@ export function renderLists(root, w, params) {
   if (missing.length) root.append(h('section', { class: 'dsec' },
     h('div', { class: 'dsec-h' }, h('h2', {}, lists.length ? 'Start another list' : 'Start a list')),
     h('div', { class: 'lchips' }, missing.map(([k, t]) => h('button', {
-      type: 'button', class: 'lchip', title: t.blurb, onclick: async () => {
+      type: 'button', class: 'lchip', 'data-edit': 'lists', title: t.blurb, onclick: async () => {
         try { const l = await store.insert('lists', { wedding_id: w.id, step_id: null, title: t.title, columns: t.columns }); location.hash = `#/w/${w.id}/lists?list=${l.id}`; } catch (e) { fail(e); }
       }
     }, '+ ' + t.title)))));
@@ -126,7 +126,7 @@ function renderListPage(root, w, l) {
       h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'List', lockChip('lists', l.id, w.id)), title, h('div', { class: 'lp-sum' }, listSummary(l).join(' · '), step ? ` · for “${step.title}”` : '')),
       h('div', { class: 'ph-right' },
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
-        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=53').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=54').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => duplicateList(store.find('lists', l.id) || l).then(c => { location.hash = `#/w/${w.id}/lists?list=${c.id}`; }).catch(e => toast(e.message || 'Could not copy', 'error')) }, 'Duplicate'),
         lockButton('lists', l.id, w.id),

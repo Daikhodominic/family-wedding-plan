@@ -44,7 +44,7 @@ export function igHandleOf(u) {
 export function phonesIn(text) {
   const out = [];
   const t = String(text || '').replace(/[‎‏‪-‮]/g, '');
-  for (const m of t.matchAll(/(?<![\d₹$.,])(?:\+|00)?\d[\d\s\-().]{7,17}\d(?![\d,]*\s*(?:k|K|lakh|lac|L\b|cr|\/-|rs|₹))/g)) {
+  for (const m of t.matchAll(/(?<![\d₹$.,])(?:\+|00)?\d[\d\s\-().]{7,17}\d(?![\d,]*\s*(?:k|K|lakh|lac|L\b|cr|\/-|rs\b))/g)) {
     let d = m[0].replace(/[^\d+]/g, '').replace(/^00/, '+');
     if (/^\+?91\d{10}$/.test(d)) d = '+91' + d.slice(-10);
     else if (/^0?[6-9]\d{9}$/.test(d)) d = '+91' + d.slice(-10);

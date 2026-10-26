@@ -1,30 +1,30 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=53';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=53';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=53';
-import { renderBoard } from './board.js?v=53';
-import { renderTodo } from './todo.js?v=53';
-import { renderFiles } from './files.js?v=53';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=53';
-import { clearPage, clearAll } from './clear.js?v=53';
-import { undoButtons } from './history.js?v=53';
-import { downloadBackup } from './tools.js?v=53';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=53';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=53';
-import { announcementBars } from './planauto.js?v=53';
-import { renderPartner } from './partner.js?v=53';
-import { renderOverview, editDate } from './overview.js?v=53';
-import { renderToday } from './today.js?v=53';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=53';
-import { renderLists } from './lists.js?v=53';
-import { planOf } from './map.js?v=53';
-import { openStep, closeDrawer } from './panel.js?v=53';
-import { waNumber } from './nudge.js?v=53';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=53';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=53';
-import { morphInto, onScreen } from './morph.js?v=53';
-import { renderShare } from './share.js?v=53';
-import { pendingFor } from './swipe.js?v=53';
-import { installApp, installOffer, isStandalone } from './install.js?v=53';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=54';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=54';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=54';
+import { renderBoard } from './board.js?v=54';
+import { renderTodo } from './todo.js?v=54';
+import { renderFiles } from './files.js?v=54';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=54';
+import { clearPage, clearAll } from './clear.js?v=54';
+import { undoButtons } from './history.js?v=54';
+import { downloadBackup } from './tools.js?v=54';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=54';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=54';
+import { announcementBars } from './planauto.js?v=54';
+import { renderPartner } from './partner.js?v=54';
+import { renderOverview, editDate } from './overview.js?v=54';
+import { renderToday } from './today.js?v=54';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=54';
+import { renderLists } from './lists.js?v=54';
+import { planOf } from './map.js?v=54';
+import { openStep, closeDrawer } from './panel.js?v=54';
+import { waNumber } from './nudge.js?v=54';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=54';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=54';
+import { morphInto, onScreen } from './morph.js?v=54';
+import { renderShare } from './share.js?v=54';
+import { pendingFor } from './swipe.js?v=54';
+import { installApp, installOffer, isStandalone } from './install.js?v=54';
 
 const app = document.getElementById('app');
 
@@ -486,8 +486,9 @@ export function render() {
   else if (parts[0] === 'share') view = familyPage(renderShare());
   else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, {}); view = familyPage(el); }
   else { view = renderHome(); setTimeout(maybeWelcome, 400); }
-  // The new look (cream, photos, olive/navy band) is on for the wedding pages.
-  document.body.dataset.look = parts[0] === 'w' && store.me ? 'ed' : '';
+  // The new look (cream, photos, olive/navy band) is on everywhere once signed in (not the partner family's view).
+  document.body.dataset.look = store.me && parts[0] !== 'p' ? 'ed' : '';
+  { const r = store.me ? store.roleOf(store.me) : 'full'; if (r === 'full') delete document.body.dataset.role; else document.body.dataset.role = r; } // view / lists: hide what they can't change
   document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe', 'share'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   const newPage = app.dataset.view !== key;
@@ -544,7 +545,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=53').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=54').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

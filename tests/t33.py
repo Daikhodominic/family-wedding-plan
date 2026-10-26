@@ -33,7 +33,7 @@ async def main():
             await pg.wait_for_timeout(300)
         print('summary', await pg.locator('.lp-sum').inner_text())
         print('datalist', await pg.locator('.ltable tbody tr').first.locator('input').nth(3).get_attribute('list'), await pg.locator('datalist#sg-share option').count())
-        msg = await pg.evaluate("async()=>{const m=await import('./js/customs.js?v=53'); const {store}=await import('./js/store.js?v=53'); const l=store.rows('lists').find(x=>x.title.startsWith('Meat list')); return m.listMessage(l)}")
+        msg = await pg.evaluate("async()=>{const m=await import('./js/customs.js?v=54'); const {store}=await import('./js/store.js?v=54'); const l=store.rows('lists').find(x=>x.title.startsWith('Meat list')); return m.listMessage(l)}")
         print('--- message ---\n'+msg); assert 'Pig head' in msg and 'Meat in all: 14 kg' in msg
         await pg.screenshot(path='shots/meat_list.png', full_page=True)
         await pg.locator('button:has-text("Print or save as PDF")').click(); await pg.wait_for_timeout(800)

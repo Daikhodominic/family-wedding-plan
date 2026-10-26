@@ -4,12 +4,12 @@
 //   contingency  — set by hand (starts at ₹0); unplanned payments and overspends draw from it
 //   areas        — the total split up; removing one frees its unspent money
 //   payments     — what is owed or paid; no area = unplanned (comes out of contingency)
-import { lockChip, toggleLock } from './locks.js?v=53';
-import { store } from './store.js?v=53';
-import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS, popMenu } from './ui.js?v=53';
-import { live, weddings, themeOf, stepVisible } from './app.js?v=53';
-import { openStep } from './panel.js?v=53';
-import { deciderOnly, isDecider, deciderNames } from './tools.js?v=53';
+import { lockChip, toggleLock } from './locks.js?v=54';
+import { store } from './store.js?v=54';
+import { h, toast, modal, field, confirmBox, shortDate, daysUntil, secHead, ICONS, popMenu } from './ui.js?v=54';
+import { live, weddings, themeOf, stepVisible } from './app.js?v=54';
+import { openStep } from './panel.js?v=54';
+import { deciderOnly, isDecider, deciderNames } from './tools.js?v=54';
 
 /* ---------- Money helpers ---------- */
 // Accepts "1,20,000", "120000", "1.2 lakh", "1.2L", "50k", "₹ 45,000".
@@ -250,14 +250,14 @@ function areaBar(r) {
 function itemRow(id, i, m, opts = {}) {
   const late = !i.paid_at && i.due && daysUntil(i.due) < 0;
   return h('div', { class: 'brow' + (i.paid_at ? ' is-paid' : '') + (opts.cancelled ? ' is-cancelled' : '') },
-    h('button', { type: 'button', class: 'brow-main', onclick: () => editItem(id, i, m) },
+    h('button', { type: 'button', class: 'brow-main', 'data-ro': '', onclick: () => editItem(id, i, m) },
       h('span', { class: 'brow-t' }, i.title),
       h('span', { class: 'brow-s' + (late ? ' late' : '') }, [
         i.payee, opts.cancelled ? 'cancelled with the budget line' : i.paid_at ? 'paid ' + shortDate(i.paid_at.slice(0, 10)) : i.due ? (late ? 'overdue since ' : 'due ') + shortDate(i.due) : 'no due date',
         opts.removed ? 'budget line removed' : null, i.refund_expected ? 'refund expected' : null].filter(Boolean).join(' · '))),
     h('span', { class: 'brow-amt' }, inr(Number(i.amount || 0))),
     opts.cancelled ? h('span') : i.paid_at
-      ? h('button', { type: 'button', class: 'paid-tag', title: 'Tap to mark as not paid', onclick: () => markUnpaid(i) }, h('span', { html: ICONS.check }), 'Paid')
+      ? h('button', { type: 'button', class: 'paid-tag', 'data-ro': '', title: 'Tap to mark as not paid', onclick: () => markUnpaid(i) }, h('span', { html: ICONS.check }), 'Paid')
       : isDecider() ? h('button', { type: 'button', class: 'btn small soft', onclick: () => markPaid(i) }, 'Mark paid') : h('span', { class: 'owed-tag' }, 'To pay'));
 }
 
@@ -317,7 +317,7 @@ export function renderBudgetView(root, opts) {
   if (!can) root.append(h('p', { class: 'hint ro-note' }, `You can see everything here. Only the Deciders (${deciderNames()}) can change money.`));
 
   root.append(h('div', { class: 'stats three' },
-    h('button', { type: 'button', class: 'stat as-btn', onclick: () => editBudget(id, opts, m), title: 'Change the total' }, h('span', {}, 'Total budget'), h('b', {}, inr(m.T)), h('small', {}, `${inr(m.contLeft)} spare for surprises`)),
+    h('button', { type: 'button', class: 'stat as-btn', 'data-ro': '', onclick: () => editBudget(id, opts, m), title: 'Change the total' }, h('span', {}, 'Total budget'), h('b', {}, inr(m.T)), h('small', {}, `${inr(m.contLeft)} spare for surprises`)),
     stat('Overall cost', inr(m.committed), `${inr(m.paid)} paid`),
     stat('Still to pay', inr(m.toPay), m.owing.length ? `${m.owing.length} ${m.owing.length === 1 ? 'payment' : 'payments'}` : 'All settled', 'accent')));
 
@@ -331,10 +331,10 @@ export function renderBudgetView(root, opts) {
     m.areaRows.length ? null : h('p', { class: 'muted' }, 'No budget lines yet. Add one for each big spend — catering, venue, décor, clothes, gifts.'),
     m.areaRows.map(r => h('div', { class: 'barea' + (r.over ? ' is-over' : '') },
       h('div', { class: 'barea-h' },
-        h('button', { type: 'button', class: 'barea-t', onclick: () => editArea(id, r.area, m) }, r.area.title),
+        h('button', { type: 'button', class: 'barea-t', 'data-ro': '', onclick: () => editArea(id, r.area, m) }, r.area.title),
         h('span', { class: 'barea-n' }, h('b', {}, inr(r.committed)), ' of ', inr(r.planned), r.over ? h('span', { class: 'neg' }, ` · ${inr(r.over)} over`) : r.left ? h('span', {}, ` · ${inr(r.left)} left`) : null),
         h('button', {
-          type: 'button', class: 'icon-btn menu-btn', 'aria-label': `More for ${r.area.title}`, html: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>',
+          type: 'button', class: 'icon-btn menu-btn', 'data-edit': '', 'aria-label': `More for ${r.area.title}`, html: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>',
           onclick: () => {
             const mm = modal({
               title: r.area.title, body: h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
