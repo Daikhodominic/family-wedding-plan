@@ -1,30 +1,30 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=54';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=54';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=54';
-import { renderBoard } from './board.js?v=54';
-import { renderTodo } from './todo.js?v=54';
-import { renderFiles } from './files.js?v=54';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=54';
-import { clearPage, clearAll } from './clear.js?v=54';
-import { undoButtons } from './history.js?v=54';
-import { downloadBackup } from './tools.js?v=54';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=54';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=54';
-import { announcementBars } from './planauto.js?v=54';
-import { renderPartner } from './partner.js?v=54';
-import { renderOverview, editDate } from './overview.js?v=54';
-import { renderToday } from './today.js?v=54';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=54';
-import { renderLists } from './lists.js?v=54';
-import { planOf } from './map.js?v=54';
-import { openStep, closeDrawer } from './panel.js?v=54';
-import { waNumber } from './nudge.js?v=54';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=54';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=54';
-import { morphInto, onScreen } from './morph.js?v=54';
-import { renderShare } from './share.js?v=54';
-import { pendingFor } from './swipe.js?v=54';
-import { installApp, installOffer, isStandalone } from './install.js?v=54';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=55';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=55';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=55';
+import { renderBoard } from './board.js?v=55';
+import { renderTodo } from './todo.js?v=55';
+import { renderFiles } from './files.js?v=55';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=55';
+import { clearPage, clearAll } from './clear.js?v=55';
+import { undoButtons } from './history.js?v=55';
+import { downloadBackup } from './tools.js?v=55';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=55';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=55';
+import { announcementBars } from './planauto.js?v=55';
+import { renderPartner } from './partner.js?v=55';
+import { renderOverview, editDate } from './overview.js?v=55';
+import { renderToday } from './today.js?v=55';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=55';
+import { renderLists } from './lists.js?v=55';
+import { planOf } from './map.js?v=55';
+import { openStep, closeDrawer } from './panel.js?v=55';
+import { waNumber } from './nudge.js?v=55';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=55';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=55';
+import { morphInto, onScreen } from './morph.js?v=55';
+import { renderShare } from './share.js?v=55';
+import { pendingFor } from './swipe.js?v=55';
+import { installApp, installOffer, isStandalone } from './install.js?v=55';
 
 const app = document.getElementById('app');
 
@@ -545,7 +545,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=54').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=55').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

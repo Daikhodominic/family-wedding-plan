@@ -2,7 +2,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-J="async(q)=>{const {store}=await import('./js/store.js?v=54'); const s=store.rows('steps').find(x=>x.title===q&&!x.deleted_at); return s? store.rows('board_items').filter(i=>i.kind==='option'&&!i.deleted_at&&(i.data||{}).step_id===s.id).map(i=>[i.data.title,(i.data.images||[]).length,i.data.phone||'']):null}"
+J="async(q)=>{const {store}=await import('./js/store.js?v=55'); const s=store.rows('steps').find(x=>x.title===q&&!x.deleted_at); return s? store.rows('board_items').filter(i=>i.kind==='option'&&!i.deleted_at&&(i.data||{}).step_id===s.id).map(i=>[i.data.title,(i.data.images||[]).length,i.data.phone||'']):null}"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':390,'height':844}, is_mobile=True, has_touch=True)
@@ -39,7 +39,7 @@ async def main():
         assert await m.locator('input[placeholder^="Phone"]').input_value()=='98765 43210'
         await m.locator('.modal-actions button:has-text("Save option")').click(); await pg.wait_for_timeout(800)
         # delete from a card
-        sid=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=54'); return store.rows('steps').find(x=>x.title==='Flower girl dress').id}")
+        sid=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=55'); return store.rows('steps').find(x=>x.title==='Flower girl dress').id}")
         await pg.goto(B+f'#/w/charani/options?step={sid}'); await pg.wait_for_timeout(800)
         n0=await pg.locator('.opt-card').count()
         await pg.locator('.opt-card .oc-del').first.click(); await pg.wait_for_timeout(300)

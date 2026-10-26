@@ -8,16 +8,14 @@ async def main():
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(400)
         await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1'); localStorage.setItem('fwp-view-elow','glimpse')}"); await pg.reload(); await pg.wait_for_timeout(400)
+        # At a glance shows final choices only: make one final first
+        await pg.evaluate("async()=>{const {store:s}=await import('./js/store.js?v=55'); const o=s.rows('board_items').find(i=>i.kind==='option'&&!i.deleted_at&&i.wedding_id==='elow'&&(i.data.images||[]).length); await s.update('board_items', o.id, {data:{...o.data, status:'chosen'}}); await s.update('steps', o.data.step_id, {locked_at:new Date().toISOString()});}")
         await pg.goto(B+'#/w/elow/choose?view=glimpse'); await pg.wait_for_timeout(1200)
-        tiles=await pg.locator('.ig-tile').count(); print('glimpse tiles', tiles, await pg.locator('.gl-filters .lchip').all_inner_texts()); assert tiles>0
+        tiles=await pg.locator('.ig-tile').count(); print('glimpse tiles', tiles); assert tiles>0
         await pg.screenshot(path='shots/glimpse_grid.png')
-        await pg.locator('.gl-filters .lchip:has-text("Still open")').click(); await pg.wait_for_timeout(500)
-        print('open filter tiles', await pg.locator('.ig-tile').count())
-        await pg.locator('.ig-tile').first.click(); await pg.wait_for_timeout(500)
+        await pg.locator('.ig-tile .ig-open').first.click(); await pg.wait_for_timeout(500)
         print('story', await pg.locator('.st-pos').inner_text(), '|', await pg.locator('.st-hero-tx h2').inner_text())
         await pg.screenshot(path='shots/story1.png')
-        await pg.locator('.st-nav.next').click(); await pg.wait_for_timeout(300)
-        print('next', await pg.locator('.st-pos').inner_text())
         # choose the leader as admin (demo user is admin & decider)
         btn=pg.locator('.st-alt .btn:has-text("Make it final")').first
         if await btn.count():
@@ -45,7 +43,7 @@ async def main():
             await (await fc.value).set_files('sample.jpg'); await pg.wait_for_timeout(400)
         print('save label', await m.locator('.modal-actions .btn:not(.ghost)').inner_text())
         await m.locator('.modal-actions .btn:not(.ghost)').click(); await pg.wait_for_timeout(800)
-        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=54'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
+        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=55'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
         print('sample on board', r); assert r==[True, True, 2]
         print('errors', errs); assert not errs
         await b.close()

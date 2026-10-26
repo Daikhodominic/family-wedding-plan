@@ -2,7 +2,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-S="import('./js/store.js?v=54').then(m=>m.store)"
+S="import('./js/store.js?v=55').then(m=>m.store)"
 async def vis(pg, sel): return await pg.evaluate(f"()=>[...document.querySelectorAll({sel!r})].filter(e=>e.getClientRects().length>0).length")
 async def main():
     async with async_playwright() as p:

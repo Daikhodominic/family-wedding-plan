@@ -3262,3 +3262,17 @@ body[data-look=ed] .pbar .pbar-back { color: var(--e-accent) !important; }
 .bk-night { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--e-line, var(--line)); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .bk-night h3 { margin: 0; font-size: 16px; }
 .bk-night .bk-list { width: 100%; }
+
+/* At a glance: final choices only, each with Edit and Take off */
+.ig-tile .ig-open { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; color: inherit; text-align: left; }
+.ig-tile .ig-open::after { content: ''; position: absolute; inset: 45% 0 0; background: linear-gradient(180deg, transparent, rgba(5, 8, 14, .82)); pointer-events: none; }
+.ig-tile::after { display: none; }
+.ig-name small { display: block; font-weight: 400; opacity: .85; font-size: 11px; margin-top: 1px; }
+.ig-acts { position: absolute; top: 6px; right: 6px; z-index: 2; display: flex; gap: 5px; }
+.ig-act { width: 30px; height: 30px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(251, 248, 243, .92); color: #2A2522; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); }
+.ig-act svg { width: 15px; height: 15px; }
+.ig-act:hover { background: #fff; }
+.ig-tile.off { opacity: .5; }
+.gl-hidden { display: block; margin: -40px auto 60px; }
+.ig-tile .ig-name, body[data-look=ed] .ig-tile .ig-name { color: #fff !important; -webkit-text-fill-color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+@media (max-width: 560px) { .ig-act { width: 28px; height: 28px; } .ig-acts { top: 5px; right: 5px; gap: 4px; } }

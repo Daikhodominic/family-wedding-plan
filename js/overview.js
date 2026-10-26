@@ -1,22 +1,22 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=54';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=54';
-import { live, stepVisible, feedList, themeOf, render } from './app.js?v=54';
-import { openStep, lockIcon } from './panel.js?v=54';
-import { planOf, journeyBar } from './map.js?v=54';
-import { listSummary } from './lists.js?v=54';
-import { budgetMath, inr } from './budget.js?v=54';
-import { editStep } from './pipeline.js?v=54';
-import { canonical } from './myjobs.js?v=54';
-import { pictureEl } from './map.js?v=54';
-import { readyToDecide, favScore } from './boardauto.js?v=54';
-import { isDecider } from './tools.js?v=54';
-import { cardTitle } from './decisions.js?v=54';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=54';
-import { share, siteLink, copyLink } from './tools.js?v=54';
-import { planOffer } from './plans.js?v=54';
-import { newForYou, pendingFor } from './swipe.js?v=54';
-import { waButton, jobsMessage } from './nudge.js?v=54';
+import { store } from './store.js?v=55';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=55';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=55';
+import { openStep, lockIcon } from './panel.js?v=55';
+import { planOf, journeyBar } from './map.js?v=55';
+import { listSummary } from './lists.js?v=55';
+import { budgetMath, inr } from './budget.js?v=55';
+import { editStep } from './pipeline.js?v=55';
+import { canonical } from './myjobs.js?v=55';
+import { pictureEl } from './map.js?v=55';
+import { readyToDecide, favScore } from './boardauto.js?v=55';
+import { isDecider } from './tools.js?v=55';
+import { cardTitle } from './decisions.js?v=55';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=55';
+import { share, siteLink, copyLink } from './tools.js?v=55';
+import { planOffer } from './plans.js?v=55';
+import { newForYou, pendingFor } from './swipe.js?v=55';
+import { waButton, jobsMessage } from './nudge.js?v=55';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -137,7 +137,7 @@ export function renderOverview(root, w, params = {}) {
   const moreBtn = h('button', { type: 'button', class: 'btn ghost small oh-more', 'aria-haspopup': 'menu', onclick: () => popMenu(moreBtn, [
     { icon: 'comment', label: 'Share this week on WhatsApp', onClick: () => shareWeek(w) },
     { icon: 'plan', label: 'Add dates to my calendar', onClick: () => calendarFor(w) },
-    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=54').then(m => m.memoryBook(w)) },
+    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=55').then(m => m.memoryBook(w)) },
     isDecider() ? { icon: 'note', label: 'Post an announcement', onClick: () => newAnnouncement(w) } : null,
     isDecider() ? { icon: 'user', label: 'Share with the partner family', onClick: () => partnerLinks(w) } : { icon: 'user', label: 'What the partner family sees', href: `#/p/preview-${w.id}` },
     store.me.isAdmin && !fw ? { icon: 'lock', label: 'Preview final-week mode', href: `#/w/${w.id}?finalweek=1` } : null]) }, 'More ', h('span', { 'aria-hidden': 'true' }, '▾'));

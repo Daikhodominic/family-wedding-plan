@@ -3,14 +3,13 @@
 // chosen one as its picture, otherwise the option in the lead. Tap one to open it full screen and go through
 // them one after another, like stories: what was chosen, the alternatives that were considered and their votes,
 // and whether it can still change.
-import { store } from './store.js?v=54';
-import { h, ICONS, shortDate, toast, buzz } from './ui.js?v=54';
-import { isDecider } from './tools.js?v=54';
-import { render } from './app.js?v=54';
-import { categoriesOf, optionsOf, votesOf, myVote, finalOf, chosenOf, openProfile, chooseOption, lightbox, photoEl, firstPic, placeholder, swipeAgain, roundsOf, addFinal, editOption, vote } from './swipe.js?v=54';
+import { store } from './store.js?v=55';
+import { h, ICONS, shortDate, toast, buzz } from './ui.js?v=55';
+import { isDecider } from './tools.js?v=55';
+import { render } from './app.js?v=55';
+import { categoriesOf, optionsOf, votesOf, myVote, finalOf, chosenOf, openProfile, chooseOption, lightbox, photoEl, firstPic, placeholder, swipeAgain, roundsOf, addFinal, editOption, vote } from './swipe.js?v=55';
 
-const FILTERS = [['all', 'Everything'], ['decided', 'Decided'], ['open', 'Still open'], ['empty', 'No options yet']];
-let filter = 'all';
+let showHidden = false;
 
 // Where a category stands, and the picture that stands for it.
 function stateOf(w, c) {
@@ -28,18 +27,37 @@ function stateOf(w, c) {
   return { opts, fin, ch, lead, decided, kind, cover, badge, votes };
 }
 
+// At a glance shows only what's been made final and has a picture — the dress, the cake, the cards.
+// Things without pictures (the date, the budget) stay in the plan. Each picture can be edited or taken off here.
+const hiddenHere = (step) => !!((step.lock_note || {}).hide_glimpse);
 export function renderGlimpse(root, w) {
   const cats = categoriesOf(w);
-  const all = cats.map(c => ({ c, st: stateOf(w, c) }));
-  const counts = { all: all.length, decided: all.filter(x => x.st.kind === 'decided').length, open: all.filter(x => x.st.kind === 'open').length, empty: all.filter(x => x.st.kind === 'empty').length };
-  const shown = all.filter(x => filter === 'all' || x.st.kind === filter);
-  root.append(
-    h('div', { class: 'gl-intro' }, h('p', {}, counts.all ? `${counts.decided} decided · ${counts.open} still open${counts.empty ? ` · ${counts.empty} with no options yet` : ''}. Tap any one to go through them like stories.` : 'Nothing here yet. Every big decision in the plan — and anything with options — appears here with its picture.')),
-    counts.all ? h('div', { class: 'gl-filters', role: 'tablist' }, FILTERS.filter(([k]) => k === 'all' || counts[k]).map(([k, l]) => h('button', { type: 'button', class: 'lchip' + (filter === k ? ' on' : ''), 'aria-pressed': String(filter === k), onclick: () => { filter = k; render(); } }, `${l} · ${counts[k]}`))) : null,
-    shown.length ? h('div', { class: 'ig-grid' }, shown.map((x, i) => h('button', { type: 'button', class: 'ig-tile ' + x.st.kind, 'aria-label': x.c.step.title, onclick: () => openStories(w, shown.map(y => y.c), i) },
-      x.st.cover ? photoEl(x.st.cover, 'ig-img') : h('span', { class: 'ig-ph' }, x.c.step.title.split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase()),
-      h('span', { class: 'ig-badge ' + x.st.kind }, x.st.badge || 'No options yet'),
-      h('span', { class: 'ig-name' }, x.c.step.title)))) : counts.all ? h('p', { class: 'muted' }, 'Nothing with this filter.') : null);
+  const finals = cats.map(c => ({ c, st: stateOf(w, c) })).filter(x => x.st.kind === 'decided' && x.st.cover);
+  const hidden = finals.filter(x => hiddenHere(x.c.step));
+  const shown = finals.filter(x => !hiddenHere(x.c.step) || showHidden);
+  const can = isDecider(w.id) && store.may('steps', {}) === true;
+  const hide = (step, on) => store.update('steps', step.id, { lock_note: { ...(step.lock_note || {}), hide_glimpse: on || null } })
+    .then(() => toast(on ? 'Taken off At a glance — it’s still final in the plan' : 'Back on At a glance')).catch(e => toast(e.message, 'error'));
+  const edit = (x) => { const ch = x.st.ch; if (ch) editOption(w, x.c.step.id, ch); else import('./panel.js?v=55').then(m => m.openStep(x.c.step.id)); };
+  const tile = (x, i) => {
+    const off = hiddenHere(x.c.step);
+    return h('div', { class: 'ig-tile decided' + (off ? ' off' : '') },
+      h('button', { type: 'button', class: 'ig-open', 'aria-label': x.c.step.title, onclick: () => openStories(w, shown.map(y => y.c), i) },
+        photoEl(x.st.cover, 'ig-img'),
+        off || x.st.badge === 'Final design' ? h('span', { class: 'ig-badge decided' }, off ? 'Taken off' : 'Final design') : null,
+        h('span', { class: 'ig-name' }, x.c.step.title, x.st.ch && (x.st.ch.data || {}).title ? h('small', {}, (x.st.ch.data || {}).title) : null)),
+      can ? h('div', { class: 'ig-acts' },
+        h('button', { type: 'button', class: 'ig-act', 'aria-label': 'Edit ' + x.c.step.title, title: 'Edit', html: ICONS.edit, onclick: () => edit(x) }),
+        off ? h('button', { type: 'button', class: 'ig-act', 'aria-label': 'Put back on At a glance', title: 'Put back', html: ICONS.undo || '↺', onclick: () => hide(x.c.step, false) })
+          : h('button', { type: 'button', class: 'ig-act', 'aria-label': 'Take ' + x.c.step.title + ' off At a glance', title: 'Take off At a glance', html: ICONS.trash, onclick: () => hide(x.c.step, true) })) : null);
+  };
+  const open = cats.filter(c => !c.step.locked_at && !chosenOf(c.step)).length;
+  root.append(...[
+    h('div', { class: 'gl-intro' }, h('p', {}, finals.length
+      ? `${finals.length - hidden.length} final ${finals.length - hidden.length === 1 ? 'choice' : 'choices'} with a picture. Tap one to go through them like stories.${open ? ` ${open} still to decide in To vote.` : ''}`
+      : 'Final choices appear here with their picture, once something is made final. Things without a picture (like the date) stay in the plan.')),
+    shown.length ? h('div', { class: 'ig-grid' }, shown.map(tile)) : null,
+    hidden.length && can ? h('button', { type: 'button', class: 'link-btn gl-hidden', onclick: () => { showHidden = !showHidden; render(); } }, showHidden ? 'Hide the ones taken off' : `${hidden.length} taken off At a glance · show`) : null].filter(Boolean));
 }
 
 /* ---------- Stories ---------- */

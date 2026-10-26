@@ -5,12 +5,12 @@
 //    only what the rules left empty. Only vendor content is sent; nothing is looked up by name.
 // 3. Each vendor is matched to one already here (same phone, Instagram or name) and placed in a step.
 //    Anything it isn't sure about waits in the Inbox, and corrections teach it for next time.
-import { store } from './store.js?v=54';
-import { h, toast, modal, uploadPhoto, ICONS, buzz } from './ui.js?v=54';
-import { live, render, wedding, weddings, stepVisible } from './app.js?v=54';
-import * as P from './smartparse.js?v=54';
-import { readDoc, docKind, nameFromFile } from './docread.js?v=54';
-import { uploadFile } from './board.js?v=54';
+import { store } from './store.js?v=55';
+import { h, toast, modal, uploadPhoto, ICONS, buzz } from './ui.js?v=55';
+import { live, render, wedding, weddings, stepVisible } from './app.js?v=55';
+import * as P from './smartparse.js?v=55';
+import { readDoc, docKind, nameFromFile } from './docread.js?v=55';
+import { uploadFile } from './board.js?v=55';
 
 /* ---------- Settings (per wedding, on this device) ---------- */
 const MODES = { ask: 'Always ask', sure: 'File when sure', all: 'File everything' };
