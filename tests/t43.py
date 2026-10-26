@@ -2,7 +2,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-S="import('./js/store.js?v=56').then(m=>m.store)"
+S="import('./js/store.js?v=57').then(m=>m.store)"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':1280,'height':900})
@@ -14,7 +14,7 @@ async def main():
         # 1. @mention makes a job for that person
         await pg.goto(B+'#/w/elow/board'); await pg.wait_for_timeout(900)
         item = await pg.evaluate(f"async()=>{{const s=await {S}; return s.rows('board_items').find(i=>i.wedding_id==='elow'&&!i.deleted_at&&i.kind!=='shape'&&i.kind!=='connector').id}}")
-        await pg.evaluate(f"async()=>{{const m=await import('./js/feedback.js?v=56'); m.openThread('{item}')}}"); await pg.wait_for_timeout(500)
+        await pg.evaluate(f"async()=>{{const m=await import('./js/feedback.js?v=57'); m.openThread('{item}')}}"); await pg.wait_for_timeout(500)
         print('mention chips', await pg.locator('.mention-row .lchip').all_inner_texts())
         await pg.locator('.mention-row .lchip:has-text("Elow Daikho")').click()
         await pg.locator('.composer textarea').type('can you call them tomorrow?')
@@ -30,6 +30,11 @@ async def main():
         # 3. Who's here
         await pg.evaluate(f"async()=>{{const s=await {S}; s.presence=[{{id:'u-elow',name:'Elow Daikho',room:'elow/choose'}}]; s.emit({{table:'presence'}});}}"); await pg.wait_for_timeout(500)
         print('here dots', await pg.locator('.here-dots').get_attribute('aria-label'))
+        await pg.locator('.here-dots').first.evaluate('b=>b.click()'); await pg.wait_for_timeout(400)
+        who = await pg.locator('.modal').inner_text(); print('who sheet', who.replace('\n',' | ')[:160]); assert 'here now · 1' in who.lower() and 'Elow Daikho' in who
+        await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
+        await pg.evaluate(f"async()=>{{const s=await {S}; s.presence=[]; s.emit({{table:'presence'}});}}"); await pg.wait_for_timeout(500)
+        print('alone', await pg.locator('.here-dots.alone').count()); assert await pg.locator('.here-dots.alone').count()>=1
         # 4. Settings: roles and stats
         await pg.goto(B+'#/settings?tab=family'); await pg.wait_for_timeout(700)
         print('stats', [t.replace('\n',' | ') for t in await pg.locator('.mem-row .mem-who').all_inner_texts()])

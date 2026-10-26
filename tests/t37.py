@@ -9,7 +9,7 @@ async def main():
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(400)
         await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1'); localStorage.setItem('fwp-view-elow','glimpse')}"); await pg.reload(); await pg.wait_for_timeout(400)
         # At a glance shows final choices only: make one final first
-        await pg.evaluate("async()=>{const {store:s}=await import('./js/store.js?v=56'); const o=s.rows('board_items').find(i=>i.kind==='option'&&!i.deleted_at&&i.wedding_id==='elow'&&(i.data.images||[]).length); await s.update('board_items', o.id, {data:{...o.data, status:'chosen'}}); await s.update('steps', o.data.step_id, {locked_at:new Date().toISOString()});}")
+        await pg.evaluate("async()=>{const {store:s}=await import('./js/store.js?v=57'); const o=s.rows('board_items').find(i=>i.kind==='option'&&!i.deleted_at&&i.wedding_id==='elow'&&(i.data.images||[]).length); await s.update('board_items', o.id, {data:{...o.data, status:'chosen'}}); await s.update('steps', o.data.step_id, {locked_at:new Date().toISOString()});}")
         await pg.goto(B+'#/w/elow/choose?view=glimpse'); await pg.wait_for_timeout(1200)
         tiles=await pg.locator('.ig-tile').count(); print('glimpse tiles', tiles); assert tiles>0
         await pg.screenshot(path='shots/glimpse_grid.png')
@@ -43,7 +43,7 @@ async def main():
             await (await fc.value).set_files('sample.jpg'); await pg.wait_for_timeout(400)
         print('save label', await m.locator('.modal-actions .btn:not(.ghost)').inner_text())
         await m.locator('.modal-actions .btn:not(.ghost)').click(); await pg.wait_for_timeout(800)
-        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=56'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
+        r=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=57'); const s=store.rows('steps').find(x=>x.title==='Bouquet'&&!x.deleted_at); const it=store.rows('board_items').find(i=>i.kind==='gallery'&&i.data&&i.data.title==='Peony idea'); return [!!s, it&&it.data.step_id===(s&&s.id), it&&it.data.images.length]}")
         print('sample on board', r); assert r==[True, True, 2]
         print('errors', errs); assert not errs
         await b.close()

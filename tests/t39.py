@@ -22,9 +22,9 @@ async def main():
         await pg.screenshot(path='shots/share.png', full_page=True)
         n=await pg.locator('.sh-opt').count(); print('vendors offered', n); assert n>0
         t=(await pg.locator('.sh-opt .sh-on').first.inner_text()).split('\n')[0]
-        before=await pg.evaluate("async(t)=>{const {store}=await import('./js/store.js?v=56'); const o=store.rows('board_items').find(i=>i.kind==='option'&&!i.deleted_at&&i.data.title===t); return [o.id,(o.data.images||[]).length]}", t)
+        before=await pg.evaluate("async(t)=>{const {store}=await import('./js/store.js?v=57'); const o=store.rows('board_items').find(i=>i.kind==='option'&&!i.deleted_at&&i.data.title===t); return [o.id,(o.data.images||[]).length]}", t)
         await pg.locator('.sh-opt').first.click(); await pg.wait_for_timeout(300); print('toasts', await pg.locator('.toast').all_inner_texts()); await pg.wait_for_timeout(1500); print('toasts', await pg.locator('.toast').all_inner_texts())
-        after=await pg.evaluate("async(id)=>{const {store}=await import('./js/store.js?v=56'); const o=store.find('board_items',id); return [(o.data.images||[]).length, o.data.links]}", before[0])
+        after=await pg.evaluate("async(id)=>{const {store}=await import('./js/store.js?v=57'); const o=store.find('board_items',id); return [(o.data.images||[]).length, o.data.links]}", before[0])
         print('added to vendor', before[1], '->', after); assert after[0]==before[1]+3 and any('instagram' in x for x in after[1])
         print('url now', pg.url.split('#')[1])
         # short form

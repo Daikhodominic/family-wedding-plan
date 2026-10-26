@@ -2,13 +2,13 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-S="import('./js/store.js?v=56').then(m=>m.store)"
+S="import('./js/store.js?v=57').then(m=>m.store)"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); ctx=await b.new_context(viewport={'width':1280,'height':900}); pg=await ctx.new_page()
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/home'); await pg.evaluate("()=>{localStorage.clear(); for(const k of ['welcome','welcome-off','guide']) localStorage.setItem('fwp-once-'+k,'1')}"); await pg.reload(); await pg.wait_for_timeout(700)
-        r = await pg.evaluate(f"""async()=>{{const s=await {S}; const d=await import('./js/duplicate.js?v=56');
+        r = await pg.evaluate(f"""async()=>{{const s=await {S}; const d=await import('./js/duplicate.js?v=57');
           const st=s.rows('steps').find(x=>x.wedding_id==='charani'&&!x.deleted_at); const c=await d.duplicateStep(st);
           const l=await s.insert('lists',{{wedding_id:'charani',title:'Guests',columns:['Name','Phone']}}); await s.insertMany('list_rows',[{{list_id:l.id,wedding_id:'charani',cells:['A','1'],position:1}},{{list_id:l.id,wedding_id:'charani',cells:['B','2'],position:2}}]);
           const lc=await d.duplicateList(l);
@@ -28,7 +28,7 @@ async def main():
         # memory book
         async with ctx.expect_page() as pp:
             await pg.goto(B+'#/w/charani'); await pg.wait_for_timeout(700)
-            await pg.evaluate("async()=>{const m=await import('./js/memorybook.js?v=56'); const {store}=await import('./js/store.js?v=56'); window.__mb=await m.memoryBook(store.find('weddings','charani'))}")
+            await pg.evaluate("async()=>{const m=await import('./js/memorybook.js?v=57'); const {store}=await import('./js/store.js?v=57'); window.__mb=await m.memoryBook(store.find('weddings','charani'))}")
         book = await pp.value; await book.wait_for_load_state(); await book.wait_for_timeout(400)
         print('book sections', await book.locator('section.page').count(), '| chose tiles', await book.locator('.tile').count(), '| nums', (await book.locator('.nums').inner_text()).replace('\n',' ')[:160])
         await book.screenshot(path='shots/memory_book.png', full_page=True)

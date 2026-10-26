@@ -2,7 +2,7 @@
 import asyncio, glob, os
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-S="import('./js/store.js?v=56').then(m=>m.store)"
+S="import('./js/store.js?v=57').then(m=>m.store)"
 HERE=os.path.dirname(os.path.abspath(__file__))
 FAKE_PDFJS = """export const GlobalWorkerOptions = {};
 export function getDocument(){ return { promise: Promise.resolve({ numPages: 2, getPage: async (i) => ({ getTextContent: async () => ({ items: i===1 ? [{str:'Royal Feast Caterers', transform:[0,0,0,0,0,700]}, {str:'Wedding menu · ₹750 per plate', transform:[0,0,0,0,0,680]}, {str:'Call 70051 55555', transform:[0,0,0,0,0,660]}] : [] }) }) }) }; }"""
@@ -34,7 +34,7 @@ async def main():
         assert res['files']==nf+5 and len(res['opts'])>=4 and all(o[4] for o in res['opts'])
         z = next(o for o in res['opts'] if 'Zeliang' in o[0]); assert '98620 77777' in (z[1] or '').replace('+91 ','') and '.docx' in z[3]
         # the vendor's profile shows its document
-        await pg.evaluate(f"async()=>{{const s=await {S}; const m=await import('./js/swipe.js?v=56'); const o=s.rows('board_items').find(i=>i.kind==='option'&&/Zeliang/.test(i.data.title||'')); m.openProfile(o)}}"); await pg.wait_for_timeout(600)
+        await pg.evaluate(f"async()=>{{const s=await {S}; const m=await import('./js/swipe.js?v=57'); const o=s.rows('board_items').find(i=>i.kind==='option'&&/Zeliang/.test(i.data.title||'')); m.openProfile(o)}}"); await pg.wait_for_timeout(600)
         print('profile docs', await pg.locator('.pf-docs .ftile').count(), await pg.locator('.pf-docs .ft-name').all_inner_texts()); assert await pg.locator('.pf-docs .ftile').count()>=1
         await pg.screenshot(path=HERE+'/shots/smart_docs_profile.png')
         print('errors', errs); assert not errs

@@ -3,10 +3,10 @@
 //      Shared photos and links land on this page, and you choose where they go: a vendor already here,
 //      a new option, or a sample for ideas.
 // Out: an option's photos (and its name, price and links) can be shared to WhatsApp or any app.
-import { store } from './store.js?v=56';
-import { h, toast, uploadPhoto, ICONS, buzz } from './ui.js?v=56';
-import { live, weddings, wedding, render } from './app.js?v=56';
-import { optionsOf, categoriesOf, editOption, photoEl, firstPic } from './swipe.js?v=56';
+import { store } from './store.js?v=57';
+import { h, toast, uploadPhoto, ICONS, buzz } from './ui.js?v=57';
+import { live, weddings, wedding, render } from './app.js?v=57';
+import { optionsOf, categoriesOf, editOption, photoEl, firstPic } from './swipe.js?v=57';
 
 const SHARE = 'fwp-share';
 let shared = null, loading = false, pickW = null, busy = false;

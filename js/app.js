@@ -1,30 +1,30 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=56';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=56';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=56';
-import { renderBoard } from './board.js?v=56';
-import { renderTodo } from './todo.js?v=56';
-import { renderFiles } from './files.js?v=56';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=56';
-import { clearPage, clearAll } from './clear.js?v=56';
-import { undoButtons } from './history.js?v=56';
-import { downloadBackup } from './tools.js?v=56';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=56';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=56';
-import { announcementBars } from './planauto.js?v=56';
-import { renderPartner } from './partner.js?v=56';
-import { renderOverview, editDate } from './overview.js?v=56';
-import { renderToday } from './today.js?v=56';
-import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=56';
-import { renderLists } from './lists.js?v=56';
-import { planOf } from './map.js?v=56';
-import { openStep, closeDrawer } from './panel.js?v=56';
-import { waNumber } from './nudge.js?v=56';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=56';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=56';
-import { morphInto, onScreen } from './morph.js?v=56';
-import { renderShare } from './share.js?v=56';
-import { pendingFor } from './swipe.js?v=56';
-import { installApp, installOffer, isStandalone } from './install.js?v=56';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=57';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=57';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=57';
+import { renderBoard } from './board.js?v=57';
+import { renderTodo } from './todo.js?v=57';
+import { renderFiles } from './files.js?v=57';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=57';
+import { clearPage, clearAll } from './clear.js?v=57';
+import { undoButtons } from './history.js?v=57';
+import { downloadBackup } from './tools.js?v=57';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=57';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=57';
+import { announcementBars } from './planauto.js?v=57';
+import { renderPartner } from './partner.js?v=57';
+import { renderOverview, editDate } from './overview.js?v=57';
+import { renderToday } from './today.js?v=57';
+import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=57';
+import { renderLists } from './lists.js?v=57';
+import { planOf } from './map.js?v=57';
+import { openStep, closeDrawer } from './panel.js?v=57';
+import { waNumber } from './nudge.js?v=57';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=57';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=57';
+import { morphInto, onScreen } from './morph.js?v=57';
+import { renderShare } from './share.js?v=57';
+import { pendingFor } from './swipe.js?v=57';
+import { installApp, installOffer, isStandalone } from './install.js?v=57';
 
 const app = document.getElementById('app');
 
@@ -391,13 +391,29 @@ function renderSpace(id, sub, params) {
 // Who else is here right now: a dot for each person, with the page they're on.
 const ROOM = { overview: 'the Overview', choose: 'Choose', options: 'Choose', board: 'the mood board', swipe: 'Choose', plan: 'the plan', todo: 'Jobs', lists: 'Lists', files: 'Lists', budget: 'the budget' };
 export function hereDots(wid) {
+  // Always there: green faces for whoever else has the War Room open now; tap for the list and when others last opened it.
   const ps = (store.presence || []).filter(p => !wid || String(p.room || '').startsWith(wid + '/'));
-  if (!ps.length) return null;
   const where = (p) => { const [w, sub] = String(p.room || '').split('/'); return wid ? 'on ' + (ROOM[sub] || 'this wedding') : (wedding(w) ? 'in ' + wedding(w).couple : 'here'); };
   const names = ps.map(p => `${p.name || 'Someone'} — ${where(p)}`);
-  return h('button', { type: 'button', class: 'here-dots', title: names.join('\n'), 'aria-label': `Here now: ${names.join(', ')}`, onclick: () => toast('Here now: ' + names.join(' · ')) },
-    ps.slice(0, 4).map(p => h('span', { class: 'hd-av' }, String(p.name || '?').trim().charAt(0).toUpperCase())),
-    ps.length > 4 ? h('span', { class: 'hd-more' }, '+' + (ps.length - 4)) : null);
+  return h('button', { type: 'button', class: 'here-dots' + (ps.length ? '' : ' alone'), title: ps.length ? names.join('\n') : 'Who’s here', 'aria-label': ps.length ? `Here now: ${names.join(', ')}` : 'Who’s here: only you right now', onclick: () => whoSheet(wid) },
+    ps.length ? ps.slice(0, 4).map(p => h('span', { class: 'hd-av' }, String(p.name || '?').trim().charAt(0).toUpperCase())) : h('span', { class: 'hd-dot', 'aria-hidden': 'true' }),
+    ps.length > 4 ? h('span', { class: 'hd-more' }, '+' + (ps.length - 4)) : null,
+    ps.length ? null : h('span', { class: 'hd-lbl' }, 'Only you'));
+}
+function whoSheet(wid) {
+  const all = store.presence || [];
+  const here = new Set(all.map(p => p.id));
+  const roomOf = (p) => { const [w, sub] = String(p.room || '').split('/'); return (wedding(w) ? wedding(w).couple + ' · ' : '') + (ROOM[sub] || (w === 'home' ? 'Home' : 'looking around')); };
+  const others = (store.rows('members') || []).filter(m => m.name && m.user_id !== store.me.id && !here.has(m.user_id))
+    .sort((a, b) => String(b.last_opened || '').localeCompare(String(a.last_opened || '')));
+  const row = (name, sub, on) => h('div', { class: 'who-row' }, h('span', { class: 'who-av' + (on ? ' on' : '') }, String(name || '?').trim().charAt(0).toUpperCase()), h('div', {}, h('b', {}, name), h('small', {}, sub)));
+  modal({ title: 'Who’s here', body: [
+    h('h3', { class: 'who-h' }, all.length ? `Here now · ${all.length}` : 'Here now'),
+    all.length ? h('div', { class: 'who-list' }, all.map(p => row(p.name || 'Someone', roomOf(p), true))) : h('p', { class: 'muted', style: { margin: '0 0 6px' } }, 'Only you at the moment. When someone else opens the War Room, a green face shows at the top.'),
+    others.length ? h('h3', { class: 'who-h' }, 'Everyone else') : null,
+    others.length ? h('div', { class: 'who-list' }, others.map(m => row(m.name, m.last_opened ? 'Last opened ' + ago(m.last_opened) : 'Not seen yet', false))) : null,
+    store.mode === 'live' && !others.some(m => m.last_opened) && others.length ? h('p', { class: 'hint' }, '“Last opened” starts working after database update 14.') : null],
+  actions: [{ label: 'Close', onClick: () => { } }] });
 }
 
 // For people with a limited role: a small reminder of what they can do.
@@ -546,7 +562,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=56').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=57').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 
