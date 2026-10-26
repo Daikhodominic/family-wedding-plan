@@ -1,22 +1,22 @@
 // The first page of each wedding: what's happening, what's next, who is doing what.
-import { store } from './store.js?v=50';
-import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=50';
-import { live, stepVisible, feedList, themeOf, render } from './app.js?v=50';
-import { openStep, lockIcon } from './panel.js?v=50';
-import { planOf, journeyBar } from './map.js?v=50';
-import { listSummary } from './lists.js?v=50';
-import { budgetMath, inr } from './budget.js?v=50';
-import { editStep } from './pipeline.js?v=50';
-import { canonical } from './myjobs.js?v=50';
-import { pictureEl } from './map.js?v=50';
-import { readyToDecide, favScore } from './boardauto.js?v=50';
-import { isDecider } from './tools.js?v=50';
-import { cardTitle } from './decisions.js?v=50';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=50';
-import { share, siteLink, copyLink } from './tools.js?v=50';
-import { planOffer } from './plans.js?v=50';
-import { newForYou, pendingFor } from './swipe.js?v=50';
-import { waButton, jobsMessage } from './nudge.js?v=50';
+import { store } from './store.js?v=51';
+import { h, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, popMenu } from './ui.js?v=51';
+import { live, stepVisible, feedList, themeOf, render } from './app.js?v=51';
+import { openStep, lockIcon } from './panel.js?v=51';
+import { planOf, journeyBar } from './map.js?v=51';
+import { listSummary } from './lists.js?v=51';
+import { budgetMath, inr } from './budget.js?v=51';
+import { editStep } from './pipeline.js?v=51';
+import { canonical } from './myjobs.js?v=51';
+import { pictureEl } from './map.js?v=51';
+import { readyToDecide, favScore } from './boardauto.js?v=51';
+import { isDecider } from './tools.js?v=51';
+import { cardTitle } from './decisions.js?v=51';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=51';
+import { share, siteLink, copyLink } from './tools.js?v=51';
+import { planOffer } from './plans.js?v=51';
+import { newForYou, pendingFor } from './swipe.js?v=51';
+import { waButton, jobsMessage } from './nudge.js?v=51';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const done = (t) => t.status === 'done' || !!t.locked_at;
@@ -70,7 +70,7 @@ function block(title, items, empty, opts = {}) {
 }
 
 // Suggestions sent in by the partner family (on a card, or in general).
-function partnerSugg(w) {
+export function partnerSugg(w) {
   const list = live(store.rows('comments') || []).filter(c => c.wedding_id === w.id && c.from_partner).sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6);
   if (!list.length) return null;
   return h('section', { class: 'oblock partner-sugg' }, h('div', { class: 'ob-h' }, h('h2', {}, 'From the partner family'), h('span', { class: 'count gold' }, String(list.length))),
@@ -79,7 +79,7 @@ function partnerSugg(w) {
 }
 
 // Viewer links for the partner family: make one, copy or send it, or turn it off.
-function partnerLinks(w) {
+export function partnerLinks(w) {
   if (store.missing && store.missing.partner_links) { toast('The partner view needs database update 9. Ask the admin to run it.', 'error'); return; }
   const body = h('div', { class: 'pl-body' });
   const draw = () => {
@@ -137,7 +137,7 @@ export function renderOverview(root, w, params = {}) {
   const moreBtn = h('button', { type: 'button', class: 'btn ghost small oh-more', 'aria-haspopup': 'menu', onclick: () => popMenu(moreBtn, [
     { icon: 'comment', label: 'Share this week on WhatsApp', onClick: () => shareWeek(w) },
     { icon: 'plan', label: 'Add dates to my calendar', onClick: () => calendarFor(w) },
-    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=50').then(m => m.memoryBook(w)) },
+    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=51').then(m => m.memoryBook(w)) },
     isDecider() ? { icon: 'note', label: 'Post an announcement', onClick: () => newAnnouncement(w) } : null,
     isDecider() ? { icon: 'user', label: 'Share with the partner family', onClick: () => partnerLinks(w) } : { icon: 'user', label: 'What the partner family sees', href: `#/p/preview-${w.id}` },
     store.me.isAdmin && !fw ? { icon: 'lock', label: 'Preview final-week mode', href: `#/w/${w.id}?finalweek=1` } : null]) }, 'More ', h('span', { 'aria-hidden': 'true' }, '▾'));

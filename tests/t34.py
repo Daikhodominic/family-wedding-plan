@@ -3,7 +3,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-J="async(q)=>{const {store}=await import('./js/store.js?v=50'); const s=store.rows('steps').find(x=>x.title===q&&!x.deleted_at); if(!s) return null; const a=store.find('areas',s.area_id); const st=a&&store.find('stages',a.stage_id); return {id:s.id, owner:s.owner, due:s.due, gate:s.gate, area:a&&a.title, stage:st&&st.title, opts:store.rows('board_items').filter(i=>i.kind==='option'&&!i.deleted_at&&(i.data||{}).step_id===s.id).length}}"
+J="async(q)=>{const {store}=await import('./js/store.js?v=51'); const s=store.rows('steps').find(x=>x.title===q&&!x.deleted_at); if(!s) return null; const a=store.find('areas',s.area_id); const st=a&&store.find('stages',a.stage_id); return {id:s.id, owner:s.owner, due:s.due, gate:s.gate, area:a&&a.title, stage:st&&st.title, opts:store.rows('board_items').filter(i=>i.kind==='option'&&!i.deleted_at&&(i.data||{}).step_id===s.id).length}}"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':360,'height':800}, is_mobile=True, has_touch=True, device_scale_factor=2)
@@ -29,7 +29,7 @@ async def main():
         print('note2', await m.locator('.cf-note').inner_text(), '| who prefilled:', await m.locator('.cf-row .ppl-chip').all_inner_texts())
         await m.locator('input[placeholder^="e.g. Lens"]').fill('Studio Kohima'); await m.locator('.modal-actions button:has-text("Save option")').click(); await pg.wait_for_timeout(900)
         r=await pg.evaluate(J,'Make-up artist'); print('reused', r); assert r['opts']==2
-        print('tile', await pg.locator('.cat-tile:has-text("Make-up artist")').inner_text())
+        print('tile', await pg.locator('.ed-arch:has-text("Make-up artist")').inner_text())
         # change category: move to The wedding day / During, new owner, rename
         await pg.goto(B+f'#/w/charani/options?step={r["id"]}'); await pg.wait_for_timeout(900)
         print('meta', await pg.locator('.cat-meta').inner_text())

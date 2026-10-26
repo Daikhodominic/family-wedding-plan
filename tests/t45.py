@@ -2,7 +2,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-S="import('./js/store.js?v=50').then(m=>m.store)"
+S="import('./js/store.js?v=51').then(m=>m.store)"
 MSG = """Hi! Sharing some vendors my cousin used:
 
 1. Lens & Light Studio – candid photography, 85k for 2 days. 98620 12345

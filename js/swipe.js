@@ -1,20 +1,21 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=50';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=50';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=50';
-import { isDecider, personInput } from './tools.js?v=50';
-import { suggestDue } from './planauto.js?v=50';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=50';
-import { addVendor } from './decisions.js?v=50';
-import { pickFiles, fetchPreview } from './board.js?v=50';
-import { chooseTabs } from './tabs.js?v=50';
-import { smartBar, inboxSection } from './smartadd.js?v=50';
-import { renderGlimpse } from './glimpse.js?v=50';
-import { planOf } from './map.js?v=50';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=50';
-import { sampleRows, isSample } from './samples.js?v=50';
+import { store } from './store.js?v=51';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=51';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=51';
+import { isDecider, personInput } from './tools.js?v=51';
+import { suggestDue } from './planauto.js?v=51';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=51';
+import { addVendor } from './decisions.js?v=51';
+import { pickFiles, fetchPreview } from './board.js?v=51';
+import { chooseTabs } from './tabs.js?v=51';
+import { areaIcon } from './areaicons.js?v=51';
+import { smartBar, inboxSection } from './smartadd.js?v=51';
+import { renderGlimpse } from './glimpse.js?v=51';
+import { planOf } from './map.js?v=51';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=51';
+import { sampleRows, isSample } from './samples.js?v=51';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -643,10 +644,10 @@ export function openProfile(o, onVote) {
       h('div', { class: 'od-acts pf-acts' },
         isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
-        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=50').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
+        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=51').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
-        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=50').then(m => m.openHistory('option', cur)); } }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=51').then(m => m.openHistory('option', cur)); } }, '↺ History'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { close(); deleteOption(cur); } }, 'Delete'))));
   const bar = h('div', { class: 'pf-bar' },
@@ -761,42 +762,70 @@ export function sampleButton(w) {
 /* ---------- Choose: every category of a wedding ---------- */
 export function renderChoose(root, w, params = {}) {
   if (params.view === 'glimpse') {
-    root.append(h('div', { class: 'ph-row' }, h('div', {}, h('h1', { class: 'page-title' }, 'The wedding at a glance')), h('div', { class: 'ph-right' }, chooseTabs(w, 'glimpse'))));
+    root.append(h('header', { class: 'ch-head' }, h('h1', { class: 'ed-h ch-title' }, h('span', { class: 'ed-caps' }, 'At a'), ' ', h('span', { class: 'ed-script' }, 'glance'))), chooseTabs(w, 'glimpse'));
     renderGlimpse(root, w); return;
   }
-  root.append(h('div', { class: 'ph-row' },
-    h('div', {}, h('h1', { class: 'page-title' }, 'Choose'), h('p', { class: 'ph-sub' }, 'Everything waiting to be chosen, and what the family thinks.')),
-    h('div', { class: 'ph-right' },
+  const ed = document.body.dataset.look === 'ed';
+  const nOpen = optionsOf(w.id).filter(isOpen).length;
+  root.append(h('header', { class: 'ch-head' },
+    h('h1', { class: 'ed-h ch-title' }, h('span', { class: 'ed-caps' }, 'Choose'), ' ', h('span', { class: 'ed-script' }, 'together')),
+    h('div', { class: 'ch-acts' },
       h('button', { type: 'button', class: 'btn', onclick: () => editOption(w) }, '+ Add an option'),
-      (() => { const n = optionsOf(w.id).filter(isOpen).length; return n ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, n) }) : null; })(),
-      null)));
+      nOpen ? waButton({ label: 'Ask the family to vote', small: false, cls: 'ghost', text: () => swipeMessage(w.id, nOpen) }) : null)));
   root.append(chooseTabs(w, 'vote'), smartBar(w));
-  const nfy = newForYou(w.id); if (nfy) root.append(nfy);
   const cats = categoriesOf(w);
-  if (!cats.length) { root.append(h('p', { class: 'muted' }, 'No categories yet. Mark a step in the plan as a big decision, or add an option to any step.')); const ib = inboxSection(w); if (ib) root.append(ib); return; }
-  const tile = ({ step, area, stage, n }) => {
+  if (!cats.length) { root.append(h('p', { class: 'ed-empty' }, 'No choices yet. Add an option, or mark a step in the plan as “Choose between options”.')); const ib = inboxSection(w); if (ib) root.append(ib); return; }
+
+  // The next thing to vote on, big — love it, not this, or see everything about it.
+  const queue = pendingFor(w.id);
+  if (queue.length) {
+    const o = queue[0], d = o.data || {}, st = stepOf(o), pic = firstPic(o), v = votesOf(o);
+    const loves = v.love.filter(n => n !== store.me.name);
+    const after = () => { buzz(14); };
+    root.append(h('section', { class: 'ch-next', 'aria-label': 'Next to vote on' },
+      h('small', { class: 'ch-k' }, `New for you · 1 of ${queue.length}`),
+      h('button', { type: 'button', class: 'ch-pic', 'aria-label': 'See everything about ' + (d.title || 'this option'), onclick: () => openProfile(o) },
+        pic ? img(pic, 'ch-img', d.title || '', true) : h('span', { class: 'ch-ph', html: ICONS.image })),
+      h('div', { class: 'ch-tx' },
+        st ? h('small', { class: 'ch-cat' }, st.title) : null,
+        h('b', {}, d.title || 'Option'),
+        h('span', {}, [d.rate, (d.smart || {}).location].filter(Boolean).join(' · ') || ((d.images || []).length > 1 ? `${d.images.length} photos` : ''))),
+      h('div', { class: 'ch-btns' },
+        h('button', { type: 'button', class: 'ch-b', 'aria-label': 'Not this', onclick: () => vote(o, 'no').then(after) }, h('span', { html: ICONS.close })),
+        h('button', { type: 'button', class: 'ch-b love', 'aria-label': 'Love it', onclick: () => vote(o, 'love').then(after) }, h('span', { html: ICONS.heart })),
+        h('button', { type: 'button', class: 'ch-b', 'aria-label': 'See everything about it', onclick: () => openProfile(o) }, h('span', { html: ICONS.back, class: 'up' }))),
+      h('p', { class: 'ch-foot' }, loves.length ? `♥ ${loves.slice(0, 2).join(' and ')}${loves.length > 2 ? ` and ${loves.length - 2} more` : ''} love it · ` : '',
+        h('a', { href: `#/w/${w.id}/swipe` }, queue.length > 1 ? `Swipe through all ${queue.length} →` : 'Open the swipe view →'))));
+  }
+
+  const open = cats.filter(c => !c.step.locked_at && c.n), empty = cats.filter(c => !c.step.locked_at && !c.n), done = cats.filter(c => c.step.locked_at);
+  const arch = ({ step, area, n }) => {
     const opts = optionsOf(w.id, step.id);
     const chosen = opts.find(o => (o.data || {}).status === 'chosen');
     const ranked = opts.filter(isOpen).sort((a, b) => votesOf(b).score - votesOf(a).score);
-    const lead = ranked[0] && votesOf(ranked[0]).total ? ranked[0] : null;
+    const lead = ranked[0] && votesOf(ranked[0]).love.length ? ranked[0] : null;
+    const show = chosen || lead || opts.find(firstPic);
     const fresh = pendingFor(w.id, step.id).length;
-    const show = chosen || lead || opts[0];
-    return h('a', { class: 'cat-tile' + (step.locked_at ? ' final' : '') + (!n ? ' empty' : ''), href: `#/w/${w.id}/options?step=${step.id}` },
-      h('span', { class: 'ct-pic' }, show && firstPic(show) ? img(firstPic(show), '') : h('span', { class: 'ct-ph' }, step.locked_at ? '✓' : n ? initials(step.title) : '+')),
-      fresh ? h('span', { class: 'ct-new' }, `${fresh} new`) : null,
-      h('span', { class: 'ct-body' },
-        h('span', { class: 'ct-area' }, [stage && stage.title, area.title].filter(Boolean).join(' · ')),
-        h('b', {}, step.title),
-        step.owner ? h('span', { class: 'ct-who' }, 'In charge: ' + step.owner) : null,
-        h('span', { class: 'ct-sub' }, step.locked_at ? '✓ ' + ((step.lock_note && (step.lock_note.with || step.lock_note.vendor)) || 'Final') : n ? `${n} ${n === 1 ? 'option' : 'options'}${lead ? ' · leading: ' + (lead.data || {}).title : ''}` : 'No options yet — add one')));
+    const p = show && firstPic(show);
+    return h('a', { class: 'ed-arch', href: `#/w/${w.id}/options?step=${step.id}` },
+      h('span', { class: 'ed-arch-pic' + (p ? '' : ' empty') }, p ? (() => { const el = img(p, ''); el.loading = 'eager'; const off = () => { const box = el.parentNode; if (box && el.isConnected !== false) { box.classList.add('empty'); el.replaceWith(h('span', { class: 'ed-arch-ic', html: areaIcon(area.title + ' ' + step.title) })); } }; el.addEventListener('error', off); if (!/^(https?:|assets\/)/.test(p)) store.url(p, 'small').then(u => { if (!u) setTimeout(off); }); return el; })() : h('span', { class: 'ed-arch-ic', html: areaIcon(area.title + ' ' + step.title) }),
+        fresh ? h('span', { class: 'ed-badge' }, `${fresh} new`) : null,
+        step.locked_at ? h('span', { class: 'ed-badge done' }, '✓ Final') : null),
+      h('b', {}, step.title),
+      h('small', {}, step.locked_at ? ((step.lock_note && (step.lock_note.with || step.lock_note.vendor)) || 'Decided') : lead ? `Leading: ${(lead.data || {}).title}` : `${n} ${n === 1 ? 'option' : 'options'}${step.owner ? ' · ' + step.owner.split(/[,&]/)[0].trim() : ''}`));
   };
-  const open = cats.filter(c => !c.step.locked_at && c.n), empty = cats.filter(c => !c.step.locked_at && !c.n), done = cats.filter(c => c.step.locked_at);
-  if (open.length) root.append(h('section', { class: 'cat-grid' }, open.map(tile)));
-  if (empty.length) root.append(h('section', { class: 'cat-empty' },
-    h('h2', { class: 'cat-h' }, 'Still needs options'),
-    h('div', { class: 'cat-chips' }, empty.map(({ step }) => h('button', { type: 'button', class: 'lchip', title: 'Add an option for ' + step.title, onclick: () => editOption(w, step.id) }, '+ ' + step.title)))));
-  if (done.length) root.append(h('h2', { class: 'cat-h' }, `Decided · ${done.length}`), h('section', { class: 'cat-grid' }, done.map(tile)));
+  if (open.length) root.append(h('section', { class: 'ed-band ch-band' }, h('div', { class: 'ed-band-in' },
+    h('h2', { class: 'ed-h' }, h('span', { class: 'ed-caps' }, 'All the'), ' ', h('span', { class: 'ed-script' }, 'choices')),
+    h('p', { class: 'ed-band-sub' }, `${open.length} still open · the family votes, the Deciders choose`),
+    h('div', { class: 'ed-arches grid' }, open.map(arch)))));
+  if (empty.length) root.append(h('section', { class: 'ch-waiting' },
+    h('h2', { class: 'ed-h small' }, h('span', { class: 'ed-caps' }, 'Waiting for'), ' ', h('span', { class: 'ed-script' }, 'ideas')),
+    h('div', { class: 'ch-chips' }, empty.map(({ step }) => h('button', { type: 'button', class: 'ch-chip', title: 'Add an option for ' + step.title, onclick: () => editOption(w, step.id) }, '+ ' + step.title)))));
+  if (done.length) root.append(h('section', { class: 'ch-done' },
+    h('h2', { class: 'ed-h small' }, h('span', { class: 'ed-caps' }, 'Already'), ' ', h('span', { class: 'ed-script' }, 'decided')),
+    h('div', { class: 'ed-arches small' }, done.map(arch))));
   const inbox = inboxSection(w); if (inbox) root.append(inbox);
+  void ed;
 }
 
 /* ---------- One category: its options, votes, compare, inspiration ---------- */

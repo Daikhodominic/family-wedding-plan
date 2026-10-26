@@ -1,6 +1,6 @@
 // @mentions in comments: "@Elow can you call them?" puts a job in Elow's list (and so on his Home and My jobs).
-import { store } from './store.js?v=50';
-import { h, toast } from './ui.js?v=50';
+import { store } from './store.js?v=51';
+import { h, toast } from './ui.js?v=51';
 
 const first = (n) => String(n || '').trim().split(/\s+/)[0];
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

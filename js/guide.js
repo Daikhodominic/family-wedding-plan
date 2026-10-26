@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=50';
-import { h, modal , ICONS } from './ui.js?v=50';
-import { once, markOnce } from './tools.js?v=50';
+import { store } from './store.js?v=51';
+import { h, modal , ICONS } from './ui.js?v=51';
+import { once, markOnce } from './tools.js?v=51';
 
 // The first-visit tour. It comes back each visit until "Don't show this again" is tapped,
 // and can be opened any time from the menu ("How to use the War Room").
@@ -13,7 +13,7 @@ const SLIDES = [
     p: 'Tap a couple’s monogram to open their wedding. “New for you” at the top shows options waiting for your vote. Below: what changed since you last looked, decisions waiting, and what’s coming up.',
     where: 'Home → a monogram' },
   { t: 'Each wedding has five tabs', ic: sv('<rect x="6" y="10" width="36" height="28" rx="4"/><path d="M6 32h36M15 32v6M24 32v6M33 32v6"/>'),
-    p: 'Overview (what’s happening, who’s doing what) · Choose (options to vote on) · Plan (every step, in order) · Lists (guests, meat list, gifts, files) · Budget. The bar at the bottom moves between them.' },
+    p: 'Today (what’s happening, what’s for you, who’s doing what) · Choose (options to vote on) · Plan (every step, in order) · Lists (guests, meat list, gifts, files) · Budget. The bar at the bottom moves between them.' },
   { t: 'Choose: swipe to vote', ic: sv('<rect x="14" y="8" width="20" height="30" rx="4" transform="rotate(12 24 23)"/><path d="M6 40l6-4M42 40l-6-4"/>'),
     p: 'Push a card right if you love it, left if not — a light push is enough. Swipe up to see all its photos and details. Made a mistake? ↶ undoes it. The Deciders choose once the family has voted.',
     where: 'Choose → a category → Swipe' },

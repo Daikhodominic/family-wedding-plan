@@ -1,29 +1,30 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=50';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=50';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=50';
-import { renderBoard } from './board.js?v=50';
-import { renderTodo } from './todo.js?v=50';
-import { renderFiles } from './files.js?v=50';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=50';
-import { clearPage, clearAll } from './clear.js?v=50';
-import { undoButtons } from './history.js?v=50';
-import { downloadBackup } from './tools.js?v=50';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=50';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=50';
-import { announcementBars } from './planauto.js?v=50';
-import { renderPartner } from './partner.js?v=50';
-import { renderOverview, editDate } from './overview.js?v=50';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=50';
-import { renderLists } from './lists.js?v=50';
-import { planOf } from './map.js?v=50';
-import { openStep, closeDrawer } from './panel.js?v=50';
-import { waNumber } from './nudge.js?v=50';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=50';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=50';
-import { morphInto, onScreen } from './morph.js?v=50';
-import { renderShare } from './share.js?v=50';
-import { pendingFor } from './swipe.js?v=50';
-import { installApp, installOffer, isStandalone } from './install.js?v=50';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=51';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=51';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=51';
+import { renderBoard } from './board.js?v=51';
+import { renderTodo } from './todo.js?v=51';
+import { renderFiles } from './files.js?v=51';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=51';
+import { clearPage, clearAll } from './clear.js?v=51';
+import { undoButtons } from './history.js?v=51';
+import { downloadBackup } from './tools.js?v=51';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=51';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=51';
+import { announcementBars } from './planauto.js?v=51';
+import { renderPartner } from './partner.js?v=51';
+import { renderOverview, editDate } from './overview.js?v=51';
+import { renderToday } from './today.js?v=51';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=51';
+import { renderLists } from './lists.js?v=51';
+import { planOf } from './map.js?v=51';
+import { openStep, closeDrawer } from './panel.js?v=51';
+import { waNumber } from './nudge.js?v=51';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=51';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=51';
+import { morphInto, onScreen } from './morph.js?v=51';
+import { renderShare } from './share.js?v=51';
+import { pendingFor } from './swipe.js?v=51';
+import { installApp, installOffer, isStandalone } from './install.js?v=51';
 
 const app = document.getElementById('app');
 
@@ -311,7 +312,7 @@ function renderHome() {
 }
 
 /* ---------- Wedding space ---------- */
-const TABS = [['overview', 'Overview', 'overview'], ['choose', 'Choose', 'compare'], ['plan', 'Plan', 'plan'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget']];
+const TABS = [['overview', 'Today', 'overview'], ['choose', 'Choose', 'compare'], ['plan', 'Plan', 'plan'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget']];
 const ALIAS = { decide: 'overview', files: 'lists', board: 'choose', options: 'choose', swipe: 'choose' }; // still reachable, shown under these tabs
 const tabOf = (t, params = {}) => !t ? (params.focus ? 'plan' : 'overview') : t === 'todo' ? 'plan' : t;
 
@@ -329,7 +330,7 @@ function renderSpace(id, sub, params) {
     : `${w.date_note || 'Date'} · to be fixed`;
   const link = (k) => '#/w/' + id + (k === 'overview' ? '' : '/' + k);
 
-  const root = h('div', { class: 'space deco-' + t.deco + (tab === 'board' ? ' on-board' : '') + (tab === 'swipe' ? ' is-swipe' : '') });
+  const root = h('div', { class: 'space deco-' + t.deco + (tab === 'board' ? ' on-board' : '') + (tab === 'swipe' ? ' is-swipe' : '') + (tab === 'overview' ? ' is-today' : '') });
   root.append(
     demoFlag() || '',
     h('header', { class: 'shead' },
@@ -365,7 +366,7 @@ function renderSpace(id, sub, params) {
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
   else if (tab === 'lists') renderLists(body, w, params);
-  else if (tab === 'overview') renderOverview(body, w, params);
+  else if (tab === 'overview') renderToday(body, w, params);
   else if (sub === 'todo') { renderPlanHead(body, w, 'todo'); renderTodo(body, w, params); }
   else renderPipeline(body, w, params);
 
@@ -475,6 +476,8 @@ export function render() {
   else if (parts[0] === 'share') view = familyPage(renderShare());
   else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, {}); view = familyPage(el); }
   else { view = renderHome(); setTimeout(maybeWelcome, 400); }
+  // The new look (cream, photos, olive/navy band) is on for the wedding pages.
+  document.body.dataset.look = parts[0] === 'w' && store.me ? 'ed' : '';
   document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe', 'share'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   const newPage = app.dataset.view !== key;
@@ -531,7 +534,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=50').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=51').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

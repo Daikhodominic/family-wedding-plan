@@ -21,9 +21,9 @@ async def main():
             print(name,'after 3 votes:', await pg.locator('.sw-count').all_inner_texts(), await pg.locator('.sw-done h2').all_inner_texts())
             if name=='d':
                 await pg.goto(B+'#/w/charani/choose'); await pg.wait_for_timeout(800)
-                print('choose tiles:', await pg.locator('.cat-tile b').all_inner_texts())
+                print('choose tiles:', await pg.locator('.ed-arch b').all_inner_texts())
                 await pg.screenshot(path='shots/s_choose.png')
-                await pg.click('.cat-tile:has-text("Photography and video")'); await pg.wait_for_timeout(800)
+                await pg.click('.ed-arch:has-text("Photography and video")'); await pg.wait_for_timeout(800)
                 print('options:', await pg.locator('.opt-card .oc-t').all_inner_texts(), await pg.locator('.oc-who').all_inner_texts())
                 await pg.screenshot(path='shots/s_options.png')
                 await pg.click('button:has-text("Compare the top 3")'); await pg.wait_for_timeout(500)

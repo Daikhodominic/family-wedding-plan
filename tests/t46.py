@@ -3,7 +3,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 L='http://localhost:8765/tests/live.html'
-S="import('../js/store.js?v=50').then(m=>m.store)"
+S="import('../js/store.js?v=51').then(m=>m.store)"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':1280,'height':900})
