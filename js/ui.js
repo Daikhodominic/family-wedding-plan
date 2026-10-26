@@ -1,5 +1,5 @@
 // Small UI helpers shared by every page.
-import { listen, onScreen } from './morph.js?v=52';
+import { listen, onScreen } from './morph.js?v=53';
 
 export function h(tag, props = {}, ...kids) {
   const el = document.createElement(tag);
@@ -294,7 +294,9 @@ export function popMenu(btn, items, head) {
   pop._owner = btn;
   document.body.append(pop);
   const r = btn.getBoundingClientRect();
-  pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+  const bar = document.querySelector('.snav'); const br = bar && bar.offsetParent !== null ? bar.getBoundingClientRect() : null;
+  const floor = br && br.top > innerHeight / 2 ? br.top : innerHeight; // stay above the bottom tab bar on phones
+  pop.style.top = Math.max(8, Math.min(r.bottom + 8, floor - pop.offsetHeight - 8)) + 'px';
   pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
   setTimeout(() => document.addEventListener('pointerdown', outside, true));
 }

@@ -20,7 +20,7 @@ async def main():
         print('swipe page height', sh)
         for h in ['#/w/elow/choose','#/w/elow/plan','#/w/charani','#/w/charani/budget','#/w/charani/lists']:
             await pg.goto(B+h); await pg.wait_for_timeout(1500)
-            t=await pg.evaluate("""async()=>{const t0=performance.now(); const {render}=await import('./js/app.js?v=52'); render(); await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); return Math.round(performance.now()-t0)}""")
+            t=await pg.evaluate("""async()=>{const t0=performance.now(); const {render}=await import('./js/app.js?v=53'); render(); await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); return Math.round(performance.now()-t0)}""")
             w=await pg.evaluate("()=>[document.documentElement.scrollWidth, innerWidth]")
             print(h,'redraw ms',t,'width',w)
         await b.close()

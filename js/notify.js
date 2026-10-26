@@ -2,10 +2,10 @@
 // comments on your step or makes a decision. They arrive while the site is open or in the
 // background on the phone (Android keeps it alive for a while once it's on the home screen).
 // Notifications when the site is fully closed need a push server — see database update 11 notes.
-import { store } from './store.js?v=52';
-import { h, toast, modal, buzz } from './ui.js?v=52';
-import { wedding } from './app.js?v=52';
-import { samePerson } from './tools.js?v=52';
+import { store } from './store.js?v=53';
+import { h, toast, modal, buzz } from './ui.js?v=53';
+import { wedding } from './app.js?v=53';
+import { samePerson } from './tools.js?v=53';
 
 const KEY = 'fwp-notify';
 const KINDS = [

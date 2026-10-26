@@ -1,6 +1,6 @@
 // Start a new wedding from an earlier one: its stages, sections and steps (fresh — nothing ticked,
 // no names or dates), its big decisions, its lists' columns, and its budget lines with the amounts as a guide.
-import { store } from './store.js?v=52';
+import { store } from './store.js?v=53';
 
 const live = (t) => (store.rows(t) || []).filter(r => !r.deleted_at);
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36));

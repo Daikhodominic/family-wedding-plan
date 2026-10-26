@@ -3190,3 +3190,9 @@ body[data-page=home] .home-stage > * { flex: none; }
 body[data-page=home] .home-stage > .emblems { flex: 1 1 auto; min-height: 0; }
 body[data-page=home] .home-stage > :is(.frame, .hb) { flex: initial; }
 body[data-page=home] .greet-card { flex-shrink: 0; }
+
+/* Menus in the new look: link items look like the other items, delete buttons calm (not bright orange) */
+body[data-look=ed] .menu-pop a.mi, body[data-look=ed] .menu-pop a.mi:visited { text-decoration: none !important; color: var(--e-ink) !important; }
+body[data-look=ed] .menu-pop .mi:hover, body[data-look=ed] .menu-pop .mi:focus-visible { background: color-mix(in srgb, var(--e-accent) 8%, transparent) !important; }
+body[data-look=ed] .btn.danger { background: transparent !important; color: var(--e-warn) !important; border: 1px solid color-mix(in srgb, var(--e-warn) 55%, transparent) !important; box-shadow: none !important; }
+body[data-look=ed] .btn.danger:hover { background: color-mix(in srgb, var(--e-warn) 8%, transparent) !important; }

@@ -25,7 +25,7 @@ async def main():
             async with pg.expect_file_chooser() as fc: await m.locator('.oe-add').click()
             await (await fc.value).set_files('sample.jpg'); await pg.wait_for_timeout(400)
         await m.locator('.modal-actions .btn:not(.ghost)').click(); await pg.wait_for_timeout(800)
-        sid=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=52'); return store.rows('steps').find(x=>x.title==='Make-up artist').id}")
+        sid=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=53'); return store.rows('steps').find(x=>x.title==='Make-up artist').id}")
         await pg.goto(B+f'#/w/charani/options?step={sid}'); await pg.wait_for_timeout(800)
         async with pg.expect_download() as dl: await pg.locator('button:has-text("⬇ Photos")').click()
         d=await dl.value; z=zipfile.ZipFile(await d.path()); print('category zip', d.suggested_filename, z.namelist()); assert len(z.namelist())==2 and z.testzip() is None
