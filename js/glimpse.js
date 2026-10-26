@@ -3,11 +3,11 @@
 // chosen one as its picture, otherwise the option in the lead. Tap one to open it full screen and go through
 // them one after another, like stories: what was chosen, the alternatives that were considered and their votes,
 // and whether it can still change.
-import { store } from './store.js?v=55';
-import { h, ICONS, shortDate, toast, buzz } from './ui.js?v=55';
-import { isDecider } from './tools.js?v=55';
-import { render } from './app.js?v=55';
-import { categoriesOf, optionsOf, votesOf, myVote, finalOf, chosenOf, openProfile, chooseOption, lightbox, photoEl, firstPic, placeholder, swipeAgain, roundsOf, addFinal, editOption, vote } from './swipe.js?v=55';
+import { store } from './store.js?v=56';
+import { h, ICONS, shortDate, toast, buzz } from './ui.js?v=56';
+import { isDecider } from './tools.js?v=56';
+import { render } from './app.js?v=56';
+import { categoriesOf, optionsOf, votesOf, myVote, finalOf, chosenOf, openProfile, chooseOption, lightbox, photoEl, firstPic, placeholder, swipeAgain, roundsOf, addFinal, editOption, vote } from './swipe.js?v=56';
 
 let showHidden = false;
 
@@ -38,7 +38,7 @@ export function renderGlimpse(root, w) {
   const can = isDecider(w.id) && store.may('steps', {}) === true;
   const hide = (step, on) => store.update('steps', step.id, { lock_note: { ...(step.lock_note || {}), hide_glimpse: on || null } })
     .then(() => toast(on ? 'Taken off At a glance — it’s still final in the plan' : 'Back on At a glance')).catch(e => toast(e.message, 'error'));
-  const edit = (x) => { const ch = x.st.ch; if (ch) editOption(w, x.c.step.id, ch); else import('./panel.js?v=55').then(m => m.openStep(x.c.step.id)); };
+  const edit = (x) => { const ch = x.st.ch; if (ch) editOption(w, x.c.step.id, ch); else import('./panel.js?v=56').then(m => m.openStep(x.c.step.id)); };
   const tile = (x, i) => {
     const off = hiddenHere(x.c.step);
     return h('div', { class: 'ig-tile decided' + (off ? ' off' : '') },

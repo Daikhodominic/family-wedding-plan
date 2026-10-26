@@ -7,7 +7,7 @@ async def main():
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':1440,'height':900})
         errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B+'#/w/charani'); await pg.wait_for_timeout(500)
-        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=55'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title==='Book the reception venue for the date'); await store.update('steps', s.id, {locked_at:new Date().toISOString(), status:'done', lock_note:{with:'Riverside Hall', phone:'98765 11111', amount:'150000', advance:'50000'}});
+        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=56'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title==='Book the reception venue for the date'); await store.update('steps', s.id, {locked_at:new Date().toISOString(), status:'done', lock_note:{with:'Riverside Hall', phone:'98765 11111', amount:'150000', advance:'50000'}});
           const c=store.find('board_items','demo-compare'); store.cache.board_items.find(x=>x.kind==='contact'&&x.wedding_id==='charani').data.phone='99999 00000';}""")
         await pg.click('.ed-more'); await pg.wait_for_timeout(150); await pg.click('.menu-pop .mi:has-text("Share with the partner family")'); await pg.wait_for_timeout(300)
         await pg.locator('.pl-new input').fill("Adahrii's family"); await pg.click('.pl-new .btn'); await pg.wait_for_timeout(400)

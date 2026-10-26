@@ -1,10 +1,10 @@
 // Family custom lists, Naga style: the invitation list and the meat list for each side of the family.
 // The bride's side sends its invitation list to the groom's family, and both sides keep a meat list
 // of the elders and relatives who receive a share — the pig head for the grandparents, legs for the uncles, and so on.
-import { store } from './store.js?v=55';
-import { h, toast } from './ui.js?v=55';
-import { live, wedding } from './app.js?v=55';
-import { openWhatsApp } from './nudge.js?v=55';
+import { store } from './store.js?v=56';
+import { h, toast } from './ui.js?v=56';
+import { live, wedding } from './app.js?v=56';
+import { openWhatsApp } from './nudge.js?v=56';
 
 export const INVITE_COLS = ['Name', 'Relation', 'Village / town', 'Phone', 'Count', 'Card sent', 'Notes'];
 export const MEAT_COLS = ['Name', 'Relation', 'Village / clan', 'Share', 'Weight (kg)', 'Given', 'Notes'];

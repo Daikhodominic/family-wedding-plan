@@ -1,7 +1,7 @@
 // Guard rails for big actions: never quietly remove what other people added.
 // "Others" = rows created by someone other than the person doing the action.
-import { store, nowIso } from './store.js?v=55';
-import { h } from './ui.js?v=55';
+import { store, nowIso } from './store.js?v=56';
+import { h } from './ui.js?v=56';
 
 const NOUNS = { stages: ['stage', 'stages'], areas: ['area', 'areas'], steps: ['step', 'steps'], todos: ['to-do', 'to-dos'], board_items: ['card', 'cards'], files: ['file', 'files'], lists: ['list', 'lists'], budget_areas: ['budget area', 'budget areas'], budget_items: ['payment', 'payments'], comments: ['comment', 'comments'] };
 

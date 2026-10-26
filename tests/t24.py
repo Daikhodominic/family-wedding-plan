@@ -9,6 +9,6 @@ async def main():
         print('modal', await pg.locator('.modal').count(), (await pg.locator('.modal').inner_text())[:200] if await pg.locator('.modal').count() else '')
         await pg.locator('.pl-new input').fill("Adahrii's family"); await pg.click('.pl-new .btn'); await pg.wait_for_timeout(600)
         print('toasts', await pg.locator('.toast').all_inner_texts())
-        print('rows', await pg.locator('.pl-row').count(), await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=55'); return JSON.stringify(store.rows('partner_links'))}"))
+        print('rows', await pg.locator('.pl-row').count(), await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=56'); return JSON.stringify(store.rows('partner_links'))}"))
         await b.close()
 asyncio.run(main())

@@ -11,7 +11,7 @@ async def main():
         print('tags', await pg.locator('.role-tag').count())
         await pg.goto(B+'#/w/elow/budget'); await pg.wait_for_timeout(400)
         print('decider: payment btn', await pg.locator('.ph-right .btn:has-text("+ Payment")').count())
-        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=55'); store.me.isAdmin=false; store.me.isDecider=false; store.emit({});}"); await pg.wait_for_timeout(500)
+        await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=56'); store.me.isAdmin=false; store.me.isDecider=false; store.emit({});}"); await pg.wait_for_timeout(500)
         print('family: payment btn', await pg.locator('.ph-right .btn:has-text("+ Payment")').count(), 'note', await pg.locator('.ro-note').count(), 'markpaid', await pg.locator('.btn:has-text("Mark paid")').count())
         await pg.locator('.brow-main').first.click(); await pg.wait_for_timeout(300)
         print('modal opened?', await pg.locator('.modal').count(), 'toast', await pg.locator('.toast').last.inner_text())

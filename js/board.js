@@ -1,14 +1,14 @@
-import { chooseTabs } from './tabs.js?v=55';
-import { store } from './store.js?v=55';
-import { h, modal, field, toast, ICONS, instaEmbed, instaPost, compressImage, uploadPhoto, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=55';
-import { live, ui, render, wedding } from './app.js?v=55';
-import { cardsToOptions } from './swipe.js?v=55';
-import { downloadZip, boardFiles } from './downloads.js?v=55';
-import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=55';
-import { together } from './history.js?v=55';
-import { isDecider } from './tools.js?v=55';
-import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=55';
-import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=55';
+import { chooseTabs } from './tabs.js?v=56';
+import { store } from './store.js?v=56';
+import { h, modal, field, toast, ICONS, instaEmbed, instaPost, compressImage, uploadPhoto, videoThumb, pdfThumb, fileExt, prettySize, youtubeId, hostOf, safeUrl, copyText, confirmBox } from './ui.js?v=56';
+import { live, ui, render, wedding } from './app.js?v=56';
+import { cardsToOptions } from './swipe.js?v=56';
+import { downloadZip, boardFiles } from './downloads.js?v=56';
+import { cardFooter, voteBar, voteCounts, optionKey, newCount, openThread, commentsOf } from './feedback.js?v=56';
+import { together } from './history.js?v=56';
+import { isDecider } from './tools.js?v=56';
+import { cardMenu, chooseOption, STATUS, sectionsFromPlan, cardTitle } from './decisions.js?v=56';
+import { compareInsight, readyToDecide, favScore, isStale, tidyUp, paletteFromImage, shareSection } from './boardauto.js?v=56';
 
 const KIND = {
   note: { label: 'Note', icon: 'note', w: 220 },

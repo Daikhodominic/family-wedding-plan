@@ -1,30 +1,30 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=55';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=55';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=55';
-import { renderBoard } from './board.js?v=55';
-import { renderTodo } from './todo.js?v=55';
-import { renderFiles } from './files.js?v=55';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=55';
-import { clearPage, clearAll } from './clear.js?v=55';
-import { undoButtons } from './history.js?v=55';
-import { downloadBackup } from './tools.js?v=55';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=55';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=55';
-import { announcementBars } from './planauto.js?v=55';
-import { renderPartner } from './partner.js?v=55';
-import { renderOverview, editDate } from './overview.js?v=55';
-import { renderToday } from './today.js?v=55';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=55';
-import { renderLists } from './lists.js?v=55';
-import { planOf } from './map.js?v=55';
-import { openStep, closeDrawer } from './panel.js?v=55';
-import { waNumber } from './nudge.js?v=55';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=55';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=55';
-import { morphInto, onScreen } from './morph.js?v=55';
-import { renderShare } from './share.js?v=55';
-import { pendingFor } from './swipe.js?v=55';
-import { installApp, installOffer, isStandalone } from './install.js?v=55';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=56';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=56';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=56';
+import { renderBoard } from './board.js?v=56';
+import { renderTodo } from './todo.js?v=56';
+import { renderFiles } from './files.js?v=56';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=56';
+import { clearPage, clearAll } from './clear.js?v=56';
+import { undoButtons } from './history.js?v=56';
+import { downloadBackup } from './tools.js?v=56';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=56';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=56';
+import { announcementBars } from './planauto.js?v=56';
+import { renderPartner } from './partner.js?v=56';
+import { renderOverview, editDate } from './overview.js?v=56';
+import { renderToday } from './today.js?v=56';
+import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=56';
+import { renderLists } from './lists.js?v=56';
+import { planOf } from './map.js?v=56';
+import { openStep, closeDrawer } from './panel.js?v=56';
+import { waNumber } from './nudge.js?v=56';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=56';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=56';
+import { morphInto, onScreen } from './morph.js?v=56';
+import { renderShare } from './share.js?v=56';
+import { pendingFor } from './swipe.js?v=56';
+import { installApp, installOffer, isStandalone } from './install.js?v=56';
 
 const app = document.getElementById('app');
 
@@ -371,7 +371,7 @@ function renderSpace(id, sub, params) {
   if (tab === 'board') renderBoard(body, w, params);
   else if (tab === 'choose') renderChoose(body, w, params);
   else if (tab === 'options') renderOptions(body, w, params.step);
-  else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap', 'data-fresh': '' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step }); }
+  else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap', 'data-fresh': '' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step, all: params.all }); }
   else if (tab === 'decide') renderOverview(body, w, params); // the old Decisions page now lives on the Overview and in Choose
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
   else if (tab === 'files') renderFiles(body, w, params);
@@ -484,10 +484,11 @@ export function render() {
   else if (parts[0] === 'me') view = familyPage(renderMyJobs());
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
   else if (parts[0] === 'share') view = familyPage(renderShare());
-  else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, {}); view = familyPage(el); }
+  else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, { all: params.all }); view = familyPage(el); }
   else { view = renderHome(); setTimeout(maybeWelcome, 400); }
   // The new look (cream, photos, olive/navy band) is on everywhere once signed in (not the partner family's view).
   document.body.dataset.look = store.me && parts[0] !== 'p' ? 'ed' : '';
+  if (store.me && booted && parts.length && parts[0] !== 'p') setTimeout(newChoicesPopup, 1600); // what's new to swipe, once per visit
   { const r = store.me ? store.roleOf(store.me) : 'full'; if (r === 'full') delete document.body.dataset.role; else document.body.dataset.role = r; } // view / lists: hide what they can't change
   document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe', 'share'].includes(parts[0]) ? 'home' : 'page';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
@@ -545,7 +546,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=55').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=56').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

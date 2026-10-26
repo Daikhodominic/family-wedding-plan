@@ -10,14 +10,14 @@ async def main():
         if await pg.locator('details.setup-card:not([open]) summary').count(): await pg.click('details.setup-card summary')
         print('dates banner', await pg.locator('.tip.auto').count())
         await pg.click('.tip.auto:has-text("no due date") .tip-x'); await pg.wait_for_timeout(600)
-        dues=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=55'); return store.rows('steps').filter(s=>s.wedding_id==='charani'&&s.due).map(s=>s.title+':'+s.due).slice(0,6)}")
+        dues=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=56'); return store.rows('steps').filter(s=>s.wedding_id==='charani'&&s.due).map(s=>s.title+':'+s.due).slice(0,6)}")
         print('dues', dues)
-        print('weekly', (await pg.evaluate("async()=>{const m=await import('./js/planauto.js?v=55'); const {store}=await import('./js/store.js?v=55'); return m.weekSummary(store.find('weddings','charani'))}"))[:300].replace('\n',' / '))
+        print('weekly', (await pg.evaluate("async()=>{const m=await import('./js/planauto.js?v=56'); const {store}=await import('./js/store.js?v=56'); return m.weekSummary(store.find('weddings','charani'))}"))[:300].replace('\n',' / '))
         async with pg.expect_download() as dl:
             await pg.click('.ed-more'); await pg.wait_for_timeout(150); await pg.click('.menu-pop .mi:has-text("calendar")')
         d=await dl.value; path=await d.path(); txt=open(path).read(); print('ics events', txt.count('BEGIN:VEVENT'))
         # looks finished: list on step with all confirmed
-        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=55'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title==='Send the invitations');
+        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=56'); const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title==='Send the invitations');
           const l=await store.insert('lists',{wedding_id:'charani', step_id:s.id, title:'Invites sent', columns:['Name','Card sent']});
           await store.insert('list_rows',{list_id:l.id, wedding_id:'charani', cells:['A','Yes'], position:1}); await store.insert('list_rows',{list_id:l.id, wedding_id:'charani', cells:['B','Yes'], position:2});
           store.cache.announcements.push({id:'an1', wedding_id:null, body:'Reception now starts at 5 pm, not 6 pm.', author_name:'Charani', created_by:'demo-charani', created_at:new Date().toISOString(), deleted_at:null}); store.emit({table:'announcements'});}""")
@@ -27,7 +27,7 @@ async def main():
         await pg.click('.announce .an-ok'); await pg.wait_for_timeout(400)
         print('after got it', await pg.locator('.announce').count())
         # final week preview with run sheet
-        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=55'); const l=await store.insert('lists',{wedding_id:'charani', step_id:null, title:'Day-of run sheet', columns:['Time','What','Who','Where','Done']});
+        await pg.evaluate("""async()=>{const {store}=await import('./js/store.js?v=56'); const l=await store.insert('lists',{wedding_id:'charani', step_id:null, title:'Day-of run sheet', columns:['Time','What','Who','Where','Done']});
           for (const [i,r] of [['09:00','Bride getting ready','Aunty Ela','Home',''],['11:00','Church service','Everyone','Church',''],['13:30','Reception lunch','Caterer','Hall','']].entries()) await store.insert('list_rows',{list_id:l.id, wedding_id:'charani', cells:r, position:i});
           const s=store.rows('steps').find(x=>x.wedding_id==='charani'&&x.title==='Book the reception venue for the date'); await store.update('steps', s.id, {locked_at:new Date().toISOString(), status:'done', lock_note:{with:'Riverside Hall', vendor:'Riverside Hall', phone:'98765 11111'}});}""")
         await pg.goto(B+'#/w/charani?finalweek=1'); await pg.wait_for_timeout(600)
@@ -37,7 +37,7 @@ async def main():
         await pg.goto(B+'#/w/charani/plan'); await pg.wait_for_timeout(500); (await pg.locator('.fold-all button:has-text(\"Open all\")').click()) if await pg.locator('.fold-all').count() else None; await pg.wait_for_timeout(300)
         await pg.click('.plan-edit'); await pg.wait_for_timeout(300)
         await pg.locator('.area:has-text("Gift preparation") .menu-btn').click(); await pg.click('.modal .btn:has-text("Copy this section to Elow")'); await pg.wait_for_timeout(600)
-        n=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=55'); return store.rows('areas').filter(a=>a.wedding_id==='elow'&&a.title==='Gift preparation'&&!a.deleted_at).length}")
+        n=await pg.evaluate("async()=>{const {store}=await import('./js/store.js?v=56'); return store.rows('areas').filter(a=>a.wedding_id==='elow'&&a.title==='Gift preparation'&&!a.deleted_at).length}")
         print('elow gift areas', n)
         # drawer suggested date
         await pg.locator('.step .txt:has-text("Food tasting")').click(); await pg.wait_for_timeout(400)
