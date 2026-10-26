@@ -241,5 +241,4 @@ end $$;
 drop trigger if exists list_rows_log on public.list_rows;
 create trigger list_rows_log after insert or update or delete on public.list_rows for each row execute function public.log_change();
 
--- Live updates for locks. (If this last line says the table is already a member, that's fine — it was added before.)
-alter publication supabase_realtime add table public.edit_locks;
+-- (Live updates for locks were already switched on in your database, so that line is no longer here.)
