@@ -1,30 +1,30 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=51';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=51';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=51';
-import { renderBoard } from './board.js?v=51';
-import { renderTodo } from './todo.js?v=51';
-import { renderFiles } from './files.js?v=51';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=51';
-import { clearPage, clearAll } from './clear.js?v=51';
-import { undoButtons } from './history.js?v=51';
-import { downloadBackup } from './tools.js?v=51';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=51';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=51';
-import { announcementBars } from './planauto.js?v=51';
-import { renderPartner } from './partner.js?v=51';
-import { renderOverview, editDate } from './overview.js?v=51';
-import { renderToday } from './today.js?v=51';
-import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=51';
-import { renderLists } from './lists.js?v=51';
-import { planOf } from './map.js?v=51';
-import { openStep, closeDrawer } from './panel.js?v=51';
-import { waNumber } from './nudge.js?v=51';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=51';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=51';
-import { morphInto, onScreen } from './morph.js?v=51';
-import { renderShare } from './share.js?v=51';
-import { pendingFor } from './swipe.js?v=51';
-import { installApp, installOffer, isStandalone } from './install.js?v=51';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=52';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=52';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=52';
+import { renderBoard } from './board.js?v=52';
+import { renderTodo } from './todo.js?v=52';
+import { renderFiles } from './files.js?v=52';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=52';
+import { clearPage, clearAll } from './clear.js?v=52';
+import { undoButtons } from './history.js?v=52';
+import { downloadBackup } from './tools.js?v=52';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=52';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=52';
+import { announcementBars } from './planauto.js?v=52';
+import { renderPartner } from './partner.js?v=52';
+import { renderOverview, editDate } from './overview.js?v=52';
+import { renderToday } from './today.js?v=52';
+import { renderSwipe, renderChoose, renderOptions, newForYou } from './swipe.js?v=52';
+import { renderLists } from './lists.js?v=52';
+import { planOf } from './map.js?v=52';
+import { openStep, closeDrawer } from './panel.js?v=52';
+import { waNumber } from './nudge.js?v=52';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=52';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=52';
+import { morphInto, onScreen } from './morph.js?v=52';
+import { renderShare } from './share.js?v=52';
+import { pendingFor } from './swipe.js?v=52';
+import { installApp, installOffer, isStandalone } from './install.js?v=52';
 
 const app = document.getElementById('app');
 
@@ -266,32 +266,41 @@ function renderHome() {
   const top = store.rows('activity')[0];
 
   const anns = announcementBars(null);
-  const changes = h('section', { class: 'hcard changes-card', 'aria-label': 'New since you last looked' },
+  const mkChanges = (n) => h('section', { class: 'hcard changes-card', 'aria-label': 'New since you last looked' },
     anns.length ? h('div', { class: 'h-anns' }, anns) : null,
     fresh.length
       ? [h('div', { class: 'hc-head' },
           h('b', {}, `${fresh.length} new since you last looked`),
-          h('button', { type: 'button', class: 'gotit', onclick: async () => { await store.markSeen(top.id); toast('All caught up'); render(); } }, 'Got it')),
-        h('div', { class: 'hc-scroll' }, feedList(fresh.slice(0, 12), { compact: true }))]
+          h('button', { type: 'button', class: 'gotit', onclick: async () => { await store.markSeen(top.id); toast('All caught up'); const m = document.querySelector('.modal-wrap'); if (m) m.remove(); render(); } }, 'Got it')),
+        h('div', { class: 'hc-scroll' }, feedList(fresh.slice(0, n), { compact: true }))]
       : [h('div', { class: 'hc-head' }, h('b', {}, 'You’re all caught up')),
         h('p', { class: 'muted hc-empty' }, 'Nothing new since you last looked. Changes other people make will appear here until you tap Got it.')],
     h('a', { class: 'hc-foot', href: '#/history' }, 'Edit history →'));
-
-  const decide = h('section', { class: 'hcol', 'aria-label': 'Waiting on a decision' },
+  const mkDecide = (n) => h('section', { class: 'hcol', 'aria-label': 'Waiting on a decision' },
     h('div', { class: 'hc-label' }, `Waiting on a decision · ${waiting.length}`),
-    waiting.length ? waiting.slice(0, 3).map(s => {
+    waiting.length ? waiting.slice(0, n).map(s => {
       const a = store.find('areas', s.area_id); const w = wedding(s.wedding_id);
       return h('a', { class: 'hrow', href: `#/w/${s.wedding_id}/plan?open=${s.id}` }, h('b', {}, s.title), h('span', {}, `${firstName(w)} · ${a ? a.title : ''}${s.due ? ' · by ' + shortDate(s.due) : ''}`));
     }) : h('p', { class: 'muted hc-empty' }, 'No big decisions waiting. Mark a step as a big decision and it shows here until it’s final.'),
-    waiting.length > 3 ? h('span', { class: 'hc-more' }, `+ ${waiting.length - 3} more`) : null);
-
-  const coming = h('section', { class: 'hcol', 'aria-label': 'Coming up' },
+    waiting.length > n ? h('span', { class: 'hc-more' }, `+ ${waiting.length - n} more`) : null);
+  const mkComing = (n) => h('section', { class: 'hcol', 'aria-label': 'Coming up' },
     h('div', { class: 'hc-label' }, 'Coming up'),
-    soon.length ? soon.slice(0, 3).map(s => {
+    soon.length ? soon.slice(0, n).map(s => {
       const w = wedding(s.wedding_id); const late = daysUntil(s.due) < 0;
       return h('a', { class: 'hrow', href: stepLink(s) }, h('b', {}, s.title), h('span', { class: late ? 'late' : '' }, `${firstName(w)}${s.owner ? ' · ' + s.owner : ''} · ${late ? 'overdue since ' : ''}${shortDate(s.due)}`));
     }) : h('p', { class: 'muted hc-empty' }, 'Nothing due in the next few weeks. Give steps a due date and they’ll appear here.'),
     ws.length ? h('a', { class: 'hrow budget-link', href: '#/budget' }, h('span', {}, 'Family budget'), h('span', {}, 'open →')) : null);
+  // On a laptop the three panels sit in one row; each shows its first two so the page fits one screen.
+  const changes = mkChanges(4), decide = mkDecide(2), coming = mkComing(2);
+  // On a phone they become three small tiles; tapping one opens it.
+  const open = (title, el) => modal({ title, body: el, actions: [{ label: 'Close', onClick: () => { } }] });
+  const tiles = h('nav', { class: 'home-tiles', 'aria-label': 'More' },
+    h('button', { type: 'button', class: 'htile' + (fresh.length ? ' hot' : ''), onclick: () => open('What’s new', mkChanges(20)) },
+      h('b', {}, fresh.length ? String(fresh.length) : '✓'), h('span', {}, fresh.length ? 'New since you looked' : 'All caught up')),
+    h('button', { type: 'button', class: 'htile', onclick: () => open('Waiting on a decision', mkDecide(30)) },
+      h('b', {}, String(waiting.length)), h('span', {}, waiting.length === 1 ? 'Decision waiting' : 'Decisions waiting')),
+    h('button', { type: 'button', class: 'htile', onclick: () => open('Coming up', mkComing(20)) },
+      h('b', {}, String(soon.length)), h('span', {}, 'Coming up')));
 
   return h('div', { class: 'home' },
     demoFlag(),
@@ -308,7 +317,8 @@ function renderHome() {
         ws.length ? ws.map(emblem)
           : h('p', { class: 'muted' }, store.me.isAdmin ? h('span', {}, 'No weddings yet. ', h('a', { href: '#/settings' }, 'Add one in Settings')) : 'No weddings yet.')),
       greeting(),
-      h('main', { class: 'home-row' }, changes, decide, coming)));
+      h('main', { class: 'home-row' }, changes, decide, coming),
+      tiles));
 }
 
 /* ---------- Wedding space ---------- */
@@ -534,7 +544,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=51').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=52').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

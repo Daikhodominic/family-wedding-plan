@@ -1,21 +1,21 @@
 // Options to choose between, swiped like cards.
 // An option is a board item of kind 'option' (data: step_id, title, rate, notes, phone, links[], images[], status).
 // Votes are reactions with target 'swipe' and value love | no — open to everyone. (Older 'maybe' votes count as not voted yet.)
-import { store } from './store.js?v=51';
-import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=51';
-import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=51';
-import { isDecider, personInput } from './tools.js?v=51';
-import { suggestDue } from './planauto.js?v=51';
-import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=51';
-import { addVendor } from './decisions.js?v=51';
-import { pickFiles, fetchPreview } from './board.js?v=51';
-import { chooseTabs } from './tabs.js?v=51';
-import { areaIcon } from './areaicons.js?v=51';
-import { smartBar, inboxSection } from './smartadd.js?v=51';
-import { renderGlimpse } from './glimpse.js?v=51';
-import { planOf } from './map.js?v=51';
-import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=51';
-import { sampleRows, isSample } from './samples.js?v=51';
+import { store } from './store.js?v=52';
+import { h, toast, modal, field, ICONS, compressImage, uploadPhoto, confirmBox, hostOf, safeUrl, buzz, pdfThumb, fileExt, shortDate, instaEmbed, instaPost } from './ui.js?v=52';
+import { live, wedding, weddings, themeOf, stepVisible, render, ui } from './app.js?v=52';
+import { isDecider, personInput } from './tools.js?v=52';
+import { suggestDue } from './planauto.js?v=52';
+import { downloadOne, downloadZip, optionPhotos } from './downloads.js?v=52';
+import { addVendor } from './decisions.js?v=52';
+import { pickFiles, fetchPreview } from './board.js?v=52';
+import { chooseTabs } from './tabs.js?v=52';
+import { areaIcon } from './areaicons.js?v=52';
+import { smartBar, inboxSection } from './smartadd.js?v=52';
+import { renderGlimpse } from './glimpse.js?v=52';
+import { planOf } from './map.js?v=52';
+import { waButton, optionMessage, swipeMessage, vendorMessage } from './nudge.js?v=52';
+import { sampleRows, isSample } from './samples.js?v=52';
 
 const VOTES = ['love', 'no'];
 const fail = (e) => { console.error(e); const m = (e && e.message) || ''; toast(/kind_check/.test(m) ? 'Options need database update 12 — run it in Supabase, then try again.' : (m || 'That did not save. Check your connection.'), 'error'); };
@@ -644,10 +644,10 @@ export function openProfile(o, onVote) {
       h('div', { class: 'od-acts pf-acts' },
         isDecider(cur.wedding_id) && s && !s.locked_at && isOpen(cur) ? h('button', { type: 'button', class: 'btn', onclick: () => { close(); chooseOption(cur); } }, 'Make it final') : null,
         isOpen(cur) ? waButton({ label: 'Share with the family', text: () => optionMessage(cur, s && s.title) }) : null,
-        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=51').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
+        pics.length ? h('button', { type: 'button', class: 'btn small wa-btn', onclick: () => import('./share.js?v=52').then(m => m.shareOption(cur, s && s.title)) }, h('span', { class: 'wa-ic', html: ICONS.chat }), 'Send the photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); addPhotosTo(cur); } }, '+ Add photos'),
         h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); editOption(w, d.step_id, cur); } }, 'Edit'),
-        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=51').then(m => m.openHistory('option', cur)); } }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost small', onclick: () => { close(); import('./versions.js?v=52').then(m => m.openHistory('option', cur)); } }, '↺ History'),
         pics.length ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => downloadZip(optionPhotos([cur]), d.title || 'Option') }, '⬇ Photos') : null,
         h('button', { type: 'button', class: 'btn ghost small', style: { color: 'var(--warn)' }, onclick: () => { close(); deleteOption(cur); } }, 'Delete'))));
   const bar = h('div', { class: 'pf-bar' },

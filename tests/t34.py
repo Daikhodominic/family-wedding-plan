@@ -3,7 +3,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 B='http://localhost:8765/index.html?demo'
-J="async(q)=>{const {store}=await import('./js/store.js?v=51'); const s=store.rows('steps').find(x=>x.title===q&&!x.deleted_at); if(!s) return null; const a=store.find('areas',s.area_id); const st=a&&store.find('stages',a.stage_id); return {id:s.id, owner:s.owner, due:s.due, gate:s.gate, area:a&&a.title, stage:st&&st.title, opts:store.rows('board_items').filter(i=>i.kind==='option'&&!i.deleted_at&&(i.data||{}).step_id===s.id).length}}"
+J="async(q)=>{const {store}=await import('./js/store.js?v=52'); const s=store.rows('steps').find(x=>x.title===q&&!x.deleted_at); if(!s) return null; const a=store.find('areas',s.area_id); const st=a&&store.find('stages',a.stage_id); return {id:s.id, owner:s.owner, due:s.due, gate:s.gate, area:a&&a.title, stage:st&&st.title, opts:store.rows('board_items').filter(i=>i.kind==='option'&&!i.deleted_at&&(i.data||{}).step_id===s.id).length}}"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':360,'height':800}, is_mobile=True, has_touch=True, device_scale_factor=2)
