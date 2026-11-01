@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//The Wedding War Room//Invite//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:charani-adahrii-20261207@family-wedding-plan
+DTSTAMP:20261102T000000Z
+DTSTART:20261207T053000Z
+DTEND:20261207T093000Z
+SUMMARY:Wedding of Charani & Adahrii
+LOCATION:MBC Kalinamai
+DESCRIPTION:Holy matrimony of Charani & Adahrii at 11:00 AM. Reception to follow at the church premises.
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Wedding of Charani & Adahrii tomorrow at 11:00 AM
+END:VALARM
+END:VEVENT
+END:VCALENDAR
