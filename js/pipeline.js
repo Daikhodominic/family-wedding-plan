@@ -1,14 +1,14 @@
-import { lockMenuItem, lockChip } from './locks.js?v=61';
-import { store } from './store.js?v=61';
-import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=61';
-import { live, ui, render } from './app.js?v=61';
-import { openStep, lockIcon } from './panel.js?v=61';
-import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=61';
-import { personInput } from './tools.js?v=61';
-import { openIdeas, sectionFor } from './decisions.js?v=61';
-import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=61';
-import { planOffer } from './plans.js?v=61';
-import { areaIcon, ringSvg, roman } from './areaicons.js?v=61';
+import { lockMenuItem, lockChip } from './locks.js?v=62';
+import { store } from './store.js?v=62';
+import { h, modal, field, toast, confirmBox, shortDate, daysUntil, ICONS, buzz } from './ui.js?v=62';
+import { live, ui, render } from './app.js?v=62';
+import { openStep, lockIcon } from './panel.js?v=62';
+import { planOf, journeyBar, renderMap, isComplete } from './map.js?v=62';
+import { personInput } from './tools.js?v=62';
+import { openIdeas, sectionFor } from './decisions.js?v=62';
+import { datesBanner, copyArea, otherWeddings } from './planauto.js?v=62';
+import { planOffer } from './plans.js?v=62';
+import { areaIcon, ringSvg, roman } from './areaicons.js?v=62';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);

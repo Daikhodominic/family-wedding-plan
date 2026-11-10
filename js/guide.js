@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=61';
-import { h, modal , ICONS } from './ui.js?v=61';
-import { once, markOnce } from './tools.js?v=61';
+import { store } from './store.js?v=62';
+import { h, modal , ICONS } from './ui.js?v=62';
+import { once, markOnce } from './tools.js?v=62';
 
 // The first-visit tour. It comes back each visit until "Don't show this again" is tapped,
 // and can be opened any time from the menu ("How to use the War Room").

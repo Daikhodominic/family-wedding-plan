@@ -1,14 +1,14 @@
-import { copyPlanFrom, planSize } from './template.js?v=61';
-import { storagePanel } from './storage.js?v=61';
-import { sampleButton } from './swipe.js?v=61';
-import { backupsPanel } from './backups.js?v=61';
-import { store } from './store.js?v=61';
-import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=61';
-import { othersSummary, bringBackOthers } from './safety.js?v=61';
-import { weddings, wedding, feedList, render, THEMES } from './app.js?v=61';
-import { confirmAreaRestore, inr } from './budget.js?v=61';
-import { clearAll } from './clear.js?v=61';
-import { downloadBackup, decidesFor } from './tools.js?v=61';
+import { copyPlanFrom, planSize } from './template.js?v=62';
+import { storagePanel } from './storage.js?v=62';
+import { sampleButton } from './swipe.js?v=62';
+import { backupsPanel } from './backups.js?v=62';
+import { store } from './store.js?v=62';
+import { h, toast, field, confirmBox, ago, dayHeading, shortDate, longDate } from './ui.js?v=62';
+import { othersSummary, bringBackOthers } from './safety.js?v=62';
+import { weddings, wedding, feedList, render, THEMES } from './app.js?v=62';
+import { confirmAreaRestore, inr } from './budget.js?v=62';
+import { clearAll } from './clear.js?v=62';
+import { downloadBackup, decidesFor } from './tools.js?v=62';
 
 const NOUN = { stages: 'stage', areas: 'area', steps: 'step', todos: 'to-do', weddings: 'wedding space', board_items: 'card', files: 'file', lists: 'list', budgets: 'budget', budget_areas: 'budget line', budget_items: 'payment', comments: 'comment' };
 const CARD = { note: 'note', image: 'photo', video: 'video', file: 'document', link: 'link', contact: 'contact', compare: 'comparison', label: 'section title', palette: 'colours', shape: 'drawing', connector: 'connection', gallery: 'collage', checklist: 'checklist', option: 'option' };

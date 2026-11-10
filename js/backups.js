@@ -1,9 +1,9 @@
 // Automatic backups: once a week, the admin's phone or laptop quietly saves a copy of everything
 // (plan, lists, votes, budget, comments) into the family's storage. The newest 8 are kept.
 // Settings → Backups lists them, to download or to make one now.
-import { store } from './store.js?v=61';
-import { h, toast } from './ui.js?v=61';
-import { backupJson } from './tools.js?v=61';
+import { store } from './store.js?v=62';
+import { h, toast } from './ui.js?v=62';
+import { backupJson } from './tools.js?v=62';
 
 const KEY = 'fwp-auto-backup-at', WEEK = 7 * 24 * 3600 * 1000, KEEP = 8;
 const pad = (n) => String(n).padStart(2, '0');

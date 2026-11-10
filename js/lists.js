@@ -1,14 +1,14 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { duplicateList } from './duplicate.js?v=61';
-import { lockChip, lockButton } from './locks.js?v=61';
-import { store } from './store.js?v=61';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=61';
-import { live } from './app.js?v=61';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=61';
-import { renderFiles } from './files.js?v=61';
-import { copyList, otherWeddings } from './planauto.js?v=61';
-import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=61';
+import { duplicateList } from './duplicate.js?v=62';
+import { lockChip, lockButton } from './locks.js?v=62';
+import { store } from './store.js?v=62';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=62';
+import { live } from './app.js?v=62';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=62';
+import { renderFiles } from './files.js?v=62';
+import { copyList, otherWeddings } from './planauto.js?v=62';
+import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=62';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -126,7 +126,7 @@ function renderListPage(root, w, l) {
       h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'List', lockChip('lists', l.id, w.id)), title, h('div', { class: 'lp-sum' }, listSummary(l).join(' · '), step ? ` · for “${step.title}”` : '')),
       h('div', { class: 'ph-right' },
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
-        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=61').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=62').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => duplicateList(store.find('lists', l.id) || l).then(c => { location.hash = `#/w/${w.id}/lists?list=${c.id}`; }).catch(e => toast(e.message || 'Could not copy', 'error')) }, 'Duplicate'),
         lockButton('lists', l.id, w.id),
