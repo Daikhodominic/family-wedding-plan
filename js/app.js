@@ -1,31 +1,31 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=58';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=58';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=58';
-import { renderBoard } from './board.js?v=58';
-import { renderTodo } from './todo.js?v=58';
-import { renderFiles } from './files.js?v=58';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=58';
-import { clearPage, clearAll } from './clear.js?v=58';
-import { undoButtons } from './history.js?v=58';
-import { downloadBackup } from './tools.js?v=58';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=58';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=58';
-import { announcementBars } from './planauto.js?v=58';
-import { renderPartner } from './partner.js?v=58';
-import { renderOverview, editDate } from './overview.js?v=58';
-import { renderToday } from './today.js?v=58';
-import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=58';
-import { renderLists } from './lists.js?v=58';
-import { planOf } from './map.js?v=58';
-import { openStep, closeDrawer } from './panel.js?v=58';
-import { waNumber } from './nudge.js?v=58';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=58';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=58';
-import { morphInto, onScreen } from './morph.js?v=58';
-import { renderShare } from './share.js?v=58';
-import { pendingFor } from './swipe.js?v=58';
-import { installApp, installOffer, isStandalone } from './install.js?v=58';
-import { renderFamily } from './family.js?v=58';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=60';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=60';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=60';
+import { renderBoard } from './board.js?v=60';
+import { renderTodo } from './todo.js?v=60';
+import { renderFiles } from './files.js?v=60';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=60';
+import { clearPage, clearAll } from './clear.js?v=60';
+import { undoButtons } from './history.js?v=60';
+import { downloadBackup } from './tools.js?v=60';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=60';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=60';
+import { announcementBars } from './planauto.js?v=60';
+import { renderPartner } from './partner.js?v=60';
+import { renderOverview, editDate } from './overview.js?v=60';
+import { renderToday } from './today.js?v=60';
+import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=60';
+import { renderLists } from './lists.js?v=60';
+import { planOf } from './map.js?v=60';
+import { openStep, closeDrawer } from './panel.js?v=60';
+import { waNumber } from './nudge.js?v=60';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=60';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=60';
+import { morphInto, onScreen } from './morph.js?v=60';
+import { renderShare } from './share.js?v=60';
+import { pendingFor } from './swipe.js?v=60';
+import { installApp, installOffer, isStandalone } from './install.js?v=60';
+import { renderFamily } from './family.js?v=60';
 
 const app = document.getElementById('app');
 
@@ -427,10 +427,16 @@ function roleChip() {
 }
 
 /* ---------- Family-wide pages ---------- */
+// Our Family opened from a wedding's Lists tab goes back there; every other family page goes Home.
+function backHref() {
+  const q = new URLSearchParams((location.hash.split('?')[1]) || '');
+  const from = q.get('from');
+  return from && weddings().some(w => w.id === from) ? `#/w/${from}/lists` : '#/home';
+}
 function pageBar() {
   return h('header', { class: 'pbar' },
     h('div', { class: 'wrap pbar-in' },
-      h('a', { class: 'brand', href: '#/home' }, h('span', { class: 'pbar-back', html: ICONS.back }), 'The Wedding War Room'),
+      h('a', { class: 'brand', href: backHref() }, h('span', { class: 'pbar-back', html: ICONS.back }), 'The Wedding War Room'),
       h('nav', { class: 'pnav', 'aria-label': 'Weddings' }, weddings().map(w => h('a', { href: '#/w/' + w.id, style: { color: themeOf(w).deep } }, w.couple))),
       syncPill(),
       undoButtons(),
@@ -568,7 +574,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=58').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=60').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

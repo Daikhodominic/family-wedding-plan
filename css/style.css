@@ -3305,6 +3305,9 @@ body[data-look=ed] .pbar .pbar-back { color: var(--e-accent) !important; }
 .who-av.on { background: #3E8E5E; color: #fff; }
 .who-av.on::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #5BD08A; border: 2px solid var(--e-card, #fff); }
 
+.lcard.famlink { margin: 0 0 18px; border-top-color: #1764b3; }
+.lcard.famlink .lc-big { font-size: 22px; }
+
 /* ===== Our Family register (built from the relatives page) ===== */
 body[data-route=family]{background:#fff !important}
 body[data-route=family] .page::before,body[data-route=family] .page::after{display:none !important}
