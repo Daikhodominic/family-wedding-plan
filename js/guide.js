@@ -1,7 +1,7 @@
 // First-visit welcome, one-time tips, and Easy view (bigger text, fewer controls).
-import { store } from './store.js?v=60';
-import { h, modal , ICONS } from './ui.js?v=60';
-import { once, markOnce } from './tools.js?v=60';
+import { store } from './store.js?v=61';
+import { h, modal , ICONS } from './ui.js?v=61';
+import { once, markOnce } from './tools.js?v=61';
 
 // The first-visit tour. It comes back each visit until "Don't show this again" is tapped,
 // and can be opened any time from the menu ("How to use the War Room").
@@ -64,6 +64,7 @@ export function openTour(start = 0) {
 }
 
 const TIPS = {
+  guests: 'Every relative and guest, shared by both weddings. Tap a name to change it, tap Unmarried or Male / Female to switch, and tap a person for more. Cards is the wedding-card list; Tree shows everyone from above.',
   overview: 'This page shows what’s happening now, what’s coming up, and who is doing what. Tap anything to open it.',
   plan: 'Tap a step to see its details, add files, or make it final. Tick the circle when it’s done. Drag by the dots to move things.',
   board: 'Drop photos and links here, or press Ctrl+V to paste. Tap “Comment” on a card to discuss it; tap ♡ if you love it.',

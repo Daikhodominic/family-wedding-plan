@@ -1,20 +1,20 @@
 // Today: the first page of each wedding, laid out like a wedding website.
 // The couple's photo with their monogram, the countdown, what's for you today, what's still to
 // decide (with photos), this week, the family, and what's already settled.
-import { store } from './store.js?v=60';
-import { h, toast, daysUntil, shortDate, ICONS, popMenu, modal, uploadPhoto, buzz } from './ui.js?v=60';
-import { live, stepVisible, render } from './app.js?v=60';
-import { openStep } from './panel.js?v=60';
-import { planOf } from './map.js?v=60';
-import { editStep } from './pipeline.js?v=60';
-import { jobsFor, isDone } from './myjobs.js?v=60';
-import { isDecider, samePerson, siteLink, share } from './tools.js?v=60';
-import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=60';
-import { planOffer } from './plans.js?v=60';
-import { categoriesOf, optionsOf, votesOf, firstPic, pendingFor, photoEl } from './swipe.js?v=60';
-import { waButton, jobsMessage } from './nudge.js?v=60';
-import { areaIcon } from './areaicons.js?v=60';
-import { editDate, partnerLinks, partnerSugg } from './overview.js?v=60';
+import { store } from './store.js?v=61';
+import { h, toast, daysUntil, shortDate, ICONS, popMenu, modal, uploadPhoto, buzz } from './ui.js?v=61';
+import { live, stepVisible, render } from './app.js?v=61';
+import { openStep } from './panel.js?v=61';
+import { planOf } from './map.js?v=61';
+import { editStep } from './pipeline.js?v=61';
+import { jobsFor, isDone } from './myjobs.js?v=61';
+import { isDecider, samePerson, siteLink, share } from './tools.js?v=61';
+import { announcementBars, finalWeek, datesBanner, looksFinished, shareWeek, calendarFor, newAnnouncement, sentAnnouncements } from './planauto.js?v=61';
+import { planOffer } from './plans.js?v=61';
+import { categoriesOf, optionsOf, votesOf, firstPic, pendingFor, photoEl } from './swipe.js?v=61';
+import { waButton, jobsMessage } from './nudge.js?v=61';
+import { areaIcon } from './areaicons.js?v=61';
+import { editDate, partnerLinks, partnerSugg } from './overview.js?v=61';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const first = (n) => String(n || '').trim().split(/\s+/)[0];
@@ -101,6 +101,11 @@ export function renderToday(root, w, params = {}) {
       go.href ? h('a', { class: 'ed-go', href: go.href }, go.label, h('span', { html: ICONS.back, class: 'ed-go-ar' }))
         : h('button', { type: 'button', class: 'ed-go', onclick: go.onclick }, go.label, h('span', { html: ICONS.back, class: 'ed-go-ar' })))));
 
+  // Shortcuts to the guest side of things (the Guests tab, shared by both weddings).
+  root.append(h('nav', { class: 'ed-short', 'aria-label': 'Guests' },
+    h('a', { href: `#/w/${w.id}/guests?view=cards` }, h('span', { html: ICONS.mail || ICONS.note }), 'Invitations'),
+    h('a', { href: `#/w/${w.id}/guests` }, h('span', { html: ICONS.user }), 'Relatives')));
+
   // Announcements sit right under the cover.
   root.append(...announcementBars(w.id));
   const sent = sentAnnouncements(w.id); if (sent) root.append(sent);
@@ -111,7 +116,7 @@ export function renderToday(root, w, params = {}) {
     { icon: 'heart', label: 'Swipe through everything again', href: `#/w/${w.id}/swipe?all=1` },
     { icon: 'comment', label: 'Share this week on WhatsApp', onClick: () => shareWeek(w) },
     { icon: 'plan', label: 'Add dates to my calendar', onClick: () => calendarFor(w) },
-    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=60').then(m => m.memoryBook(w)) },
+    { icon: 'file', label: 'Memory book (print or save as PDF)', onClick: () => import('./memorybook.js?v=61').then(m => m.memoryBook(w)) },
     isDecider() ? { icon: 'note', label: 'Post an announcement', onClick: () => newAnnouncement(w) } : null,
     isDecider() ? { icon: 'user', label: 'Share with the partner family', onClick: () => partnerLinks(w) } : { icon: 'user', label: 'What the partner family sees', href: `#/p/preview-${w.id}` },
     me.isAdmin ? { icon: 'image', label: coverSrc(w) ? 'Change the cover photo' : 'Add a cover photo', onClick: () => changeCover(w) } : null,

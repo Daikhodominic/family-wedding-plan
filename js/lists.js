@@ -1,14 +1,14 @@
 // The Lists tab: guest list, gifts, vehicles, songs … each one a full page you can
 // read at a glance, edit in place, tick off and download.
-import { duplicateList } from './duplicate.js?v=60';
-import { lockChip, lockButton } from './locks.js?v=60';
-import { store } from './store.js?v=60';
-import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=60';
-import { live } from './app.js?v=60';
-import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=60';
-import { renderFiles } from './files.js?v=60';
-import { copyList, otherWeddings } from './planauto.js?v=60';
-import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=60';
+import { duplicateList } from './duplicate.js?v=61';
+import { lockChip, lockButton } from './locks.js?v=61';
+import { store } from './store.js?v=61';
+import { h, toast, modal, field, confirmBox, ICONS, secHead } from './ui.js?v=61';
+import { live } from './app.js?v=61';
+import { LIST_TEMPLATES, downloadList, newList } from './panel.js?v=61';
+import { renderFiles } from './files.js?v=61';
+import { copyList, otherWeddings } from './planauto.js?v=61';
+import { customsSection, isCustom, SUGGEST, suggestFor, sendList, printList, shareTally } from './customs.js?v=61';
 
 const fail = (e) => { console.error(e); toast(e.message || 'That did not save. Check your connection.', 'error'); };
 const byPos = (a, b) => (a.position || 0) - (b.position || 0);
@@ -39,12 +39,6 @@ export function renderLists(root, w, params) {
   if (params.list) { const l = store.find('lists', params.list); if (l && !l.deleted_at) { renderListPage(root, w, l); return; } }
   const lists = live(store.rows('lists') || []).filter(l => l.wedding_id === w.id).sort((a, b) => a.title.localeCompare(b.title));
   root.append(secHead('Lists and files', 'Lists & files', h('button', { class: 'btn', type: 'button', 'data-edit': 'lists', onclick: () => newList(w.id, null) }, '+ New list'), h('a', { class: 'btn ghost', href: '#files', onclick: (e) => { e.preventDefault(); const f = document.getElementById('files'); if (f) f.scrollIntoView({ behavior: 'smooth' }); } }, 'Files ↓')));
-  // Guests & relatives live on one shared page (Our Family) that both weddings use.
-  root.append(h('a', { class: 'lcard famlink', href: `#/family?from=${w.id}` },
-    h('span', { class: 'lc-ic', html: ICONS.user }),
-    h('span', { class: 'lc-t' }, 'Guests & relatives'),
-    h('span', { class: 'lc-big' }, 'Our Family'),
-    h('span', { class: 'lc-s' }, 'Every relative and guest, the wedding-card list and the family tree · shared by both weddings')));
   root.append(customsSection(w, lists, fail));
   const others = lists.filter(l => !isCustom(l));
   if (others.length) root.append(h('div', { class: 'lgrid' }, others.map(l => {
@@ -132,7 +126,7 @@ function renderListPage(root, w, l) {
       h('div', { class: 'ph-title' }, h('div', { class: 'eyebrow' }, 'List', lockChip('lists', l.id, w.id)), title, h('div', { class: 'lp-sum' }, listSummary(l).join(' · '), step ? ` · for “${step.title}”` : '')),
       h('div', { class: 'ph-right' },
         h('button', { type: 'button', class: 'btn', onclick: addRow }, '+ Add a row'),
-        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=60').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
+        h('button', { type: 'button', class: 'btn ghost', onclick: () => import('./versions.js?v=61').then(m => m.openHistory('list', store.find('lists', l.id) || l)) }, '↺ History'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => downloadList(l) }, 'Download for Excel'),
         h('button', { type: 'button', class: 'btn ghost', onclick: () => duplicateList(store.find('lists', l.id) || l).then(c => { location.hash = `#/w/${w.id}/lists?list=${c.id}`; }).catch(e => toast(e.message || 'Could not copy', 'error')) }, 'Duplicate'),
         lockButton('lists', l.id, w.id),

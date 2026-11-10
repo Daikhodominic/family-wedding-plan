@@ -1,31 +1,31 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=60';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=60';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=60';
-import { renderBoard } from './board.js?v=60';
-import { renderTodo } from './todo.js?v=60';
-import { renderFiles } from './files.js?v=60';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=60';
-import { clearPage, clearAll } from './clear.js?v=60';
-import { undoButtons } from './history.js?v=60';
-import { downloadBackup } from './tools.js?v=60';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=60';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=60';
-import { announcementBars } from './planauto.js?v=60';
-import { renderPartner } from './partner.js?v=60';
-import { renderOverview, editDate } from './overview.js?v=60';
-import { renderToday } from './today.js?v=60';
-import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=60';
-import { renderLists } from './lists.js?v=60';
-import { planOf } from './map.js?v=60';
-import { openStep, closeDrawer } from './panel.js?v=60';
-import { waNumber } from './nudge.js?v=60';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=60';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=60';
-import { morphInto, onScreen } from './morph.js?v=60';
-import { renderShare } from './share.js?v=60';
-import { pendingFor } from './swipe.js?v=60';
-import { installApp, installOffer, isStandalone } from './install.js?v=60';
-import { renderFamily } from './family.js?v=60';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=61';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=61';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=61';
+import { renderBoard } from './board.js?v=61';
+import { renderTodo } from './todo.js?v=61';
+import { renderFiles } from './files.js?v=61';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=61';
+import { clearPage, clearAll } from './clear.js?v=61';
+import { undoButtons } from './history.js?v=61';
+import { downloadBackup } from './tools.js?v=61';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=61';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=61';
+import { announcementBars } from './planauto.js?v=61';
+import { renderPartner } from './partner.js?v=61';
+import { renderOverview, editDate } from './overview.js?v=61';
+import { renderToday } from './today.js?v=61';
+import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=61';
+import { renderLists } from './lists.js?v=61';
+import { planOf } from './map.js?v=61';
+import { openStep, closeDrawer } from './panel.js?v=61';
+import { waNumber } from './nudge.js?v=61';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=61';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=61';
+import { morphInto, onScreen } from './morph.js?v=61';
+import { renderShare } from './share.js?v=61';
+import { pendingFor } from './swipe.js?v=61';
+import { installApp, installOffer, isStandalone } from './install.js?v=61';
+import { renderFamily } from './family.js?v=61';
 
 const app = document.getElementById('app');
 
@@ -103,7 +103,6 @@ function avatarMenu(btn) {
     h('div', { class: 'mp-head' }, h('b', {}, store.me.name), h('span', {}, store.me.isAdmin ? 'Admin' : 'Family')),
     item('check', 'My jobs', () => go('#/me'), myOpenJobs().length ? h('span', { class: 'badge' }, String(myOpenJobs().length)) : null),
     item('history', 'Edit history', () => go('#/history'), n ? h('span', { class: 'badge' }, String(n)) : null),
-    item('user', 'Our Family · relatives & cards', () => go('#/family')),
     item('budget', 'Family budget', () => go('#/budget')),
     item('trash', 'Bin', () => go('#/bin')),
     store.me.isAdmin ? item('settings', 'Settings', () => go('#/settings')) : null,
@@ -291,7 +290,6 @@ function renderHome() {
       const w = wedding(s.wedding_id); const late = daysUntil(s.due) < 0;
       return h('a', { class: 'hrow', href: stepLink(s) }, h('b', {}, s.title), h('span', { class: late ? 'late' : '' }, `${firstName(w)}${s.owner ? ' · ' + s.owner : ''} · ${late ? 'overdue since ' : ''}${shortDate(s.due)}`));
     }) : h('p', { class: 'muted hc-empty' }, 'Nothing due in the next few weeks. Give steps a due date and they’ll appear here.'),
-    h('a', { class: 'hrow budget-link', href: '#/family' }, h('span', {}, 'Our Family · relatives, tree & card list'), h('span', {}, 'open →')),
     ws.length ? h('a', { class: 'hrow budget-link', href: '#/budget' }, h('span', {}, 'Family budget'), h('span', {}, 'open →')) : null);
   // On a laptop the three panels sit in one row; each shows its first two so the page fits one screen.
   const changes = mkChanges(4), decide = mkDecide(2), coming = mkComing(2);
@@ -325,7 +323,7 @@ function renderHome() {
 }
 
 /* ---------- Wedding space ---------- */
-const TABS = [['overview', 'Today', 'overview'], ['choose', 'Choose', 'compare'], ['plan', 'Plan', 'plan'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget']];
+const TABS = [['overview', 'Today', 'overview'], ['choose', 'Choose', 'compare'], ['plan', 'Plan', 'plan'], ['guests', 'Guests', 'user'], ['lists', 'Lists', 'list'], ['budget', 'Budget', 'budget']];
 const ALIAS = { decide: 'overview', files: 'lists', board: 'choose', options: 'choose', swipe: 'choose' }; // still reachable, shown under these tabs
 const tabOf = (t, params = {}) => !t ? (params.focus ? 'plan' : 'overview') : t === 'todo' ? 'plan' : t;
 
@@ -377,6 +375,7 @@ function renderSpace(id, sub, params) {
   else if (tab === 'swipe') { const sw = h('div', { class: 'sw-wrap', 'data-fresh': '' }); body.append(sw); renderSwipe(sw, { weddingId: w.id, stepId: params.step, all: params.all }); }
   else if (tab === 'decide') renderOverview(body, w, params); // the old Decisions page now lives on the Overview and in Choose
   else if (tab === 'budget') renderWeddingBudget(body, w, params);
+  else if (tab === 'guests') body.append(renderFamily(params)); // Our Family: one shared register for both weddings
   else if (tab === 'files') renderFiles(body, w, params);
   else if (tab === 'lists') renderLists(body, w, params);
   else if (tab === 'overview') renderToday(body, w, params);
@@ -392,7 +391,7 @@ function renderSpace(id, sub, params) {
 }
 
 // Who else is here right now: a dot for each person, with the page they're on.
-const ROOM = { overview: 'the Overview', choose: 'Choose', options: 'Choose', board: 'the mood board', swipe: 'Choose', plan: 'the plan', todo: 'Jobs', lists: 'Lists', files: 'Lists', budget: 'the budget' };
+const ROOM = { overview: 'the Overview', choose: 'Choose', options: 'Choose', board: 'the mood board', swipe: 'Choose', plan: 'the plan', todo: 'Jobs', lists: 'Lists', files: 'Lists', budget: 'the budget', guests: 'Guests' };
 export function hereDots(wid) {
   // Always there: green faces for whoever else has the War Room open now; tap for the list and when others last opened it.
   const ps = (store.presence || []).filter(p => !wid || String(p.room || '').startsWith(wid + '/'));
@@ -507,7 +506,7 @@ export function render() {
   else if (parts[0] === 'bin') view = familyPage(renderBin());
   else if (parts[0] === 'budget') view = familyPage(renderFamilyBudget(params));
   else if (parts[0] === 'me') view = familyPage(renderMyJobs());
-  else if (parts[0] === 'family') { view = familyPage(renderFamily()); document.title = 'Our Family · The Wedding War Room'; }
+  else if (parts[0] === 'family') { view = familyPage(renderFamily(params)); document.title = 'Our Family · The Wedding War Room'; }
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
   else if (parts[0] === 'share') view = familyPage(renderShare());
   else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, { all: params.all }); view = familyPage(el); }
@@ -574,7 +573,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=60').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=61').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

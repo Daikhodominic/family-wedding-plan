@@ -3305,8 +3305,13 @@ body[data-look=ed] .pbar .pbar-back { color: var(--e-accent) !important; }
 .who-av.on { background: #3E8E5E; color: #fff; }
 .who-av.on::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #5BD08A; border: 2px solid var(--e-card, #fff); }
 
-.lcard.famlink { margin: 0 0 18px; border-top-color: #1764b3; }
-.lcard.famlink .lc-big { font-size: 22px; }
+.sbody .famreg-page { padding: 0 !important; max-width: none; }
+
+.ed-short { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 4px; }
+.ed-short a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--w-line, #e3dccb); background: var(--w-surface, #fff); color: inherit; text-decoration: none; font-size: 14px; font-weight: 500; }
+.ed-short a span { display: inline-flex; width: 16px; height: 16px; }
+.ed-short a span svg { width: 16px; height: 16px; }
+.ed-short a:hover { border-color: var(--gold, #a8843f); }
 
 /* ===== Our Family register (built from the relatives page) ===== */
 body[data-route=family]{background:#fff !important}

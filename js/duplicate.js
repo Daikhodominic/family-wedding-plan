@@ -1,6 +1,6 @@
 // Duplicate a step (right after itself) or a list (with all its rows).
-import { store } from './store.js?v=60';
-import { toast } from './ui.js?v=60';
+import { store } from './store.js?v=61';
+import { toast } from './ui.js?v=61';
 
 const live = (rows) => (rows || []).filter(r => !r.deleted_at);
 
