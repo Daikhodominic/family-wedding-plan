@@ -1,30 +1,31 @@
-import { store, onStatus, syncState, outboxItems } from './store.js?v=57';
-import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=57';
-import { renderPipeline, renderPlanHead } from './pipeline.js?v=57';
-import { renderBoard } from './board.js?v=57';
-import { renderTodo } from './todo.js?v=57';
-import { renderFiles } from './files.js?v=57';
-import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=57';
-import { clearPage, clearAll } from './clear.js?v=57';
-import { undoButtons } from './history.js?v=57';
-import { downloadBackup } from './tools.js?v=57';
-import { renderMyJobs, myOpenJobs } from './myjobs.js?v=57';
-import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=57';
-import { announcementBars } from './planauto.js?v=57';
-import { renderPartner } from './partner.js?v=57';
-import { renderOverview, editDate } from './overview.js?v=57';
-import { renderToday } from './today.js?v=57';
-import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=57';
-import { renderLists } from './lists.js?v=57';
-import { planOf } from './map.js?v=57';
-import { openStep, closeDrawer } from './panel.js?v=57';
-import { waNumber } from './nudge.js?v=57';
-import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=57';
-import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=57';
-import { morphInto, onScreen } from './morph.js?v=57';
-import { renderShare } from './share.js?v=57';
-import { pendingFor } from './swipe.js?v=57';
-import { installApp, installOffer, isStandalone } from './install.js?v=57';
+import { store, onStatus, syncState, outboxItems } from './store.js?v=58';
+import { h, $, toast, modal, field, daysUntil, fancyDate, shortDate, ago, ICONS, confirmBox } from './ui.js?v=58';
+import { renderPipeline, renderPlanHead } from './pipeline.js?v=58';
+import { renderBoard } from './board.js?v=58';
+import { renderTodo } from './todo.js?v=58';
+import { renderFiles } from './files.js?v=58';
+import { renderWeddingBudget, renderFamilyBudget } from './budget.js?v=58';
+import { clearPage, clearAll } from './clear.js?v=58';
+import { undoButtons } from './history.js?v=58';
+import { downloadBackup } from './tools.js?v=58';
+import { renderMyJobs, myOpenJobs } from './myjobs.js?v=58';
+import { maybeWelcome, openTour, tip, helpButton, toggleEasy, easyOn, applyEasy } from './guide.js?v=58';
+import { announcementBars } from './planauto.js?v=58';
+import { renderPartner } from './partner.js?v=58';
+import { renderOverview, editDate } from './overview.js?v=58';
+import { renderToday } from './today.js?v=58';
+import { renderSwipe, renderChoose, renderOptions, newForYou, newChoicesPopup } from './swipe.js?v=58';
+import { renderLists } from './lists.js?v=58';
+import { planOf } from './map.js?v=58';
+import { openStep, closeDrawer } from './panel.js?v=58';
+import { waNumber } from './nudge.js?v=58';
+import { notifySupported, notifyOn, notifySettings, startNotifier } from './notify.js?v=58';
+import { renderActivity, renderBin, renderSettings, describe, linkFor } from './extras.js?v=58';
+import { morphInto, onScreen } from './morph.js?v=58';
+import { renderShare } from './share.js?v=58';
+import { pendingFor } from './swipe.js?v=58';
+import { installApp, installOffer, isStandalone } from './install.js?v=58';
+import { renderFamily } from './family.js?v=58';
 
 const app = document.getElementById('app');
 
@@ -102,6 +103,7 @@ function avatarMenu(btn) {
     h('div', { class: 'mp-head' }, h('b', {}, store.me.name), h('span', {}, store.me.isAdmin ? 'Admin' : 'Family')),
     item('check', 'My jobs', () => go('#/me'), myOpenJobs().length ? h('span', { class: 'badge' }, String(myOpenJobs().length)) : null),
     item('history', 'Edit history', () => go('#/history'), n ? h('span', { class: 'badge' }, String(n)) : null),
+    item('user', 'Our Family · relatives & cards', () => go('#/family')),
     item('budget', 'Family budget', () => go('#/budget')),
     item('trash', 'Bin', () => go('#/bin')),
     store.me.isAdmin ? item('settings', 'Settings', () => go('#/settings')) : null,
@@ -289,6 +291,7 @@ function renderHome() {
       const w = wedding(s.wedding_id); const late = daysUntil(s.due) < 0;
       return h('a', { class: 'hrow', href: stepLink(s) }, h('b', {}, s.title), h('span', { class: late ? 'late' : '' }, `${firstName(w)}${s.owner ? ' · ' + s.owner : ''} · ${late ? 'overdue since ' : ''}${shortDate(s.due)}`));
     }) : h('p', { class: 'muted hc-empty' }, 'Nothing due in the next few weeks. Give steps a due date and they’ll appear here.'),
+    h('a', { class: 'hrow budget-link', href: '#/family' }, h('span', {}, 'Our Family · relatives, tree & card list'), h('span', {}, 'open →')),
     ws.length ? h('a', { class: 'hrow budget-link', href: '#/budget' }, h('span', {}, 'Family budget'), h('span', {}, 'open →')) : null);
   // On a laptop the three panels sit in one row; each shows its first two so the page fits one screen.
   const changes = mkChanges(4), decide = mkDecide(2), coming = mkComing(2);
@@ -498,6 +501,7 @@ export function render() {
   else if (parts[0] === 'bin') view = familyPage(renderBin());
   else if (parts[0] === 'budget') view = familyPage(renderFamilyBudget(params));
   else if (parts[0] === 'me') view = familyPage(renderMyJobs());
+  else if (parts[0] === 'family') { view = familyPage(renderFamily()); document.title = 'Our Family · The Wedding War Room'; }
   else if (parts[0] === 'settings') view = familyPage(renderSettings());
   else if (parts[0] === 'share') view = familyPage(renderShare());
   else if (parts[0] === 'swipe') { const el = h('main', { class: 'wrap swipe-page' }); renderSwipe(el, { all: params.all }); view = familyPage(el); }
@@ -506,7 +510,8 @@ export function render() {
   document.body.dataset.look = store.me && parts[0] !== 'p' ? 'ed' : '';
   if (store.me && booted && parts.length && parts[0] !== 'p') setTimeout(newChoicesPopup, 1600); // what's new to swipe, once per visit
   { const r = store.me ? store.roleOf(store.me) : 'full'; if (r === 'full') delete document.body.dataset.role; else document.body.dataset.role = r; } // view / lists: hide what they can't change
-  document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe', 'share'].includes(parts[0]) ? 'home' : 'page';
+  document.body.dataset.page = parts[0] === 'p' ? 'partner' : !parts.length ? 'landing' : !store.me ? 'gate' : parts[0] === 'w' ? 'space' : parts[0] === 'home' || !['activity', 'history', 'bin', 'settings', 'budget', 'me', 'swipe', 'share', 'family'].includes(parts[0]) ? 'home' : 'page';
+  document.body.dataset.route = store.me ? parts[0] || '' : '';
   const keepScroll = app.dataset.view === key ? window.scrollY : 0;
   const newPage = app.dataset.view !== key;
   app.dataset.view = key;
@@ -527,8 +532,9 @@ function scheduleRender() {
   if (pending) return;
   pending = true;
   const tryRender = () => {
-    const a = document.activeElement;
-    const typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && app.contains(a);
+    const outer = document.activeElement;
+    const a = outer && outer.shadowRoot && outer.shadowRoot.activeElement ? outer.shadowRoot.activeElement : outer; // inside Our Family's own frame
+    const typing = a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable) && app.contains(outer);
     const popOpen = document.querySelector('.menu-pop, .add-pop:not([hidden]), .rx-pick:not([hidden]), .addmenu:not([hidden])');
     if (ui.busy || typing || popOpen || document.querySelector('.modal-wrap')) { setTimeout(tryRender, 400); return; }
     pending = false; render();
@@ -562,7 +568,7 @@ async function boot() {
   }
   booted = true;
   startNotifier();
-  import('./backups.js?v=57').then(m => m.autoBackup()).catch(() => { });
+  import('./backups.js?v=58').then(m => m.autoBackup()).catch(() => { });
   if (!onLandingNow()) render();
 }
 

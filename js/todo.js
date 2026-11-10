@@ -1,9 +1,9 @@
-import { store } from './store.js?v=57';
-import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=57';
-import { live, ui, render, stepVisible } from './app.js?v=57';
-import { editStep } from './pipeline.js?v=57';
-import { personInput } from './tools.js?v=57';
-import { jobsFor, jobSections, isDone } from './myjobs.js?v=57';
+import { store } from './store.js?v=58';
+import { h, toast, shortDate, daysUntil, ICONS } from './ui.js?v=58';
+import { live, ui, render, stepVisible } from './app.js?v=58';
+import { editStep } from './pipeline.js?v=58';
+import { personInput } from './tools.js?v=58';
+import { jobsFor, jobSections, isDone } from './myjobs.js?v=58';
 
 const STATUS = { todo: 'To do', doing: 'In progress', done: 'Done' };
 let showDone = false;   // the Done section starts folded

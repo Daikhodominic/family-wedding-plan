@@ -3304,3 +3304,10 @@ body[data-look=ed] .pbar .pbar-back { color: var(--e-accent) !important; }
 .who-av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; background: var(--e-line, #ddd); color: var(--e-ink, #222); position: relative; flex: none; }
 .who-av.on { background: #3E8E5E; color: #fff; }
 .who-av.on::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #5BD08A; border: 2px solid var(--e-card, #fff); }
+
+/* ===== Our Family register (built from the relatives page) ===== */
+body[data-route=family]{background:#fff !important}
+body[data-route=family] .page::before,body[data-route=family] .page::after{display:none !important}
+.famreg-page{padding-top:8px !important}
+.famreg-host{display:block}
+/* ===== end Our Family register ===== */
